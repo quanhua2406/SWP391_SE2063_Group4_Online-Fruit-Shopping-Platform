@@ -17,13 +17,22 @@ public class VerifyOTPServlet extends HttpServlet {
     private final UserDAO userDAO = new UserDAO();
 
 
+    // =========================================================
+    // GET - SHOW VERIFY OTP PAGE
+    // =========================================================
+
     @Override
-    protected void doGet(HttpServletRequest request,
-                          HttpServletResponse response)
+    protected void doGet(
+            HttpServletRequest request,
+            HttpServletResponse response)
             throws ServletException, IOException {
 
         HttpSession session =
                 request.getSession(false);
+
+        // -----------------------------------------------------
+        // CHECK RESET SESSION
+        // -----------------------------------------------------
 
         if (session == null
                 || session.getAttribute("resetEmail") == null) {
@@ -36,28 +45,36 @@ public class VerifyOTPServlet extends HttpServlet {
             return;
         }
 
+
         request.getRequestDispatcher(
                 "/verify-otp.jsp"
         ).forward(request, response);
     }
 
 
+    // =========================================================
+    // POST - VERIFY OTP
+    // =========================================================
+
     @Override
-    protected void doPost(HttpServletRequest request,
-                          HttpServletResponse response)
+    protected void doPost(
+            HttpServletRequest request,
+            HttpServletResponse response)
             throws ServletException, IOException {
 
         request.setCharacterEncoding("UTF-8");
 
 
-        // =====================================================
-        // SESSION
-        // =====================================================
-
         HttpSession session =
                 request.getSession(false);
 
-        if (session == null) {
+
+        // -----------------------------------------------------
+        // CHECK SESSION
+        // -----------------------------------------------------
+
+        if (session == null
+                || session.getAttribute("resetEmail") == null) {
 
             response.sendRedirect(
                     request.getContextPath()
@@ -68,41 +85,53 @@ public class VerifyOTPServlet extends HttpServlet {
         }
 
 
-        // =====================================================
+        // -----------------------------------------------------
         // GET EMAIL FROM SESSION
-        // =====================================================
+        // -----------------------------------------------------
 
         String email =
                 (String) session.getAttribute(
                         "resetEmail"
                 );
 
-        if (email == null || email.isBlank()) {
 
-            response.sendRedirect(
-                    request.getContextPath()
-                            + "/forgot-password"
+        // -----------------------------------------------------
+        // GET OTP
+        // -----------------------------------------------------
+
+        String otp =
+                request.getParameter("otp");
+
+
+        if (otp == null) {
+            otp = "";
+        }
+
+        otp = otp.trim();
+
+
+        // -----------------------------------------------------
+        // VALIDATE OTP EMPTY
+        // -----------------------------------------------------
+
+        if (otp.isEmpty()) {
+
+            request.setAttribute(
+                    "error",
+                    "OTP cannot be empty."
             );
+
+            request.getRequestDispatcher(
+                    "/verify-otp.jsp"
+            ).forward(request, response);
 
             return;
         }
 
 
-        // =====================================================
-        // GET OTP
-        // =====================================================
-
-        String otp =
-                request.getParameter("otp");
-
-        otp = otp == null
-                ? ""
-                : otp.trim();
-
-
-        // =====================================================
+        // -----------------------------------------------------
         // VALIDATE OTP FORMAT
-        // =====================================================
+        // -----------------------------------------------------
 
         if (!otp.matches("\\d{6}")) {
 
@@ -119,20 +148,20 @@ public class VerifyOTPServlet extends HttpServlet {
         }
 
 
+        // -----------------------------------------------------
+        // VERIFY OTP
+        // -----------------------------------------------------
+
         try {
 
-            // =================================================
-            // VERIFY
-            // =================================================
-
-            boolean valid =
+            boolean verified =
                     userDAO.verifyResetOTP(
                             email,
                             otp
                     );
 
 
-            if (!valid) {
+            if (!verified) {
 
                 request.setAttribute(
                         "error",
@@ -147,9 +176,9 @@ public class VerifyOTPServlet extends HttpServlet {
             }
 
 
-            // =================================================
-            // OTP SUCCESS
-            // =================================================
+            // -------------------------------------------------
+            // OTP VERIFIED
+            // -------------------------------------------------
 
             session.setAttribute(
                     "resetVerified",
@@ -157,10 +186,15 @@ public class VerifyOTPServlet extends HttpServlet {
             );
 
 
+            // -------------------------------------------------
+            // GO TO RESET PASSWORD
+            // -------------------------------------------------
+
             response.sendRedirect(
                     request.getContextPath()
                             + "/reset-password"
             );
+
 
         } catch (Exception e) {
 

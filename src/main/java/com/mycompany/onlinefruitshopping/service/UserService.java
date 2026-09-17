@@ -10,6 +10,11 @@ public class UserService {
 
     private final UserDAO userDAO = new UserDAO();
 
+
+    // =========================================================
+    // REGISTER USER
+    // =========================================================
+
     public boolean registerUser(
             String fullName,
             String email,
@@ -18,17 +23,19 @@ public class UserService {
             String address)
             throws SQLException {
 
-        // Kiểm tra email đã tồn tại
+        // Check email already exists
         if (userDAO.emailExists(email)) {
             return false;
         }
 
-        // Hash password bằng BCrypt
-        String passwordHash = BCrypt.hashpw(
-                password,
-                BCrypt.gensalt(12)
-        );
+        // Hash password
+        String passwordHash =
+                BCrypt.hashpw(
+                        password,
+                        BCrypt.gensalt(12)
+                );
 
+        // Save user
         return userDAO.registerUser(
                 fullName,
                 email,
@@ -37,29 +44,84 @@ public class UserService {
                 address
         );
     }
-    public boolean isEmailExists(String email) throws SQLException {
-    return userDAO.emailExists(email);
-}
+
+
+    // =========================================================
+    // CHECK EMAIL
+    // =========================================================
+
+    public boolean isEmailExists(String email)
+            throws SQLException {
+
+        return userDAO.emailExists(email);
+    }
+
+
+    // =========================================================
+    // LOGIN
+    // =========================================================
 
     public User getUserByLogin(
             String email,
             String password)
             throws SQLException {
 
-        User user = userDAO.getUserByEmail(email);
+        User user =
+                userDAO.getUserByEmail(email);
 
+        // Account not found
         if (user == null) {
             return null;
         }
 
-        // Kiểm tra password nhập vào với password hash trong DB
+        // Check password
         if (BCrypt.checkpw(
                 password,
-                user.getPasswordHash()
-        )) {
+                user.getPasswordHash())) {
+
             return user;
         }
 
         return null;
+    }
+
+
+    // =========================================================
+    // GET USER BY EMAIL
+    // =========================================================
+
+    public User getUserByEmail(String email)
+            throws SQLException {
+
+        return userDAO.getUserByEmail(email);
+    }
+
+
+    // =========================================================
+    // GET USER BY ID
+    // =========================================================
+
+    public User getUserById(int userId)
+            throws SQLException {
+
+        return userDAO.getUserById(userId);
+    }
+
+
+    // =========================================================
+    // UPDATE PROFILE
+    // =========================================================
+
+    public boolean updateProfile(
+            int userId,
+            String fullName,
+            String phone)
+            throws SQLException {
+
+        return userDAO.updateProfile(
+                userId,
+                fullName,
+                phone
+        );
     }
 }

@@ -1,7 +1,6 @@
 package com.mycompany.onlinefruitshopping.controller;
 
 import com.mycompany.onlinefruitshopping.service.UserService;
-import com.mycompany.onlinefruitshopping.utils.ValidationUtil;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -10,210 +9,423 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.sql.SQLException;
 
 @WebServlet("/register")
 public class RegisterServlet extends HttpServlet {
 
     private final UserService userService = new UserService();
 
+    // =========================================================
+    // GET - SHOW REGISTER PAGE
+    // =========================================================
+
     @Override
-    protected void doGet(HttpServletRequest request,
-                          HttpServletResponse response)
+    protected void doGet(
+            HttpServletRequest request,
+            HttpServletResponse response)
             throws ServletException, IOException {
 
-        request.getRequestDispatcher("/register.jsp")
-                .forward(request, response);
+        request.getRequestDispatcher(
+                "/register.jsp"
+        ).forward(request, response);
     }
 
+
+    // =========================================================
+    // POST - REGISTER
+    // =========================================================
+
     @Override
-    protected void doPost(HttpServletRequest request,
-                           HttpServletResponse response)
+    protected void doPost(
+            HttpServletRequest request,
+            HttpServletResponse response)
             throws ServletException, IOException {
 
         request.setCharacterEncoding("UTF-8");
 
+        // -----------------------------------------------------
+        // GET FORM DATA
+        // -----------------------------------------------------
+
         String fullName = request.getParameter("fullName");
         String email = request.getParameter("email");
         String password = request.getParameter("password");
-        String confirmPassword = request.getParameter("confirmPassword");
+        String confirmPassword =
+                request.getParameter("confirmPassword");
         String phone = request.getParameter("phone");
         String address = request.getParameter("address");
 
-        fullName = fullName == null ? "" : fullName.trim();
-        email = email == null ? "" : email.trim();
-        password = password == null ? "" : password;
-        confirmPassword = confirmPassword == null ? "" : confirmPassword;
-        phone = phone == null ? "" : phone.trim();
-        address = address == null ? "" : address.trim();
 
-        // Keep entered data when validation fails
-        request.setAttribute("fullName", fullName);
-        request.setAttribute("email", email);
-        request.setAttribute("phone", phone);
-        request.setAttribute("address", address);
+        // Handle null values
+        if (fullName == null) {
+            fullName = "";
+        }
 
-        // =========================
-        // 1. Full Name
-        // =========================
-        if (!ValidationUtil.isValidFullName(fullName)) {
+        if (email == null) {
+            email = "";
+        }
 
-            request.setAttribute(
-                    "error",
-                    "Full name is invalid. Please enter 2-100 letters and spaces only."
+        if (password == null) {
+            password = "";
+        }
+
+        if (confirmPassword == null) {
+            confirmPassword = "";
+        }
+
+        if (phone == null) {
+            phone = "";
+        }
+
+        if (address == null) {
+            address = "";
+        }
+
+
+        // Trim normal text fields
+        fullName = fullName.trim();
+        email = email.trim();
+        phone = phone.trim();
+        address = address.trim();
+
+
+        // =====================================================
+        // VALIDATE FULL NAME
+        // =====================================================
+
+        if (fullName.isEmpty()) {
+
+            showError(
+                    request,
+                    response,
+                    "Full name cannot be empty."
             );
-
-            request.getRequestDispatcher("/register.jsp")
-                    .forward(request, response);
 
             return;
         }
 
-        // =========================
-        // 2. Email
-        // =========================
-        if (!ValidationUtil.isValidEmail(email)) {
 
-            request.setAttribute(
-                    "error",
-                    "Please enter a valid Gmail address."
+        if (fullName.length() < 2) {
+
+            showError(
+                    request,
+                    response,
+                    "Full name must contain at least 2 characters."
             );
-
-            request.getRequestDispatcher("/register.jsp")
-                    .forward(request, response);
 
             return;
         }
 
-        // =========================
-        // 3. Password
-        // =========================
-        if (!ValidationUtil.isValidPassword(password)) {
 
-            request.setAttribute(
-                    "error",
-                    "Password must contain at least 8 characters, including at least 1 letter and 1 number."
+        if (fullName.length() > 100) {
+
+            showError(
+                    request,
+                    response,
+                    "Full name cannot exceed 100 characters."
             );
-
-            request.getRequestDispatcher("/register.jsp")
-                    .forward(request, response);
 
             return;
         }
 
-        // =========================
-        // 4. Confirm Password
-        // =========================
+
+        // Must contain at least one letter
+        if (!fullName.matches(".*\\p{L}.*")) {
+
+            showError(
+                    request,
+                    response,
+                    "Full name must contain letters."
+            );
+
+            return;
+        }
+
+
+        // Only letters and spaces
+        if (!fullName.matches("[\\p{L}\\s]+")) {
+
+            showError(
+                    request,
+                    response,
+                    "Full name can contain only letters and spaces."
+            );
+
+            return;
+        }
+
+
+        // =====================================================
+        // VALIDATE EMAIL
+        // =====================================================
+
+        if (email.isEmpty()) {
+
+            showError(
+                    request,
+                    response,
+                    "Email cannot be empty."
+            );
+
+            return;
+        }
+
+
+        if (!email.matches(
+                "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
+
+            showError(
+                    request,
+                    response,
+                    "Please enter a valid email address."
+            );
+
+            return;
+        }
+
+
+        // =====================================================
+        // VALIDATE PASSWORD
+        // =====================================================
+
+        if (password.isEmpty()) {
+
+            showError(
+                    request,
+                    response,
+                    "Password cannot be empty."
+            );
+
+            return;
+        }
+
+
+        if (password.length() < 8) {
+
+            showError(
+                    request,
+                    response,
+                    "Password must contain at least 8 characters."
+            );
+
+            return;
+        }
+
+
+        // At least one letter
+        if (!password.matches(".*[A-Za-z].*")) {
+
+            showError(
+                    request,
+                    response,
+                    "Password must contain at least one letter."
+            );
+
+            return;
+        }
+
+
+        // At least one number
+        if (!password.matches(".*[0-9].*")) {
+
+            showError(
+                    request,
+                    response,
+                    "Password must contain at least one number."
+            );
+
+            return;
+        }
+
+
+        // =====================================================
+        // CONFIRM PASSWORD
+        // =====================================================
+
+        if (confirmPassword.isEmpty()) {
+
+            showError(
+                    request,
+                    response,
+                    "Confirm password cannot be empty."
+            );
+
+            return;
+        }
+
+
         if (!password.equals(confirmPassword)) {
 
-            request.setAttribute(
-                    "error",
-                    "Password and Confirm Password do not match."
+            showError(
+                    request,
+                    response,
+                    "Passwords do not match."
             );
-
-            request.getRequestDispatcher("/register.jsp")
-                    .forward(request, response);
 
             return;
         }
 
-        // =========================
-        // 5. Phone
-        // =========================
-        if (!ValidationUtil.isValidPhone(phone)) {
 
-            request.setAttribute(
-                    "error",
-                    "Phone must contain only 10-11 digits and start with 0."
+        // =====================================================
+        // VALIDATE PHONE
+        // =====================================================
+
+        if (phone.isEmpty()) {
+
+            showError(
+                    request,
+                    response,
+                    "Phone number cannot be empty."
             );
-
-            request.getRequestDispatcher("/register.jsp")
-                    .forward(request, response);
 
             return;
         }
 
-        // =========================
-        // 6. Address
-        // =========================
-        if (!ValidationUtil.isValidAddress(address)) {
 
-            request.setAttribute(
-                    "error",
-                    "Address cannot exceed 255 characters."
+        if (!phone.matches("\\d+")) {
+
+            showError(
+                    request,
+                    response,
+                    "Phone number can contain only digits."
             );
-
-            request.getRequestDispatcher("/register.jsp")
-                    .forward(request, response);
 
             return;
         }
+
+
+        if (phone.length() < 9 ||
+                phone.length() > 11) {
+
+            showError(
+                    request,
+                    response,
+                    "Phone number must contain 9 to 11 digits."
+            );
+
+            return;
+        }
+
+
+        // =====================================================
+        // VALIDATE ADDRESS
+        // =====================================================
+
+        if (address.isEmpty()) {
+
+            showError(
+                    request,
+                    response,
+                    "Address cannot be empty."
+            );
+
+            return;
+        }
+
+
+        // =====================================================
+        // CHECK EMAIL EXISTS
+        // =====================================================
 
         try {
 
-            // =========================
-            // 7. Check duplicate email
-            // =========================
             if (userService.isEmailExists(email)) {
 
-                request.setAttribute(
-                        "error",
+                showError(
+                        request,
+                        response,
                         "This email is already registered."
                 );
 
-                request.getRequestDispatcher("/register.jsp")
-                        .forward(request, response);
-
                 return;
             }
 
-            // =========================
-            // 8. Register user
-            // =========================
-            boolean success = userService.registerUser(
-                    fullName,
-                    email,
-                    password,
-                    phone,
-                    address
-            );
 
-            if (success) {
+            // =================================================
+            // REGISTER
+            // =================================================
 
-                // Registration successful
-                request.setAttribute(
-                        "success",
-                        "Account created successfully! Please login to continue."
+            boolean registered =
+                    userService.registerUser(
+                            fullName,
+                            email,
+                            password,
+                            phone,
+                            address
+                    );
+
+
+            if (!registered) {
+
+                showError(
+                        request,
+                        response,
+                        "Registration failed. Please try again."
                 );
 
-                request.getRequestDispatcher(
-                        "/login.jsp"
-                ).forward(request, response);
-
                 return;
             }
 
-            // Register failed
-            request.setAttribute(
-                    "error",
-                    "Registration failed. Please try again."
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            response.sendRedirect(
+                    request.getContextPath()
+                            + "/login?registered=success"
             );
 
-            request.getRequestDispatcher(
-                    "/register.jsp"
-            ).forward(request, response);
 
-        } catch (Exception e) {
+        } catch (SQLException e) {
 
-            e.printStackTrace();
-
-            request.setAttribute(
-                    "error",
-                    "System error. Please try again later."
+            throw new ServletException(
+                    "Registration failed.",
+                    e
             );
-
-            request.getRequestDispatcher(
-                    "/register.jsp"
-            ).forward(request, response);
         }
+    }
+
+
+    // =========================================================
+    // SHOW ERROR
+    // =========================================================
+
+    private void showError(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            String error)
+            throws ServletException, IOException {
+
+        request.setAttribute(
+                "error",
+                error
+        );
+
+        // Keep entered values
+        request.setAttribute(
+                "fullName",
+                request.getParameter("fullName")
+        );
+
+        request.setAttribute(
+                "email",
+                request.getParameter("email")
+        );
+
+        request.setAttribute(
+                "phone",
+                request.getParameter("phone")
+        );
+
+        request.setAttribute(
+                "address",
+                request.getParameter("address")
+        );
+
+        request.getRequestDispatcher(
+                "/register.jsp"
+        ).forward(request, response);
     }
 }

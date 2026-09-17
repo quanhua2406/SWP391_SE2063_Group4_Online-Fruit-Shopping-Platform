@@ -2,7 +2,6 @@ package com.mycompany.onlinefruitshopping.controller;
 
 import com.mycompany.onlinefruitshopping.model.User;
 import com.mycompany.onlinefruitshopping.service.UserService;
-import com.mycompany.onlinefruitshopping.utils.ValidationUtil;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -12,50 +11,90 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.sql.SQLException;
 
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
 
     private final UserService userService = new UserService();
 
+    // =========================================================
+    // GET - SHOW LOGIN PAGE
+    // =========================================================
+
     @Override
-    protected void doGet(HttpServletRequest request,
-                          HttpServletResponse response)
+    protected void doGet(
+            HttpServletRequest request,
+            HttpServletResponse response)
             throws ServletException, IOException {
 
-        request.getRequestDispatcher("/login.jsp")
-                .forward(request, response);
+        // If user is already logged in,
+        // redirect to home
+        HttpSession session = request.getSession(false);
+
+        if (session != null && session.getAttribute("user") != null) {
+
+            response.sendRedirect(
+                    request.getContextPath() + "/home"
+            );
+
+            return;
+        }
+
+        request.getRequestDispatcher(
+                "/login.jsp"
+        ).forward(request, response);
     }
 
+
+    // =========================================================
+    // POST - LOGIN
+    // =========================================================
+
     @Override
-    protected void doPost(HttpServletRequest request,
-                           HttpServletResponse response)
+    protected void doPost(
+            HttpServletRequest request,
+            HttpServletResponse response)
             throws ServletException, IOException {
 
         request.setCharacterEncoding("UTF-8");
 
-        // =========================================
-        // 1. Get data from form
-        // =========================================
+        // =====================================================
+        // GET FORM DATA
+        // =====================================================
 
         String email = request.getParameter("email");
         String password = request.getParameter("password");
 
-        email = email == null ? "" : email.trim();
-        password = password == null ? "" : password;
 
-        // Keep email when login fails
-        request.setAttribute("email", email);
+        // Handle null
+        if (email == null) {
+            email = "";
+        }
 
-        // =========================================
-        // 2. Validate email
-        // =========================================
+        if (password == null) {
+            password = "";
+        }
 
-        if (!ValidationUtil.isValidEmail(email)) {
+
+        // Remove spaces from email
+        email = email.trim();
+
+
+        // =====================================================
+        // VALIDATE EMAIL
+        // =====================================================
+
+        if (email.isEmpty()) {
 
             request.setAttribute(
                     "error",
-                    "Please enter a valid Gmail address."
+                    "Email cannot be empty."
+            );
+
+            request.setAttribute(
+                    "email",
+                    email
             );
 
             request.getRequestDispatcher(
@@ -65,15 +104,22 @@ public class LoginServlet extends HttpServlet {
             return;
         }
 
-        // =========================================
-        // 3. Validate password
-        // =========================================
 
-        if (password.isBlank()) {
+        // =====================================================
+        // VALIDATE EMAIL FORMAT
+        // =====================================================
+
+        if (!email.matches(
+                "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
 
             request.setAttribute(
                     "error",
-                    "Please enter your password."
+                    "Please enter a valid email address."
+            );
+
+            request.setAttribute(
+                    "email",
+                    email
             );
 
             request.getRequestDispatcher(
@@ -82,44 +128,59 @@ public class LoginServlet extends HttpServlet {
 
             return;
         }
+
+
+        // =====================================================
+        // VALIDATE PASSWORD
+        // =====================================================
+
+        if (password.isEmpty()) {
+
+            request.setAttribute(
+                    "error",
+                    "Password cannot be empty."
+            );
+
+            request.setAttribute(
+                    "email",
+                    email
+            );
+
+            request.getRequestDispatcher(
+                    "/login.jsp"
+            ).forward(request, response);
+
+            return;
+        }
+
+
+        // =====================================================
+        // LOGIN
+        // =====================================================
 
         try {
 
-            // =========================================
-            // 4. Authenticate user
-            // =========================================
+            User user =
+                    userService.getUserByLogin(
+                            email,
+                            password
+                    );
 
-            User user = userService.getUserByLogin(
-                    email,
-                    password
-            );
 
-            // Invalid email/password
+            // =================================================
+            // LOGIN FAILED
+            // =================================================
+
             if (user == null) {
 
                 request.setAttribute(
                         "error",
-                        "Invalid Gmail or password."
+                        "Invalid email or password."
                 );
-
-                request.getRequestDispatcher(
-                        "/login.jsp"
-                ).forward(request, response);
-
-                return;
-            }
-
-            // =========================================
-            // 5. Check account status
-            // =========================================
-
-            if (user.getStatus() != null
-                    && !"ACTIVE".equalsIgnoreCase(
-                            user.getStatus())) {
 
                 request.setAttribute(
-                        "error",
-                        "Your account is not active."
+                        "email",
+                        email
                 );
 
                 request.getRequestDispatcher(
@@ -129,111 +190,41 @@ public class LoginServlet extends HttpServlet {
                 return;
             }
 
-            // =========================================
-            // 6. Create session
-            // =========================================
+
+            // =================================================
+            // LOGIN SUCCESS
+            // =================================================
 
             HttpSession session =
-                    request.getSession();
+                    request.getSession(true);
 
+
+            // Store user
             session.setAttribute(
                     "user",
                     user
             );
 
+
+            // Store role
             session.setAttribute(
-                    "role",
+                    "roleName",
                     user.getRoleName()
             );
 
-            // =========================================
-            // 7. Redirect by role
-            // =========================================
 
-            String role = user.getRoleName();
-
-            if (role == null || role.isBlank()) {
-
-                session.invalidate();
-
-                request.setAttribute(
-                        "error",
-                        "Invalid user role."
-                );
-
-                request.getRequestDispatcher(
-                        "/login.jsp"
-                ).forward(request, response);
-
-                return;
-            }
-
-            switch (role.toUpperCase()) {
-
-                case "CUSTOMER":
-
-                    response.sendRedirect(
-                            request.getContextPath()
-                                    + "/customer/dashboard"
-                    );
-
-                    break;
-
-                case "SHOP_OWNER":
-
-                    response.sendRedirect(
-                            request.getContextPath()
-                                    + "/store-owner/dashboard"
-                    );
-
-                    break;
-
-                case "DELIVERY_STAFF":
-
-                    response.sendRedirect(
-                            request.getContextPath()
-                                    + "/delivery/dashboard"
-                    );
-
-                    break;
-
-                case "ADMIN":
-
-                    response.sendRedirect(
-                            request.getContextPath()
-                                    + "/admin/dashboard"
-                    );
-
-                    break;
-
-                default:
-
-                    session.invalidate();
-
-                    request.setAttribute(
-                            "error",
-                            "Invalid user role."
-                    );
-
-                    request.getRequestDispatcher(
-                            "/login.jsp"
-                    ).forward(request, response);
-
-                    break;
-            }
-
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
-            request.setAttribute(
-                    "error",
-                    "System error. Please try again later."
+            // Redirect to home
+            response.sendRedirect(
+                    request.getContextPath()
+                            + "/home"
             );
 
-            request.getRequestDispatcher(
-                    "/login.jsp"
-            ).forward(request, response);
+        } catch (SQLException e) {
+
+            throw new ServletException(
+                    "Login failed.",
+                    e
+            );
         }
     }
 }

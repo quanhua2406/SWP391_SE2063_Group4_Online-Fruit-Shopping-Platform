@@ -5,14 +5,43 @@ public class User {
     private int userID;
     private String fullName;
     private String email;
-    private String phone;
-    private String address;
-    private int roleID;
-    private String roleName;
-    private String status;
     private String passwordHash;
+    private String phone;
+    private String roleName;
+    private int roleID;
+    private String status;
+
+    // =========================================================
+    // CONSTRUCTOR
+    // =========================================================
+
     public User() {
     }
+
+    public User(
+            int userID,
+            String fullName,
+            String email,
+            String passwordHash,
+            String phone,
+            int roleID,
+            String roleName,
+            String status) {
+
+        this.userID = userID;
+        this.fullName = fullName;
+        this.email = email;
+        this.passwordHash = passwordHash;
+        this.phone = phone;
+        this.roleID = roleID;
+        this.roleName = roleName;
+        this.status = status;
+    }
+
+
+    // =========================================================
+    // GETTERS AND SETTERS
+    // =========================================================
 
     public int getUserID() {
         return userID;
@@ -22,6 +51,7 @@ public class User {
         this.userID = userID;
     }
 
+
     public String getFullName() {
         return fullName;
     }
@@ -29,6 +59,7 @@ public class User {
     public void setFullName(String fullName) {
         this.fullName = fullName;
     }
+
 
     public String getEmail() {
         return email;
@@ -38,6 +69,16 @@ public class User {
         this.email = email;
     }
 
+
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
+
     public String getPhone() {
         return phone;
     }
@@ -46,21 +87,6 @@ public class User {
         this.phone = phone;
     }
 
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public int getRoleID() {
-        return roleID;
-    }
-
-    public void setRoleID(int roleID) {
-        this.roleID = roleID;
-    }
 
     public String getRoleName() {
         return roleName;
@@ -70,6 +96,16 @@ public class User {
         this.roleName = roleName;
     }
 
+
+    public int getRoleID() {
+        return roleID;
+    }
+
+    public void setRoleID(int roleID) {
+        this.roleID = roleID;
+    }
+
+
     public String getStatus() {
         return status;
     }
@@ -77,11 +113,4 @@ public class User {
     public void setStatus(String status) {
         this.status = status;
     }
-    public String getPasswordHash() {
-    return passwordHash;
-}
-
-public void setPasswordHash(String passwordHash) {
-    this.passwordHash = passwordHash;
-}
 }

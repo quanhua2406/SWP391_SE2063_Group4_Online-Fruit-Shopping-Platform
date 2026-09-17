@@ -1,6 +1,7 @@
 package com.mycompany.onlinefruitshopping.controller;
 
 import com.mycompany.onlinefruitshopping.dao.UserDAO;
+import com.mycompany.onlinefruitshopping.utils.ValidationUtil;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -16,17 +17,27 @@ public class ResetPasswordServlet extends HttpServlet {
 
     private final UserDAO userDAO = new UserDAO();
 
+
+    // =========================================================
+    // GET - SHOW RESET PASSWORD PAGE
+    // =========================================================
+
     @Override
-    protected void doGet(HttpServletRequest request,
-                          HttpServletResponse response)
+    protected void doGet(
+            HttpServletRequest request,
+            HttpServletResponse response)
             throws ServletException, IOException {
 
-        HttpSession session = request.getSession(false);
+        HttpSession session =
+                request.getSession(false);
 
-        // User must verify OTP first
+
+        // -----------------------------------------------------
+        // CHECK RESET EMAIL
+        // -----------------------------------------------------
+
         if (session == null
-                || !Boolean.TRUE.equals(
-                        session.getAttribute("resetVerified"))) {
+                || session.getAttribute("resetEmail") == null) {
 
             response.sendRedirect(
                     request.getContextPath()
@@ -36,41 +47,57 @@ public class ResetPasswordServlet extends HttpServlet {
             return;
         }
 
-        String email =
-                (String) session.getAttribute("resetEmail");
 
-        if (email == null || email.isBlank()) {
+        // -----------------------------------------------------
+        // CHECK OTP VERIFIED
+        // -----------------------------------------------------
 
-            session.invalidate();
+        Boolean resetVerified =
+                session.getAttribute("resetVerified") != null
+                        ? (Boolean) session.getAttribute("resetVerified")
+                        : false;
+
+
+        if (!resetVerified) {
 
             response.sendRedirect(
                     request.getContextPath()
-                            + "/forgot-password"
+                            + "/verify-otp"
             );
 
             return;
         }
 
-        request.setAttribute("email", email);
 
         request.getRequestDispatcher(
                 "/reset-password.jsp"
         ).forward(request, response);
     }
 
+
+    // =========================================================
+    // POST - RESET PASSWORD
+    // =========================================================
+
     @Override
-    protected void doPost(HttpServletRequest request,
-                           HttpServletResponse response)
+    protected void doPost(
+            HttpServletRequest request,
+            HttpServletResponse response)
             throws ServletException, IOException {
 
         request.setCharacterEncoding("UTF-8");
 
-        HttpSession session = request.getSession(false);
 
-        // Must verify OTP first
+        HttpSession session =
+                request.getSession(false);
+
+
+        // -----------------------------------------------------
+        // CHECK SESSION
+        // -----------------------------------------------------
+
         if (session == null
-                || !Boolean.TRUE.equals(
-                        session.getAttribute("resetVerified"))) {
+                || session.getAttribute("resetEmail") == null) {
 
             response.sendRedirect(
                     request.getContextPath()
@@ -80,100 +107,219 @@ public class ResetPasswordServlet extends HttpServlet {
             return;
         }
 
-        String email =
-                (String) session.getAttribute("resetEmail");
 
-        String newPassword =
-                request.getParameter("newPassword");
+        // -----------------------------------------------------
+        // CHECK OTP VERIFIED
+        // -----------------------------------------------------
 
-        String confirmPassword =
-                request.getParameter("confirmPassword");
+        Boolean resetVerified =
+                session.getAttribute("resetVerified") != null
+                        ? (Boolean) session.getAttribute("resetVerified")
+                        : false;
 
-        newPassword =
-                newPassword == null
-                        ? ""
-                        : newPassword;
 
-        confirmPassword =
-                confirmPassword == null
-                        ? ""
-                        : confirmPassword;
+        if (!resetVerified) {
 
-        // Validate password
-        if (!newPassword.equals(confirmPassword)) {
-
-            request.setAttribute(
-                    "error",
-                    "Password and Confirm Password do not match."
+            response.sendRedirect(
+                    request.getContextPath()
+                            + "/verify-otp"
             );
-
-            request.setAttribute(
-                    "email",
-                    email
-            );
-
-            request.getRequestDispatcher(
-                    "/reset-password.jsp"
-            ).forward(request, response);
 
             return;
         }
 
-        try {
 
-            boolean success =
-                    userDAO.resetPassword(
-                            email,
-                            newPassword
-                    );
+        // -----------------------------------------------------
+        // GET EMAIL
+        // -----------------------------------------------------
 
-            if (success) {
-
-                // Reset process completed
-                session.removeAttribute("resetVerified");
-                session.removeAttribute("resetEmail");
-
-                response.sendRedirect(
-                        request.getContextPath()
-                                + "/login"
+        String email =
+                (String) session.getAttribute(
+                        "resetEmail"
                 );
 
-                return;
 
-            } else {
+        // -----------------------------------------------------
+        // GET PASSWORD
+        // -----------------------------------------------------
 
-                request.setAttribute(
-                        "error",
+        String password =
+                request.getParameter("password");
+
+
+        String confirmPassword =
+                request.getParameter(
+                        "confirmPassword"
+                );
+
+
+        if (password == null) {
+            password = "";
+        }
+
+        if (confirmPassword == null) {
+            confirmPassword = "";
+        }
+
+
+        // =====================================================
+        // VALIDATE PASSWORD
+        // =====================================================
+
+        if (password.isEmpty()) {
+
+            showError(
+                    request,
+                    response,
+                    "Password cannot be empty."
+            );
+
+            return;
+        }
+
+
+        if (password.length() < 8) {
+
+            showError(
+                    request,
+                    response,
+                    "Password must contain at least 8 characters."
+            );
+
+            return;
+        }
+
+
+        if (!password.matches(".*[A-Za-z].*")) {
+
+            showError(
+                    request,
+                    response,
+                    "Password must contain at least one letter."
+            );
+
+            return;
+        }
+
+
+        if (!password.matches(".*[0-9].*")) {
+
+            showError(
+                    request,
+                    response,
+                    "Password must contain at least one number."
+            );
+
+            return;
+        }
+
+
+        // =====================================================
+        // CONFIRM PASSWORD
+        // =====================================================
+
+        if (confirmPassword.isEmpty()) {
+
+            showError(
+                    request,
+                    response,
+                    "Confirm password cannot be empty."
+            );
+
+            return;
+        }
+
+
+        if (!password.equals(confirmPassword)) {
+
+            showError(
+                    request,
+                    response,
+                    "Passwords do not match."
+            );
+
+            return;
+        }
+
+
+        // =====================================================
+        // RESET PASSWORD
+        // =====================================================
+
+        try {
+
+            boolean reset =
+                    userDAO.resetPassword(
+                            email,
+                            password
+                    );
+
+
+            if (!reset) {
+
+                showError(
+                        request,
+                        response,
                         "Unable to reset password."
                 );
 
-                request.setAttribute(
-                        "email",
-                        email
-                );
-
-                request.getRequestDispatcher(
-                        "/reset-password.jsp"
-                ).forward(request, response);
+                return;
             }
+
+
+            // -------------------------------------------------
+            // CLEAR RESET SESSION
+            // -------------------------------------------------
+
+            session.removeAttribute(
+                    "resetEmail"
+            );
+
+            session.removeAttribute(
+                    "resetVerified"
+            );
+
+
+            // -------------------------------------------------
+            // GO TO LOGIN
+            // -------------------------------------------------
+
+            response.sendRedirect(
+                    request.getContextPath()
+                            + "/login?reset=success"
+            );
+
 
         } catch (Exception e) {
 
             e.printStackTrace();
 
-            request.setAttribute(
-                    "error",
-                    "System error. Please try again later."
+            showError(
+                    request,
+                    response,
+                    "Unable to reset password."
             );
-
-            request.setAttribute(
-                    "email",
-                    email
-            );
-
-            request.getRequestDispatcher(
-                    "/reset-password.jsp"
-            ).forward(request, response);
         }
+    }
+
+
+    // =========================================================
+    // SHOW ERROR
+    // =========================================================
+
+    private void showError(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            String error)
+            throws ServletException, IOException {
+
+        request.setAttribute(
+                "error",
+                error
+        );
+
+        request.getRequestDispatcher(
+                "/reset-password.jsp"
+        ).forward(request, response);
     }
 }
