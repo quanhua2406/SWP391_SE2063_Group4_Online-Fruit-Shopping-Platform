@@ -3,7 +3,8 @@ package com.mycompany.onlinefruitshopping.dao;
 import com.mycompany.onlinefruitshopping.model.User;
 import com.mycompany.onlinefruitshopping.utils.DBConnection;
 import org.mindrot.jbcrypt.BCrypt;
-
+import java.util.ArrayList;
+import java.util.List;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -483,4 +484,48 @@ public class UserDAO {
             return ps.executeUpdate() > 0;
         }
     }
+    public List<User> getAllUsers() throws SQLException {
+
+    List<User> users = new ArrayList<>();
+
+    String sql = """
+            SELECT
+                u.user_id,
+                u.full_name,
+                u.email,
+                u.password_hash,
+                u.phone,
+                u.status,
+                r.role_id,
+                r.role_name
+            FROM users u
+            LEFT JOIN user_roles ur
+                ON u.user_id = ur.user_id
+            LEFT JOIN roles r
+                ON ur.role_id = r.role_id
+            ORDER BY u.user_id DESC
+            """;
+
+    try (Connection conn = DBConnection.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+
+        while (rs.next()) {
+
+            User user = new User();
+
+            user.setUserID(rs.getInt("user_id"));
+            user.setFullName(rs.getString("full_name"));
+            user.setEmail(rs.getString("email"));
+            user.setPhone(rs.getString("phone"));
+            user.setStatus(rs.getString("status"));
+            user.setRoleID(rs.getInt("role_id"));
+            user.setRoleName(rs.getString("role_name"));
+
+            users.add(user);
+        }
+    }
+
+    return users;
+}
 }

@@ -83,7 +83,7 @@ public class ForgotPasswordServlet extends HttpServlet {
 
 
             /*
-             * Không tiết lộ email có tồn tại hay không.
+             *
              */
 
             if (!exists) {

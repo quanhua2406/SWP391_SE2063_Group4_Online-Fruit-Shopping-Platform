@@ -14,24 +14,39 @@
 
 </head>
 
+
 <body>
+
 
 <div class="auth-page">
 
     <div class="auth-container">
 
+
+        <!-- =================================================
+             LOGO
+             ================================================= -->
+
         <div class="auth-logo">
             🍊 FreshFruit
         </div>
 
+
+        <!-- =================================================
+             TITLE
+             ================================================= -->
+
         <h2>Verify OTP</h2>
+
 
         <p class="auth-description">
             Enter the 6-digit OTP sent to your Gmail.
         </p>
 
 
-        <!-- ERROR -->
+        <!-- =================================================
+             SERVER ERROR
+             ================================================= -->
 
         <% if (request.getAttribute("error") != null) { %>
 
@@ -45,15 +60,31 @@
         <% } %>
 
 
-        <!-- FORM -->
+        <!-- =================================================
+             CLIENT ERROR
+             ================================================= -->
 
-        <form action="${pageContext.request.contextPath}/verify-otp"
-              method="post">
+        <div
+            id="clientError"
+            class="error-message"
+            style="display: none;">
+        </div>
+
+
+        <!-- =================================================
+             OTP FORM
+             ================================================= -->
+
+        <form
+            action="${pageContext.request.contextPath}/verify-otp"
+            method="post"
+            onsubmit="return validateOTP();">
+
 
             <div class="auth-form-group">
 
                 <label for="otp">
-                    OTP
+                    OTP Code
                 </label>
 
                 <input
@@ -63,23 +94,31 @@
                     placeholder="Enter 6-digit OTP"
                     maxlength="6"
                     inputmode="numeric"
-                    pattern="[0-9]{6}"
                     autocomplete="one-time-code"
-                    required
                 >
 
             </div>
 
 
+            <!-- =================================================
+                 VERIFY BUTTON
+                 ================================================= -->
+
             <button
                 type="submit"
-                class="auth-button"
-            >
+                class="auth-button">
+
                 Verify OTP
+
             </button>
+
 
         </form>
 
+
+        <!-- =================================================
+             BACK LINK
+             ================================================= -->
 
         <div class="auth-links">
 
@@ -88,24 +127,97 @@
                 Didn't receive the OTP?
 
                 <a href="${pageContext.request.contextPath}/forgot-password">
-                    Request a new one
+
+                    Send Again
+
                 </a>
 
             </p>
 
+
             <p>
 
                 <a href="${pageContext.request.contextPath}/login">
+
                     Back to Login
+
                 </a>
 
             </p>
 
         </div>
 
+
     </div>
 
 </div>
 
+
+<!-- =========================================================
+     JAVASCRIPT VALIDATION
+     ========================================================= -->
+
+<script>
+
+function validateOTP() {
+
+    const otp =
+        document.getElementById("otp")
+            .value
+            .trim();
+
+    const error =
+        document.getElementById("clientError");
+
+
+    // =========================================================
+    // CLEAR ERROR
+    // =========================================================
+
+    error.style.display = "none";
+    error.innerHTML = "";
+
+
+    // =========================================================
+    // EMPTY
+    // =========================================================
+
+    if (otp === "") {
+
+        error.innerHTML =
+            "OTP cannot be empty.";
+
+        error.style.display = "block";
+
+        return false;
+    }
+
+
+    // =========================================================
+    // EXACTLY 6 DIGITS
+    // =========================================================
+
+    if (!/^\d{6}$/.test(otp)) {
+
+        error.innerHTML =
+            "OTP must contain exactly 6 digits.";
+
+        error.style.display = "block";
+
+        return false;
+    }
+
+
+    // =========================================================
+    // VALID
+    // =========================================================
+
+    return true;
+}
+
+</script>
+
+
 </body>
+
 </html>

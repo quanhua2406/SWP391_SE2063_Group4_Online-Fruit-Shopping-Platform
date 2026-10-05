@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.util.Locale;
 
 @WebFilter("/*")
 public class AuthorizationFilter implements Filter {
@@ -42,7 +43,7 @@ public class AuthorizationFilter implements Filter {
                 );
 
         // =========================================
-        // 1. Allow public resources
+        // 1. PUBLIC RESOURCE
         // =========================================
 
         if (isPublicResource(path)) {
@@ -56,7 +57,7 @@ public class AuthorizationFilter implements Filter {
         }
 
         // =========================================
-        // 2. Get session
+        // 2. GET CURRENT USER
         // =========================================
 
         HttpSession session =
@@ -76,12 +77,12 @@ public class AuthorizationFilter implements Filter {
         }
 
         // =========================================
-        // 3. Protected URL
+        // 3. PROTECTED RESOURCE
         // =========================================
 
         if (isProtectedResource(path)) {
 
-            // Not logged in
+            // Guest cannot access protected resources
             if (user == null) {
 
                 httpResponse.sendRedirect(
@@ -92,7 +93,7 @@ public class AuthorizationFilter implements Filter {
             }
 
             // =========================================
-            // 4. Get role
+            // 4. GET ROLE
             // =========================================
 
             String role =
@@ -108,10 +109,12 @@ public class AuthorizationFilter implements Filter {
                 return;
             }
 
-            role = role.toUpperCase();
+            role = role
+                    .trim()
+                    .toUpperCase(Locale.ROOT);
 
             // =========================================
-            // 5. Check authorization
+            // 5. CHECK AUTHORIZATION
             // =========================================
 
             if (!isAuthorized(path, role)) {
@@ -126,7 +129,7 @@ public class AuthorizationFilter implements Filter {
         }
 
         // =========================================
-        // 6. Continue
+        // 6. CONTINUE
         // =========================================
 
         chain.doFilter(
@@ -147,16 +150,26 @@ public class AuthorizationFilter implements Filter {
 
         return path.equals("/")
                 || path.equals("/index.jsp")
+
+                // Authentication
                 || path.equals("/login")
                 || path.equals("/login.jsp")
                 || path.equals("/register")
                 || path.equals("/register.jsp")
+
+                // Registration Email Verification
+                || path.equals("/verify-register-otp")
+                || path.equals("/verify-register-otp.jsp")
+
+                // Forgot Password
                 || path.equals("/forgot-password")
                 || path.equals("/forgot-password.jsp")
                 || path.equals("/verify-otp")
                 || path.equals("/verify-otp.jsp")
                 || path.equals("/reset-password")
                 || path.equals("/reset-password.jsp")
+
+                // Static resources
                 || path.startsWith("/css/")
                 || path.startsWith("/js/")
                 || path.startsWith("/images/")
@@ -183,25 +196,37 @@ public class AuthorizationFilter implements Filter {
     private boolean isAuthorized(String path,
                                  String role) {
 
+        // =========================================
         // CUSTOMER
+        // =========================================
+
         if (path.startsWith("/customer/")) {
 
             return role.equals("CUSTOMER");
         }
 
-        // SHOP OWNER
+        // =========================================
+        // STORE OWNER
+        // =========================================
+
         if (path.startsWith("/store-owner/")) {
 
-            return role.equals("SHOP_OWNER");
+            return role.equals("SHOPOWNER");
         }
 
+        // =========================================
         // DELIVERY STAFF
+        // =========================================
+
         if (path.startsWith("/delivery/")) {
 
-            return role.equals("DELIVERY_STAFF");
+            return role.equals("DELIVERYSTAFF");
         }
 
+        // =========================================
         // ADMIN
+        // =========================================
+
         if (path.startsWith("/admin/")) {
 
             return role.equals("ADMIN");

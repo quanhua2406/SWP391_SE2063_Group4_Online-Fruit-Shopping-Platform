@@ -1,20 +1,31 @@
 package com.mycompany.onlinefruitshopping.controller;
 
+import com.mycompany.onlinefruitshopping.dao.RegistrationVerificationDAO;
 import com.mycompany.onlinefruitshopping.service.UserService;
+import com.mycompany.onlinefruitshopping.utils.EmailService;
+import jakarta.mail.MessagingException;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.security.SecureRandom;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @WebServlet("/register")
 public class RegisterServlet extends HttpServlet {
 
     private final UserService userService = new UserService();
+    private final RegistrationVerificationDAO verificationDAO =
+            new RegistrationVerificationDAO();
+
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     // =========================================================
     // GET - SHOW REGISTER PAGE
@@ -30,7 +41,6 @@ public class RegisterServlet extends HttpServlet {
                 "/register.jsp"
         ).forward(request, response);
     }
-
 
     // =========================================================
     // POST - REGISTER
@@ -56,273 +66,147 @@ public class RegisterServlet extends HttpServlet {
         String phone = request.getParameter("phone");
         String address = request.getParameter("address");
 
+        // Handle null
+        if (fullName == null) fullName = "";
+        if (email == null) email = "";
+        if (password == null) password = "";
+        if (confirmPassword == null) confirmPassword = "";
+        if (phone == null) phone = "";
+        if (address == null) address = "";
 
-        // Handle null values
-        if (fullName == null) {
-            fullName = "";
-        }
-
-        if (email == null) {
-            email = "";
-        }
-
-        if (password == null) {
-            password = "";
-        }
-
-        if (confirmPassword == null) {
-            confirmPassword = "";
-        }
-
-        if (phone == null) {
-            phone = "";
-        }
-
-        if (address == null) {
-            address = "";
-        }
-
-
-        // Trim normal text fields
+        // Trim
         fullName = fullName.trim();
         email = email.trim();
         phone = phone.trim();
         address = address.trim();
-
 
         // =====================================================
         // VALIDATE FULL NAME
         // =====================================================
 
         if (fullName.isEmpty()) {
-
-            showError(
-                    request,
-                    response,
-                    "Full name cannot be empty."
-            );
-
+            showError(request, response,
+                    "Full name cannot be empty.");
             return;
         }
-
 
         if (fullName.length() < 2) {
-
-            showError(
-                    request,
-                    response,
-                    "Full name must contain at least 2 characters."
-            );
-
+            showError(request, response,
+                    "Full name must contain at least 2 characters.");
             return;
         }
-
 
         if (fullName.length() > 100) {
-
-            showError(
-                    request,
-                    response,
-                    "Full name cannot exceed 100 characters."
-            );
-
+            showError(request, response,
+                    "Full name cannot exceed 100 characters.");
             return;
         }
 
-
-        // Must contain at least one letter
         if (!fullName.matches(".*\\p{L}.*")) {
-
-            showError(
-                    request,
-                    response,
-                    "Full name must contain letters."
-            );
-
+            showError(request, response,
+                    "Full name must contain letters.");
             return;
         }
 
-
-        // Only letters and spaces
         if (!fullName.matches("[\\p{L}\\s]+")) {
-
-            showError(
-                    request,
-                    response,
-                    "Full name can contain only letters and spaces."
-            );
-
+            showError(request, response,
+                    "Full name can contain only letters and spaces.");
             return;
         }
-
 
         // =====================================================
         // VALIDATE EMAIL
         // =====================================================
 
         if (email.isEmpty()) {
-
-            showError(
-                    request,
-                    response,
-                    "Email cannot be empty."
-            );
-
+            showError(request, response,
+                    "Email cannot be empty.");
             return;
         }
-
 
         if (!email.matches(
                 "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
 
-            showError(
-                    request,
-                    response,
-                    "Please enter a valid email address."
-            );
-
+            showError(request, response,
+                    "Please enter a valid email address.");
             return;
         }
-
 
         // =====================================================
         // VALIDATE PASSWORD
         // =====================================================
 
         if (password.isEmpty()) {
-
-            showError(
-                    request,
-                    response,
-                    "Password cannot be empty."
-            );
-
+            showError(request, response,
+                    "Password cannot be empty.");
             return;
         }
-
 
         if (password.length() < 8) {
-
-            showError(
-                    request,
-                    response,
-                    "Password must contain at least 8 characters."
-            );
-
+            showError(request, response,
+                    "Password must contain at least 8 characters.");
             return;
         }
 
-
-        // At least one letter
         if (!password.matches(".*[A-Za-z].*")) {
-
-            showError(
-                    request,
-                    response,
-                    "Password must contain at least one letter."
-            );
-
+            showError(request, response,
+                    "Password must contain at least one letter.");
             return;
         }
 
-
-        // At least one number
         if (!password.matches(".*[0-9].*")) {
-
-            showError(
-                    request,
-                    response,
-                    "Password must contain at least one number."
-            );
-
+            showError(request, response,
+                    "Password must contain at least one number.");
             return;
         }
-
 
         // =====================================================
         // CONFIRM PASSWORD
         // =====================================================
 
         if (confirmPassword.isEmpty()) {
-
-            showError(
-                    request,
-                    response,
-                    "Confirm password cannot be empty."
-            );
-
+            showError(request, response,
+                    "Confirm password cannot be empty.");
             return;
         }
-
 
         if (!password.equals(confirmPassword)) {
-
-            showError(
-                    request,
-                    response,
-                    "Passwords do not match."
-            );
-
+            showError(request, response,
+                    "Passwords do not match.");
             return;
         }
-
 
         // =====================================================
         // VALIDATE PHONE
         // =====================================================
 
         if (phone.isEmpty()) {
-
-            showError(
-                    request,
-                    response,
-                    "Phone number cannot be empty."
-            );
-
+            showError(request, response,
+                    "Phone number cannot be empty.");
             return;
         }
-
 
         if (!phone.matches("\\d+")) {
-
-            showError(
-                    request,
-                    response,
-                    "Phone number can contain only digits."
-            );
-
+            showError(request, response,
+                    "Phone number can contain only digits.");
             return;
         }
 
-
-        if (phone.length() < 9 ||
-                phone.length() > 11) {
-
-            showError(
-                    request,
-                    response,
-                    "Phone number must contain 9 to 11 digits."
-            );
-
+        if (phone.length() < 9 || phone.length() > 11) {
+            showError(request, response,
+                    "Phone number must contain 9 to 11 digits.");
             return;
         }
-
 
         // =====================================================
         // VALIDATE ADDRESS
         // =====================================================
 
         if (address.isEmpty()) {
-
-            showError(
-                    request,
-                    response,
-                    "Address cannot be empty."
-            );
-
+            showError(request, response,
+                    "Address cannot be empty.");
             return;
         }
-
 
         // =====================================================
         // CHECK EMAIL EXISTS
@@ -332,51 +216,68 @@ public class RegisterServlet extends HttpServlet {
 
             if (userService.isEmailExists(email)) {
 
-                showError(
-                        request,
-                        response,
-                        "This email is already registered."
-                );
+                showError(request, response,
+                        "This email is already registered.");
 
                 return;
             }
 
+            // =================================================
+            // GENERATE OTP
+            // =================================================
+
+            String otp = generateOTP();
 
             // =================================================
-            // REGISTER
+            // SAVE PENDING REGISTRATION
             // =================================================
 
-            boolean registered =
-                    userService.registerUser(
+            boolean saved =
+                    verificationDAO.savePendingRegistration(
                             fullName,
                             email,
                             password,
                             phone,
-                            address
+                            address,
+                            otp
                     );
 
-
-            if (!registered) {
+            if (!saved) {
 
                 showError(
                         request,
                         response,
-                        "Registration failed. Please try again."
+                        "Unable to process registration. Please try again."
                 );
 
                 return;
             }
 
+            // =================================================
+            // SEND OTP EMAIL
+            // =================================================
+
+            EmailService.sendOTP(email, otp);
 
             // =================================================
-            // SUCCESS
+            // SAVE EMAIL IN SESSION
+            // =================================================
+
+            HttpSession session = request.getSession();
+
+            session.setAttribute(
+                    "registerEmail",
+                    email
+            );
+
+            // =================================================
+            // REDIRECT TO VERIFY OTP
             // =================================================
 
             response.sendRedirect(
                     request.getContextPath()
-                            + "/login?registered=success"
+                            + "/verify-register-otp"
             );
-
 
         } catch (SQLException e) {
 
@@ -384,9 +285,22 @@ public class RegisterServlet extends HttpServlet {
                     "Registration failed.",
                     e
             );
+        } catch (MessagingException ex) {
+            Logger.getLogger(RegisterServlet.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
+    // =========================================================
+    // GENERATE OTP
+    // =========================================================
+
+    private String generateOTP() {
+
+        int otp =
+                100000 + RANDOM.nextInt(900000);
+
+        return String.valueOf(otp);
+    }
 
     // =========================================================
     // SHOW ERROR
@@ -403,7 +317,6 @@ public class RegisterServlet extends HttpServlet {
                 error
         );
 
-        // Keep entered values
         request.setAttribute(
                 "fullName",
                 request.getParameter("fullName")
