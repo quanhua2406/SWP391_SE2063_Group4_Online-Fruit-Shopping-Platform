@@ -48,8 +48,9 @@
                         break;
 
                     case "SHOPOWNER":
+                    case "SHOP_OWNER":
                         dashboardUrl =
-                                request.getContextPath() + "/shopowner/dashboard";
+                                request.getContextPath() + "/store-owner/dashboard";
                         dashboardName = "Shop Owner Dashboard";
                         break;
 

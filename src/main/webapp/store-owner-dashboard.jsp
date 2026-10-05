@@ -45,7 +45,7 @@
             <div class="dashboard-icon">🍎</div>
             <h3>My Products</h3>
             <p>Add, update and manage your fruit products.</p>
-            <a href="#">Manage Products</a>
+            <a href="${pageContext.request.contextPath}/store-owner/products">Manage Products</a>
         </div>
 
         <div class="dashboard-card">
