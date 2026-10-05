@@ -6,14 +6,13 @@ import java.sql.SQLException;
 
 public class DBConnection {
 
-    private static final String URL =
-            "jdbc:sqlserver://localhost:1433;"
+    private static final String URL = "jdbc:sqlserver://localhost:1433;"
             + "databaseName=OnlineFruitShopping;"
             + "encrypt=true;"
             + "trustServerCertificate=true";
 
     private static final String USER = "sa";
-    private static final String PASSWORD = "Passw0rd@123";
+    private static final String PASSWORD = "123"; /** Mk: 123 Hoặc Passw0rd@123 **/
 
     public static Connection getConnection() throws SQLException {
 

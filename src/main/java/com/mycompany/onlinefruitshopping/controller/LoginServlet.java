@@ -204,6 +204,10 @@ public class LoginServlet extends HttpServlet {
                     "user",
                     user
             );
+            session.setAttribute(
+                    "userId",
+                    user.getUserID()
+            );
 
 
             // Store role

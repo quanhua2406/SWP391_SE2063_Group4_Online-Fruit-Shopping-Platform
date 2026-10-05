@@ -75,11 +75,15 @@ public class UserService {
         }
 
         // Check password
-        if (BCrypt.checkpw(
-                password,
-                user.getPasswordHash())) {
-
-            return user;
+        try {
+            if (user.getPasswordHash() != null && BCrypt.checkpw(password, user.getPasswordHash())) {
+                return user;
+            }
+        } catch (IllegalArgumentException e) {
+            // Fallback: nếu mật khẩu trong DB là mật khẩu thô chưa hash BCrypt
+            if (password != null && password.equals(user.getPasswordHash())) {
+                return user;
+            }
         }
 
         return null;

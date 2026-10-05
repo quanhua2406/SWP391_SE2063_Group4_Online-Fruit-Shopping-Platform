@@ -52,7 +52,7 @@
             <div class="dashboard-icon">🍎</div>
             <h3>Product Management</h3>
             <p>Manage and approve products on the platform.</p>
-            <a href="#">Manage Products</a>
+            <a href="${pageContext.request.contextPath}/admin/products">Manage Products</a>
         </div>
 
         <div class="dashboard-card">

@@ -24,23 +24,82 @@
     </div>
 
     <div class="nav-actions">
-        <a href="${pageContext.request.contextPath}/customer/dashboard">
+
+        <%
+            com.mycompany.onlinefruitshopping.model.User currentUser =
+                    (com.mycompany.onlinefruitshopping.model.User)
+                    session.getAttribute("user");
+
+            String dashboardUrl = null;
+            String dashboardName = null;
+
+            if (currentUser != null && currentUser.getRoleName() != null) {
+
+                String role = currentUser.getRoleName()
+                        .trim()
+                        .toUpperCase();
+
+                switch (role) {
+
+                    case "ADMIN":
+                        dashboardUrl =
+                                request.getContextPath() + "/admin/dashboard";
+                        dashboardName = "Admin Dashboard";
+                        break;
+
+                    case "SHOPOWNER":
+                    case "SHOP_OWNER":
+                        dashboardUrl =
+                                request.getContextPath() + "/store-owner/dashboard";
+                        dashboardName = "Shop Owner Dashboard";
+                        break;
+
+                    case "DELIVERYSTAFF":
+                        dashboardUrl =
+                                request.getContextPath() + "/delivery/dashboard";
+                        dashboardName = "Delivery Dashboard";
+                        break;
+
+                    case "CUSTOMER":
+                        dashboardUrl =
+                                request.getContextPath() + "/customer/dashboard";
+                        dashboardName = "Customer Dashboard";
+                        break;
+                }
+            }
+        %>
+
+
+        <!-- My Account -->
+        <a href="${pageContext.request.contextPath}/profile">
             My Account
         </a>
 
-        <a href="#">
-            🛒 Cart
-        </a>
 
-        <% if (session.getAttribute("user") != null) { %>
-    <a class="logout"
-       href="${pageContext.request.contextPath}/logout">
-        Logout
-    </a>
-<% } %>
+        <!-- Dashboard -->
+        <% if (dashboardUrl != null) { %>
+
+            <a href="<%= dashboardUrl %>">
+                <%= dashboardName %>
+            </a>
+
+        <% } %>
+
+
+        <!-- Logout -->
+        <% if (currentUser != null) { %>
+
+            <a class="logout"
+               href="${pageContext.request.contextPath}/logout">
+                Logout
+            </a>
+
+        <% } %>
+
     </div>
 
 </header>
+
 
 <nav class="category-bar">
 
@@ -51,6 +110,7 @@
     <a href="#">Seasonal Fruits</a>
 
 </nav>
+
 
 <section class="hero">
 
@@ -77,6 +137,7 @@
     </div>
 
 </section>
+
 
 <section class="section">
 
@@ -118,6 +179,7 @@
 
 </section>
 
+
 <section class="section">
 
     <div class="section-header">
@@ -130,8 +192,11 @@
 
     </div>
 
+
     <div class="product-grid">
 
+
+        <!-- Product 1 -->
         <div class="product-card">
 
             <div class="product-image">
@@ -158,6 +223,8 @@
 
         </div>
 
+
+        <!-- Product 2 -->
         <div class="product-card">
 
             <div class="product-image">
@@ -184,6 +251,8 @@
 
         </div>
 
+
+        <!-- Product 3 -->
         <div class="product-card">
 
             <div class="product-image">
@@ -210,6 +279,8 @@
 
         </div>
 
+
+        <!-- Product 4 -->
         <div class="product-card">
 
             <div class="product-image">
@@ -236,9 +307,11 @@
 
         </div>
 
+
     </div>
 
 </section>
+
 
 <footer class="footer">
 
@@ -253,6 +326,7 @@
     </p>
 
 </footer>
+
 
 </body>
 </html>
