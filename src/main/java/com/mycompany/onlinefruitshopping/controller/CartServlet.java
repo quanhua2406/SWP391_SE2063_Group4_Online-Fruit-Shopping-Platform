@@ -1,6 +1,7 @@
 package com.mycompany.onlinefruitshopping.controller;
 
 import com.mycompany.onlinefruitshopping.model.CartItem;
+import com.mycompany.onlinefruitshopping.model.User;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -19,10 +20,16 @@ public class CartServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // Kiểm tra đăng nhập
+        // Tự động tạo mock user nếu chưa đăng nhập để test độc lập không phụ thuộc SQL
         if (request.getSession().getAttribute("user") == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
-            return;
+            User mockUser = new User();
+            mockUser.setUserID(1);
+            mockUser.setFullName("Nguyễn Văn An");
+            mockUser.setEmail("customer@freshfruit.com");
+            mockUser.setPhone("0988888888");
+            mockUser.setRoleName("CUSTOMER");
+            mockUser.setStatus("ACTIVE");
+            request.getSession().setAttribute("user", mockUser);
         }
 
         // Dữ liệu hoa quả mẫu hiển thị trong giỏ hàng (Feature 5: View Cart)
