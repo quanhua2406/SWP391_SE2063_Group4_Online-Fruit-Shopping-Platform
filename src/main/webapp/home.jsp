@@ -15,7 +15,7 @@
 <header class="navbar">
 
     <div class="logo">
-        🍊 FreshFruit
+        FreshFruit
     </div>
 
     <div class="search-box">
@@ -70,10 +70,26 @@
         %>
 
 
-        <!-- My Account -->
-        <a href="${pageContext.request.contextPath}/profile">
-            My Account
-        </a>
+        <!-- Cart: chỉ hiển thị icon giỏ hàng khi khách login -->
+        <% if (currentUser != null) { %>
+            <a href="${pageContext.request.contextPath}/cart" title="Giỏ hàng" style="display: inline-flex; align-items: center; gap: 6px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="9" cy="21" r="1"></circle>
+                    <circle cx="20" cy="21" r="1"></circle>
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                </svg>
+                Giỏ hàng
+            </a>
+
+            <!-- My Account -->
+            <a href="${pageContext.request.contextPath}/profile">
+                My Account
+            </a>
+        <% } else { %>
+            <a href="${pageContext.request.contextPath}/login">
+                Đăng nhập
+            </a>
+        <% } %>
 
 
         <!-- Dashboard -->
