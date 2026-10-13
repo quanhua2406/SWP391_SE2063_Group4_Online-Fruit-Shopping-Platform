@@ -1,0 +1,7 @@
+target/
+*.class
+.DS_Store
+*.DS_Store
+.netbeans_automatic_build
+nbproject/private/
+*.war
