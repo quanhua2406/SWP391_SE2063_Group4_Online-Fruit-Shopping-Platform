@@ -63,10 +63,10 @@
         </div>
 
         <div class="dashboard-card">
-            <div class="dashboard-icon">🛒</div>
+            <div class="dashboard-icon">Orders</div>
             <h3>Orders</h3>
             <p>View and process orders containing your products.</p>
-            <a href="#">View Orders</a>
+            <a href="${pageContext.request.contextPath}/store-owner/orders">View Orders</a>
         </div>
 
         <div class="dashboard-card">
