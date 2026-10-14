@@ -49,6 +49,13 @@
         </div>
 
         <div class="dashboard-card">
+            <div class="dashboard-icon">📁</div>
+            <h3>Categories</h3>
+            <p>Organize fruit categories, origins and hierarchy.</p>
+            <a href="${pageContext.request.contextPath}/store-owner/categories">Manage Categories</a>
+        </div>
+
+        <div class="dashboard-card">
             <div class="dashboard-icon">📦</div>
             <h3>Inventory</h3>
             <p>Monitor stock quantity and product availability.</p>
