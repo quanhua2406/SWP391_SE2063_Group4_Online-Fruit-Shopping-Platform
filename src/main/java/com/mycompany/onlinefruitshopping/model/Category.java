@@ -5,6 +5,8 @@ public class Category {
     private int categoryId;
     private Integer parentId;
     private String categoryName;
+    private String parentName;
+    private int productCount;
 
     public Category() {
     }
@@ -42,5 +44,21 @@ public class Category {
 
     public void setCategoryName(String categoryName) {
         this.categoryName = categoryName;
+    }
+
+    public String getParentName() {
+        return parentName;
+    }
+
+    public void setParentName(String parentName) {
+        this.parentName = parentName;
+    }
+
+    public int getProductCount() {
+        return productCount;
+    }
+
+    public void setProductCount(int productCount) {
+        this.productCount = productCount;
     }
 }
