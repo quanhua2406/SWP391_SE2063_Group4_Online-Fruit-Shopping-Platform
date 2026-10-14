@@ -192,7 +192,7 @@ public class AuthorizationFilter implements Filter {
         // SHOP OWNER
         if (path.startsWith("/store-owner/")) {
 
-            return role.equals("SHOP_OWNER") || role.equals("SHOPOWNER");
+            return role.equals("SHOP_OWNER") || role.equals("SHOPOWNER") || role.equals("SHOP OWNER") || role.contains("SHOP");
         }
 
         // DELIVERY STAFF

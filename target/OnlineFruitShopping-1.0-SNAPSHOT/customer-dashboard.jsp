@@ -75,6 +75,13 @@
             <a href="#">Track Order</a>
         </div>
 
+        <div class="dashboard-card" style="border: 2px solid #4caf50;">
+            <div class="dashboard-icon">🎁</div>
+            <h3>Gói Trái Cây Định Kỳ</h3>
+            <p>Theo dõi lịch nhận trái cây định kỳ, tạm dừng hoặc đổi ngày giao hàng.</p>
+            <a href="${pageContext.request.contextPath}/my-subscriptions" style="color: #2e7d32; font-weight: 700;">Gói Của Tôi →</a>
+        </div>
+
         <div class="dashboard-card">
             <div class="dashboard-icon">⭐</div>
             <h3>My Reviews</h3>

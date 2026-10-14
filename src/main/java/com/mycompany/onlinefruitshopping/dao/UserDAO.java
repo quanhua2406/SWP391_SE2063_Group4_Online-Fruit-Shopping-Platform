@@ -193,6 +193,7 @@ public class UserDAO {
                     u.password_hash,
                     u.phone,
                     u.status,
+                    u.is_member,
                     r.role_id,
                     r.role_name
                 FROM users u
@@ -248,6 +249,10 @@ public class UserDAO {
                             rs.getString("status")
                     );
 
+                    try {
+                        user.setIsMember(rs.getBoolean("is_member"));
+                    } catch (Exception ignored) {}
+
                     return user;
                 }
             }
@@ -300,6 +305,7 @@ public class UserDAO {
                     u.password_hash,
                     u.phone,
                     u.status,
+                    u.is_member,
                     r.role_id,
                     r.role_name
                 FROM users u
@@ -353,6 +359,10 @@ public class UserDAO {
                     user.setStatus(
                             rs.getString("status")
                     );
+
+                    try {
+                        user.setIsMember(rs.getBoolean("is_member"));
+                    } catch (Exception ignored) {}
 
                     return user;
                 }

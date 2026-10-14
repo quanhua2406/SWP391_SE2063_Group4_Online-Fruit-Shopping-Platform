@@ -217,11 +217,18 @@ public class LoginServlet extends HttpServlet {
             );
 
 
-            // Redirect to home
-            response.sendRedirect(
-                    request.getContextPath()
-                            + "/home"
-            );
+            // Check redirectAfterLogin if user was previously trying to access checkout or my-subscriptions
+            String redirectUrl = (String) session.getAttribute("redirectAfterLogin");
+            if (redirectUrl != null && !redirectUrl.isBlank()) {
+                session.removeAttribute("redirectAfterLogin");
+                response.sendRedirect(redirectUrl);
+            } else {
+                // Redirect to home
+                response.sendRedirect(
+                        request.getContextPath()
+                                + "/home"
+                );
+            }
 
         } catch (SQLException e) {
 
