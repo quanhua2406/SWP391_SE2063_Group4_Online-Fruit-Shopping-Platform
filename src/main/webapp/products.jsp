@@ -60,28 +60,6 @@
     </div>
 </header>
 
-<%-- Link tắt cho Admin: Quản lý đánh giá --%>
-<%
-    com.mycompany.onlinefruitshopping.model.User _u =
-        (com.mycompany.onlinefruitshopping.model.User) session.getAttribute("user");
-    boolean _isAdmin = _u != null && "admin".equalsIgnoreCase(_u.getRoleName());
-%>
-<% if (_isAdmin) { %>
-<div style="background:#1e293b;padding:8px 20px;display:flex;gap:12px;font-size:13px;">
-    <a href="${pageContext.request.contextPath}/admin/reviews"
-       style="color:#94a3b8;text-decoration:none;padding:4px 12px;border-radius:6px;
-              background:rgba(255,255,255,.08);">
-        🛡️ Moderation đánh giá
-    </a>
-    <a href="${pageContext.request.contextPath}/admin/reviews?status=reported"
-       style="color:#fbbf24;text-decoration:none;padding:4px 12px;border-radius:6px;
-              background:rgba(251,191,36,.1);">
-        ⚠️ Chờ xét duyệt
-    </a>
-</div>
-<% } %>
-
-
 <div class="product-management-container">
 
     <!-- ALERT NOTIFICATIONS -->
@@ -102,7 +80,17 @@
     </c:if>
     <c:if test="${param.success == 'status'}">
         <div class="alert-box alert-success">
-            <span>Đã cập nhật trạng thái hiển thị của sản phẩm!</span>
+            <span>Đã cập nhật trạng thái hiển thị của sản phẩm thành công!</span>
+        </div>
+    </c:if>
+    <c:if test="${param.error == 'invalid_id'}">
+        <div class="alert-box" style="background: #ffebee; color: #c62828; border: 1px solid #ffcdd2;">
+            <span>Mã sản phẩm không hợp lệ!</span>
+        </div>
+    </c:if>
+    <c:if test="${param.error == 'notfound'}">
+        <div class="alert-box" style="background: #ffebee; color: #c62828; border: 1px solid #ffcdd2;">
+            <span>Không tìm thấy sản phẩm yêu cầu hoặc bạn không có quyền thao tác!</span>
         </div>
     </c:if>
 
@@ -112,7 +100,10 @@
             <h1 class="page-title">Quản Lý Sản Phẩm Trái Cây</h1>
             <p style="color: #666; font-size: 14px; margin-top: 4px;">Xem danh sách, cập nhật thông tin giá bán và số lượng tồn kho sản phẩm.</p>
         </div>
-        <div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <a href="${pageContext.request.contextPath}/store-owner/categories" class="btn-secondary" style="padding: 10px 16px; font-weight: bold; border-radius: 8px; font-size: 14px;">
+                Quản Lý Danh Mục
+            </a>
             <a href="${pageContext.request.contextPath}/store-owner/products?action=add" class="btn-add">
                 Thêm Sản Phẩm Mới
             </a>
@@ -164,7 +155,7 @@
                     <th>Giá niêm yết</th>
                     <th>Tồn kho</th>
                     <th>Trạng thái</th>
-                    <th style="width: 170px; text-align: center;">Hành động</th>
+                    <th style="width: 280px; text-align: center;">Hành động</th>
                 </tr>
             </thead>
             <tbody>
@@ -217,25 +208,54 @@
                                     </c:choose>
                                 </td>
                                 <td style="text-align: center;">
-                                    <div class="action-btns" style="justify-content: center;">
+                                    <div class="action-btns" style="justify-content: center; flex-wrap: wrap;">
+                                        <!-- Bật/Tắt trạng thái (Availability Toggle) -->
+                                        <c:choose>
+                                            <c:when test="${p.status == 'published'}">
+                                                <a href="${pageContext.request.contextPath}/store-owner/products?action=toggleStatus&id=${p.productId}"
+                                                   class="btn-sm btn-toggle"
+                                                   onclick="return confirm('Bạn có chắc muốn tạm ẨN sản phẩm #${p.productId} - ${p.productName} khỏi gian hàng?');"
+                                                   title="Tạm ẩn sản phẩm">
+                                                    Ẩn
+                                                </a>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <a href="${pageContext.request.contextPath}/store-owner/products?action=toggleStatus&id=${p.productId}"
+                                                   class="btn-sm" style="background: #e8f5e9; color: #2e7d32;"
+                                                   onclick="return confirm('Bạn có chắc muốn MỞ BÁN lại sản phẩm #${p.productId} - ${p.productName}?');"
+                                                   title="Mở bán sản phẩm">
+                                                    Hiện
+                                                </a>
+                                            </c:otherwise>
+                                        </c:choose>
+
+                                        <!-- Quản lý quy cách đóng gói (Variants) -->
+                                        <a href="${pageContext.request.contextPath}/store-owner/variants?productId=${p.productId}"
+                                           class="btn-sm btn-variants" title="Quản lý quy cách đóng gói & giá biến thể">
+                                            Quy cách
+                                        </a>
+
+                                        <!-- Quản lý bộ ảnh sản phẩm (Images) -->
+                                        <a href="${pageContext.request.contextPath}/store-owner/product-images?productId=${p.productId}"
+                                           class="btn-sm btn-images" title="Quản lý thư viện hình ảnh">
+                                            Ảnh
+                                        </a>
+
+                                        <!-- Sửa thông tin -->
                                         <a href="${pageContext.request.contextPath}/store-owner/products?action=edit&id=${p.productId}" 
-                                           class="btn-sm btn-edit" title="Sửa thông tin">
+                                           class="btn-sm btn-edit" title="Sửa thông tin sản phẩm">
                                             Sửa
                                         </a>
-                                        <a href="${pageContext.request.contextPath}/reviews?productId=${p.productId}"
-                                           class="btn-sm btn-review" title="Xem đánh giá sản phẩm"
-                                           style="background:#e8f5e9;color:#2e7d32;border:1px solid #c8e6c9;">
-                                            ⭐ Đánh giá
-                                        </a>
-                                        <a href="${pageContext.request.contextPath}/store-owner/products?action=delete&id=${p.productId}" 
+
+                                        <!-- Xóa sản phẩm -->
+                                        <a href="${pageContext.request.contextPath}/store-owner/products?action=delete&id=${p.productId}"
                                            class="btn-sm btn-delete" 
-                                           onclick="return confirm('Bạn có chắc chắn muốn xóa sản phẩm #${p.productId} - ${p.productName}?');" 
+                                           onclick="return confirm('Bạn có chắc chắn muốn xóa sản phẩm #${p.productId} - ${p.productName}? Thao tác này sẽ xóa vĩnh viễn!');"
                                            title="Xóa sản phẩm">
                                             Xóa
                                         </a>
                                     </div>
                                 </td>
-
                             </tr>
                         </c:forEach>
                     </c:otherwise>

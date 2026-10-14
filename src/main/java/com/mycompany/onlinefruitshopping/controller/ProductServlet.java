@@ -47,7 +47,7 @@ public class ProductServlet extends HttpServlet {
                     handleDelete(request, response, user);
                     break;
                 case "toggleStatus":
-                    handleToggleStatus(request, response);
+                    handleToggleStatus(request, response, user);
                     break;
                 case "list":
                 default:
@@ -336,15 +336,32 @@ public class ProductServlet extends HttpServlet {
     // =========================================================
     // 5. TOGGLE PRODUCT STATUS (ACTIVE / HIDDEN)
     // =========================================================
-    private void handleToggleStatus(HttpServletRequest request, HttpServletResponse response)
+    private void handleToggleStatus(HttpServletRequest request, HttpServletResponse response, User user)
             throws SQLException, IOException {
 
         String idStr = request.getParameter("id");
-        if (idStr != null && !idStr.isBlank()) {
-            int productId = Integer.parseInt(idStr);
-            productDAO.toggleProductStatus(productId);
+        if (idStr == null || idStr.isBlank()) {
+            response.sendRedirect(request.getRequestURI() + "?error=invalid_id");
+            return;
         }
-        response.sendRedirect(request.getRequestURI() + "?success=status");
+
+        try {
+            int productId = Integer.parseInt(idStr);
+            Integer shopId = null;
+            String role = (user.getRoleName() != null) ? user.getRoleName().toUpperCase() : "";
+            if (role.contains("SHOP") || role.contains("OWNER")) {
+                shopId = productDAO.getOrCreateShopIdForUser(user.getUserID(), user.getFullName());
+            }
+
+            boolean success = productDAO.toggleProductStatus(productId, shopId);
+            if (success) {
+                response.sendRedirect(request.getRequestURI() + "?success=status");
+            } else {
+                response.sendRedirect(request.getRequestURI() + "?error=notfound");
+            }
+        } catch (NumberFormatException e) {
+            response.sendRedirect(request.getRequestURI() + "?error=invalid_id");
+        }
     }
 
     // =========================================================

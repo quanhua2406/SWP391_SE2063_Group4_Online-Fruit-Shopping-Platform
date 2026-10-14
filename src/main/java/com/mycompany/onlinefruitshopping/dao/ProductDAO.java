@@ -525,17 +525,24 @@ public class ProductDAO {
     }
 
     // =========================================================
-    // TOGGLE STATUS
+    // TOGGLE STATUS (AVAILABILITY)
     // =========================================================
-    public boolean toggleProductStatus(int productId) throws SQLException {
-        String sql = """
+    public boolean toggleProductStatus(int productId, Integer shopId) throws SQLException {
+        StringBuilder sql = new StringBuilder("""
                 UPDATE products
                 SET status = CASE WHEN status = 'published' THEN 'hidden' ELSE 'published' END
                 WHERE product_id = ?
-                """;
+                """);
+        if (shopId != null) {
+            sql.append(" AND shop_id = ?");
+        }
+
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             ps.setInt(1, productId);
+            if (shopId != null) {
+                ps.setInt(2, shopId);
+            }
             return ps.executeUpdate() > 0;
         }
     }

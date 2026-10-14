@@ -931,6 +931,33 @@ input {
 }
 
 .btn-toggle {
+    background: #fff3e0;
+    color: #e65100;
+}
+
+.btn-toggle:hover {
+    background: #ffe0b2;
+}
+
+.btn-variants {
+    background: #ede7f6;
+    color: #512da8;
+}
+
+.btn-variants:hover {
+    background: #d1c4e9;
+}
+
+.btn-images {
+    background: #e0f2f1;
+    color: #00796b;
+}
+
+.btn-images:hover {
+    background: #b2dfdb;
+}
+
+.btn-toggle {
     background: #ede7f6;
     color: #512da8;
 }
