@@ -5,7 +5,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Quan Ly Don Hang - FreshFruit Store Owner</title>
+    <title>Quản Lý Đơn Hàng - FreshFruit Store Owner</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
     <style>
         .order-container {
@@ -299,10 +299,10 @@
     </div>
     <div class="nav-actions">
         <a href="${pageContext.request.contextPath}/store-owner/dashboard">Dashboard</a>
-        <a href="${pageContext.request.contextPath}/store-owner/products">San pham</a>
-        <a href="${pageContext.request.contextPath}/store-owner/categories">Danh muc</a>
-        <a href="${pageContext.request.contextPath}/store-owner/orders" style="font-weight: bold; color: #fff; background: #275629; padding: 4px 10px; border-radius: 4px;">Don hang</a>
-        <a href="${pageContext.request.contextPath}/logout" class="logout">Dang xuat</a>
+        <a href="${pageContext.request.contextPath}/store-owner/products">Sản phẩm</a>
+        <a href="${pageContext.request.contextPath}/store-owner/categories">Danh mục</a>
+        <a href="${pageContext.request.contextPath}/store-owner/orders" style="font-weight: bold; color: #fff; background: #275629; padding: 4px 10px; border-radius: 4px;">Đơn hàng</a>
+        <a href="${pageContext.request.contextPath}/logout" class="logout">Đăng xuất</a>
     </div>
 </header>
 
@@ -310,12 +310,12 @@
 
     <div class="page-header">
         <div>
-            <h1 class="page-title">Quan Ly Don Hang Cua Cua Hang</h1>
-            <p style="color: #666; font-size: 14px; margin-top: 4px;">Theo doi, xac nhan va cap nhat trang thai don hang trai cay.</p>
+            <h1 class="page-title">Quản Lý Đơn Hàng Cửa Hàng</h1>
+            <p style="color: #666; font-size: 14px; margin-top: 4px;">Theo dõi, xác nhận và cập nhật tiến trình đơn hàng hoa quả.</p>
         </div>
     </div>
 
-    <!-- THONG BAO ALERT -->
+    <!-- THÔNG BÁO ALERT -->
     <c:if test="${not empty param.successMessage}">
         <div class="alert alert-success">
             ${param.successMessage}
@@ -331,27 +331,27 @@
     <div class="status-tabs">
         <a href="${pageContext.request.contextPath}/store-owner/orders?status=all" 
            class="tab-item ${currentStatus == 'all' ? 'active' : ''}">
-            Tat ca <span class="tab-counter">${counts.all}</span>
+            Tất cả <span class="tab-counter">${counts.all}</span>
         </a>
         <a href="${pageContext.request.contextPath}/store-owner/orders?status=pending_confirmation" 
            class="tab-item ${currentStatus == 'pending_confirmation' ? 'active' : ''}">
-            Cho xac nhan <span class="tab-counter">${counts.pending_confirmation}</span>
+            Chờ xác nhận <span class="tab-counter">${counts.pending_confirmation}</span>
         </a>
         <a href="${pageContext.request.contextPath}/store-owner/orders?status=preparing" 
            class="tab-item ${currentStatus == 'preparing' ? 'active' : ''}">
-            Dang dong goi <span class="tab-counter">${counts.preparing}</span>
+            Đang đóng gói <span class="tab-counter">${counts.preparing}</span>
         </a>
         <a href="${pageContext.request.contextPath}/store-owner/orders?status=shipping" 
            class="tab-item ${currentStatus == 'shipping' ? 'active' : ''}">
-            Dang giao hang <span class="tab-counter">${counts.shipping}</span>
+            Đang giao hàng <span class="tab-counter">${counts.shipping}</span>
         </a>
         <a href="${pageContext.request.contextPath}/store-owner/orders?status=delivered" 
            class="tab-item ${currentStatus == 'delivered' ? 'active' : ''}">
-            Da giao thanh cong <span class="tab-counter">${counts.delivered}</span>
+            Đã giao thành công <span class="tab-counter">${counts.delivered}</span>
         </a>
         <a href="${pageContext.request.contextPath}/store-owner/orders?status=cancelled" 
            class="tab-item ${currentStatus == 'cancelled' ? 'active' : ''}">
-            Da huy / Tu choi <span class="tab-counter">${counts.cancelled}</span>
+            Đã hủy / Từ chối <span class="tab-counter">${counts.cancelled}</span>
         </a>
     </div>
 
@@ -359,27 +359,27 @@
     <form action="${pageContext.request.contextPath}/store-owner/orders" method="GET" class="search-bar">
         <input type="hidden" name="status" value="${currentStatus}">
         <input type="text" name="q" value="${searchQuery}" class="search-input" 
-               placeholder="Tim theo ma don, ten khach hang, SDT...">
-        <button type="submit" class="btn-search">Tim kiem</button>
+               placeholder="Tìm theo mã đơn, tên khách hàng, SĐT...">
+        <button type="submit" class="btn-search">Tìm kiếm</button>
         <c:if test="${not empty searchQuery}">
             <a href="${pageContext.request.contextPath}/store-owner/orders?status=${currentStatus}" 
                style="align-self: center; color: #666; font-size: 13px; text-decoration: underline;">
-                Bo loc tim kiem
+                Xóa bộ lọc tìm kiếm
             </a>
         </c:if>
     </form>
 
-    <!-- BANG DANH SACH DON HANG -->
+    <!-- BẢNG DANH SÁCH ĐƠN HÀNG -->
     <table class="orders-table">
         <thead>
             <tr>
-                <th style="width: 70px;">Ma don</th>
-                <th style="width: 130px;">Ngay dat</th>
-                <th>Khach hang / Nguoi nhan</th>
-                <th>San pham</th>
-                <th style="width: 120px;">Tong tien</th>
-                <th style="width: 130px;">Trang thai</th>
-                <th style="width: 220px; text-align: center;">Thao tac</th>
+                <th style="width: 70px;">Mã đơn</th>
+                <th style="width: 130px;">Ngày đặt</th>
+                <th>Khách hàng / Người nhận</th>
+                <th>Sản phẩm</th>
+                <th style="width: 120px;">Tổng tiền</th>
+                <th style="width: 140px;">Trạng thái</th>
+                <th style="width: 220px; text-align: center;">Thao tác</th>
             </tr>
         </thead>
         <tbody>
@@ -393,11 +393,11 @@
                             </td>
                             <td>
                                 <div style="font-weight: bold; color: #275629;">${o.recipientName}</div>
-                                <div style="font-size: 12px; color: #666;">SDT: ${o.recipientPhone}</div>
+                                <div style="font-size: 12px; color: #666;">SĐT: ${o.recipientPhone}</div>
                                 <div style="font-size: 12px; color: #888;">${o.recipientAddress}</div>
                             </td>
                             <td>
-                                <div style="font-size: 13px;">${o.totalQuantity} san pham</div>
+                                <div style="font-size: 13px;">${o.totalQuantity} sản phẩm</div>
                                 <div style="font-size: 12px; color: #888;">
                                     <c:forEach var="item" items="${o.items}" varStatus="status">
                                         <c:if test="${status.index < 2}">
@@ -409,7 +409,7 @@
                             </td>
                             <td>
                                 <strong style="color: #275629; font-size: 14px;">
-                                    <fmt:formatNumber value="${o.totalAmount}" pattern="#,###"/> d
+                                    <fmt:formatNumber value="${o.totalAmount}" pattern="#,###"/> đ
                                 </strong>
                             </td>
                             <td>
@@ -419,38 +419,38 @@
                             </td>
                             <td style="text-align: center;">
                                 <div class="action-btns" style="justify-content: center;">
-                                    <!-- Nut xem chi tiet -->
+                                    <!-- Nút xem chi tiết -->
                                     <a href="${pageContext.request.contextPath}/store-owner/orders?action=detail&orderId=${o.orderId}&status=${currentStatus}" 
                                        class="btn-action btn-detail">
-                                        Chi tiet
+                                        Chi tiết
                                     </a>
 
-                                    <!-- Nut xac nhan don (neu dang cho xac nhan) -->
+                                    <!-- Nút xác nhận đơn (nếu đang chờ xác nhận) -->
                                     <c:if test="${o.status == 'pending_confirmation'}">
                                         <form action="${pageContext.request.contextPath}/store-owner/orders" method="POST" style="display:inline;">
                                             <input type="hidden" name="action" value="confirm">
                                             <input type="hidden" name="orderId" value="${o.orderId}">
                                             <button type="submit" class="btn-action btn-confirm" 
-                                                    onclick="return confirm('Xac nhan duyet don hang #' + ${o.orderId} + '?');">
-                                                Duyet don
+                                                    onclick="return confirm('Xác nhận duyệt đơn hàng #' + ${o.orderId} + '?');">
+                                                Duyệt đơn
                                             </button>
                                         </form>
 
-                                        <!-- Nut tu choi don -->
+                                        <!-- Nút từ chối đơn -->
                                         <button type="button" class="btn-action btn-reject" 
                                                 onclick="openRejectModal(${o.orderId});">
-                                            Tu choi
+                                            Từ chối
                                         </button>
                                     </c:if>
 
-                                    <!-- Nut dong goi xong / san sang giao -->
+                                    <!-- Nút đóng gói xong / sẵn sàng giao -->
                                     <c:if test="${o.status == 'preparing'}">
                                         <form action="${pageContext.request.contextPath}/store-owner/orders" method="POST" style="display:inline;">
                                             <input type="hidden" name="action" value="ready">
                                             <input type="hidden" name="orderId" value="${o.orderId}">
                                             <button type="submit" class="btn-action btn-ready" 
-                                                    onclick="return confirm('Xac nhan da dong goi xong va chuyen don #' + ${o.orderId} + ' sang Dang giao?');">
-                                                Giao hang
+                                                    onclick="return confirm('Xác nhận đã đóng gói xong và chuyển đơn #' + ${o.orderId} + ' sang Đang giao hàng?');">
+                                                Giao hàng
                                             </button>
                                         </form>
                                     </c:if>
@@ -462,7 +462,7 @@
                 <c:otherwise>
                     <tr>
                         <td colspan="7" style="text-align: center; padding: 40px; color: #888;">
-                            Khong co don hang nao trong muc nay.
+                            Không có đơn hàng nào trong mục này.
                         </td>
                     </tr>
                 </c:otherwise>
@@ -472,35 +472,35 @@
 
 </div>
 
-<!-- MODAL XEM CHI TIET DON HANG -->
+<!-- MODAL XEM CHI TIẾT ĐƠN HÀNG -->
 <c:if test="${not empty selectedOrder}">
     <div class="modal-overlay" id="detailModal">
         <div class="modal-card">
             <div class="modal-header">
-                <h3 class="modal-title">Chi Tiet Don Hang #${selectedOrder.orderId}</h3>
+                <h3 class="modal-title">Chi Tiết Đơn Hàng #${selectedOrder.orderId}</h3>
                 <a href="${pageContext.request.contextPath}/store-owner/orders?status=${currentStatus}" class="modal-close">&times;</a>
             </div>
 
-            <!-- Thong tin khach hang & giao nhan -->
+            <!-- Thông tin khách hàng & giao nhận -->
             <div style="background: #fbfdfa; border: 1px solid #edf3eb; border-radius: 6px; padding: 14px; margin-bottom: 18px; font-size: 13px;">
                 <div style="margin-bottom: 6px;">
-                    <strong>Nguoi nhan:</strong> ${selectedOrder.recipientName} - <strong>SDT:</strong> ${selectedOrder.recipientPhone}
+                    <strong>Người nhận:</strong> ${selectedOrder.recipientName} - <strong>SĐT:</strong> ${selectedOrder.recipientPhone}
                 </div>
                 <div style="margin-bottom: 6px;">
-                    <strong>Dia chi giao:</strong> ${selectedOrder.recipientAddress}
+                    <strong>Địa chỉ giao:</strong> ${selectedOrder.recipientAddress}
                 </div>
                 <div style="margin-bottom: 6px;">
-                    <strong>Ngay dat hang:</strong> <fmt:formatDate value="${selectedOrder.createdAt}" pattern="dd/MM/yyyy HH:mm:ss"/>
+                    <strong>Ngày đặt hàng:</strong> <fmt:formatDate value="${selectedOrder.createdAt}" pattern="dd/MM/yyyy HH:mm:ss"/>
                 </div>
                 <div>
-                    <strong>Trang thai:</strong> 
+                    <strong>Trạng thái:</strong> 
                     <span class="badge ${selectedOrder.statusBadgeClass}">${selectedOrder.statusDisplayName}</span>
                 </div>
             </div>
 
-            <!-- Danh sach san pham -->
+            <!-- Danh sách sản phẩm -->
             <div style="font-weight: bold; margin-bottom: 10px; color: #275629; font-size: 14px;">
-                Danh Sach Trai Cay (${selectedOrder.items.size()} loai)
+                Danh Sách Trái Cây (${selectedOrder.items.size()} mặt hàng)
             </div>
             <div style="margin-bottom: 20px;">
                 <c:forEach var="item" items="${selectedOrder.items}">
@@ -510,33 +510,33 @@
                              onerror="this.src='https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=500';">
                         <div style="flex: 1;">
                             <div style="font-weight: 600; font-size: 13px; color: #2e532f;">${item.productName}</div>
-                            <div style="font-size: 12px; color: #777;">Quy cach: ${item.packagingType} (${item.unit})</div>
+                            <div style="font-size: 12px; color: #777;">Quy cách: ${item.packagingType} (${item.unit})</div>
                         </div>
                         <div style="font-size: 13px; color: #555;">
-                            SL: <strong>${item.quantity}</strong> x <fmt:formatNumber value="${item.unitPrice}" pattern="#,###"/> d
+                            SL: <strong>${item.quantity}</strong> x <fmt:formatNumber value="${item.unitPrice}" pattern="#,###"/> đ
                         </div>
-                        <div style="font-size: 13px; font-weight: bold; color: #275629; width: 100px; text-align: right;">
-                            <fmt:formatNumber value="${item.lineTotal}" pattern="#,###"/> d
+                        <div style="font-size: 13px; font-weight: bold; color: #275629; width: 110px; text-align: right;">
+                            <fmt:formatNumber value="${item.lineTotal}" pattern="#,###"/> đ
                         </div>
                     </div>
                 </c:forEach>
             </div>
 
             <div style="display: flex; justify-content: space-between; border-top: 1px dashed #ccd8c9; padding-top: 12px; margin-bottom: 20px; font-size: 15px;">
-                <strong>Tong Tien Thanh Toan:</strong>
-                <strong style="color: #275629; font-size: 17px;"><fmt:formatNumber value="${selectedOrder.totalAmount}" pattern="#,###"/> d</strong>
+                <strong>Tổng Tiền Thanh Toán:</strong>
+                <strong style="color: #275629; font-size: 17px;"><fmt:formatNumber value="${selectedOrder.totalAmount}" pattern="#,###"/> đ</strong>
             </div>
 
-            <!-- Lich su tien trinh trang thai -->
+            <!-- Lịch sử tiến trình trạng thái -->
             <c:if test="${not empty selectedOrder.historyList}">
                 <div style="font-weight: bold; margin-bottom: 10px; color: #275629; font-size: 14px;">
-                    Lich Su Cap Nhat Tien Trinh
+                    Lịch Sử Cập Nhật Tiến Trình
                 </div>
                 <div style="margin-bottom: 20px;">
                     <c:forEach var="h" items="${selectedOrder.historyList}">
                         <div class="timeline-step">
-                            <strong>Trang thai:</strong> ${h.status} - 
-                            <span style="color: #666;">Boi: ${not empty h.changedByName ? h.changedByName : 'He thong'}</span> - 
+                            <strong>Trạng thái:</strong> ${h.status} - 
+                            <span style="color: #666;">Bởi: ${not empty h.changedByName ? h.changedByName : 'Hệ thống'}</span> - 
                             <span style="color: #888;"><fmt:formatDate value="${h.changedAt}" pattern="dd/MM/yyyy HH:mm:ss"/></span>
                         </div>
                     </c:forEach>
@@ -546,18 +546,18 @@
             <div style="text-align: right;">
                 <a href="${pageContext.request.contextPath}/store-owner/orders?status=${currentStatus}" 
                    class="btn-action btn-detail" style="padding: 8px 18px; font-size: 13px;">
-                    Dong
+                    Đóng
                 </a>
             </div>
         </div>
     </div>
 </c:if>
 
-<!-- MODAL TU CHOI DON HANG -->
+<!-- MODAL TỪ CHỐI ĐƠN HÀNG -->
 <div class="modal-overlay" id="rejectModal" style="display: none;">
     <div class="modal-card" style="max-width: 480px;">
         <div class="modal-header">
-            <h3 class="modal-title">Tu Choi Don Hang</h3>
+            <h3 class="modal-title">Từ Chối Đơn Hàng</h3>
             <span class="modal-close" style="cursor: pointer;" onclick="closeRejectModal()">&times;</span>
         </div>
 
@@ -567,15 +567,15 @@
 
             <div style="margin-bottom: 16px;">
                 <p style="font-size: 13px; color: #555; margin-top: 0;">
-                    Vui long nhap ly do tu choi don hang de thong bao cho khach hang:
+                    Vui lòng nhập lý do từ chối đơn hàng để thông báo cho khách hàng:
                 </p>
                 <textarea name="reason" id="rejectReason" rows="3" class="search-input" style="width: 100%; box-sizing: border-box; resize: vertical;" 
-                          placeholder="Vi du: Mat hang tam thoi het trai tuoi ngon, khong dap ung giao ngay..." required></textarea>
+                          placeholder="Ví dụ: Trái cây hiện tại hết hàng tươi ngon, không kịp chuẩn bị..." required></textarea>
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                <button type="button" class="btn-action btn-detail" onclick="closeRejectModal()">Huy bo</button>
-                <button type="submit" class="btn-action btn-reject" style="padding: 8px 16px;">Xac Nhan Tu Choi</button>
+                <button type="button" class="btn-action btn-detail" onclick="closeRejectModal()">Hủy bỏ</button>
+                <button type="submit" class="btn-action btn-reject" style="padding: 8px 16px;">Xác Nhận Từ Chối</button>
             </div>
         </form>
     </div>
