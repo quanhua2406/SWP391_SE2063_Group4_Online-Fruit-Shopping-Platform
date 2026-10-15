@@ -1,973 +1,509 @@
-<%@ page contentType="text/html;charset=UTF-8" %>
-<%@ page import="java.util.List" %>
-<%@ page import="com.mycompany.onlinefruitshopping.dao.RoleDAO.Role" %>
-<%@ page import="com.mycompany.onlinefruitshopping.dao.RoleDAO.UserRoleInfo" %>
+
+<%@page import="java.util.List"%>
+<%@page import="com.mycompany.onlinefruitshopping.dao.RoleDAO.Role"%>
+<%@page import="com.mycompany.onlinefruitshopping.dao.RoleDAO.UserRoleInfo"%>
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
+
+<%!
+    private String escapeHtml(String value) {
+        if (value == null) return "";
+        return value.replace("&", "&amp;")
+                    .replace("<", "&lt;")
+                    .replace(">", "&gt;")
+                    .replace("\"", "&quot;")
+                    .replace("'", "&#39;");
+    }
+%>
+
+<%
+    List<UserRoleInfo> users =
+        (List<UserRoleInfo>) request.getAttribute("users");
+
+    List<Role> roles =
+        (List<Role>) request.getAttribute("roles");
+
+    String searchEmail = request.getAttribute("searchEmail") == null
+        ? "" : String.valueOf(request.getAttribute("searchEmail"));
+
+    String error = request.getAttribute("error") == null
+        ? "" : String.valueOf(request.getAttribute("error"));
+
+    String message = request.getParameter("message");
+    if (message == null) {
+        message = request.getAttribute("success") == null
+            ? "" : String.valueOf(request.getAttribute("success"));
+    }
+
+    String cp = request.getContextPath();
+%>
 
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Role Management - FreshFruit</title>
 
-    <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/css/style.css">
-
     <style>
+        * { box-sizing: border-box; }
 
-        /* =====================================================
-           PAGE
-           ===================================================== */
-
-        .role-page {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 40px 30px;
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            color: #263238;
+            background: #f5f7fa;
         }
 
-        .role-header {
+        .navbar {
+            min-height: 68px;
+            padding: 16px 5%;
+            background: #fff;
+            border-bottom: 1px solid #e5e7eb;
             display: flex;
+            align-items: center;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
+            gap: 16px;
         }
 
-        .role-header h1 {
-            margin: 0;
-            font-size: 30px;
-            color: #222;
+        .logo {
+            color: #2e7d32;
+            font-size: 24px;
+            font-weight: bold;
         }
 
-        .role-header p {
-            margin-top: 8px;
-            color: #777;
-            font-size: 15px;
-        }
-
-
-        /* =====================================================
-           ALERT
-           ===================================================== */
-
-        .role-message {
-            padding: 14px 18px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-
-        .role-error {
-            background: #ffe8e8;
-            color: #c62828;
-            border: 1px solid #ffcaca;
-        }
-
-        .role-success {
-            background: #e8f7ed;
-            color: #218838;
-            border: 1px solid #c7ead2;
-        }
-
-
-        /* =====================================================
-           SEARCH
-           ===================================================== */
-
-        .role-search-box {
-            background: #ffffff;
-            border: 1px solid #e5e5e5;
-            border-radius: 12px;
-            padding: 22px;
-            margin-bottom: 25px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        }
-
-        .role-search-title {
-            margin-bottom: 15px;
-        }
-
-        .role-search-title h2 {
-            margin: 0;
-            font-size: 19px;
-            color: #333;
-        }
-
-        .role-search-title p {
-            margin: 6px 0 0;
-            font-size: 13px;
-            color: #888;
-        }
-
-        .role-search-form {
+        .nav-links {
             display: flex;
-            gap: 10px;
-            align-items: center;
+            gap: 20px;
         }
 
-        .role-input-wrapper {
-            flex: 1;
-        }
+        a { text-decoration: none; }
 
-        .role-input-wrapper input {
-            width: 100%;
-            height: 44px;
-            box-sizing: border-box;
-            border: 1px solid #d8d8d8;
-            border-radius: 8px;
-            padding: 0 15px;
-            font-size: 14px;
-            outline: none;
-        }
-
-        .role-input-wrapper input:focus {
-            border-color: #ff7a00;
-            box-shadow: 0 0 0 2px rgba(255,122,0,0.1);
-        }
-
-        .role-search-btn {
-            height: 44px;
-            padding: 0 24px;
-            border: none;
-            border-radius: 8px;
-            background: #ff7a00;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        .role-search-btn:hover {
-            background: #e86d00;
-        }
-
-        .role-reset-btn {
-            height: 44px;
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            border-radius: 8px;
-            background: #f1f1f1;
-            color: #555;
-            text-decoration: none;
+        .nav-links a {
+            color: #374151;
             font-size: 14px;
         }
 
-        .role-reset-btn:hover {
-            background: #e5e5e5;
+        .container {
+            width: 94%;
+            max-width: 1400px;
+            margin: 32px auto;
         }
 
+        .page-header { margin-bottom: 24px; }
 
-        /* =====================================================
-           USERS TABLE
-           ===================================================== */
+        h1 {
+            margin: 0 0 8px;
+            font-size: 28px;
+        }
 
-        .role-users-box {
-            background: #ffffff;
-            border: 1px solid #e5e5e5;
-            border-radius: 12px;
+        .muted {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .panel {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            margin-bottom: 22px;
             overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         }
 
-        .role-users-header {
-            padding: 22px 24px;
-            border-bottom: 1px solid #eeeeee;
-        }
+        .filters { padding: 20px; }
 
-        .role-users-header h2 {
-            margin: 0;
-            font-size: 19px;
-            color: #333;
-        }
-
-        .role-users-header p {
-            margin: 6px 0 0;
-            color: #888;
-            font-size: 13px;
-        }
-
-        .role-table-wrapper {
-            width: 100%;
-            overflow-x: auto;
-        }
-
-        .role-table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 950px;
-        }
-
-        .role-table th {
-            background: #fafafa;
-            padding: 15px 18px;
-            text-align: left;
-            font-size: 13px;
-            color: #666;
-            border-bottom: 1px solid #eeeeee;
-        }
-
-        .role-table td {
-            padding: 16px 18px;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 14px;
-            color: #444;
-            vertical-align: middle;
-        }
-
-        .role-table tbody tr:hover {
-            background: #fffaf5;
-        }
-
-
-        /* =====================================================
-           USER
-           ===================================================== */
-
-        .role-user {
+        .filter-form {
             display: flex;
-            align-items: center;
             gap: 12px;
+            flex-wrap: wrap;
         }
 
-        .role-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: #fff0e3;
-            color: #ff7a00;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-weight: 700;
+        input, select {
+            min-height: 42px;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: white;
+            font-size: 14px;
         }
 
-        .role-user-name {
-            font-weight: 600;
-            color: #333;
+        .filter-form input {
+            flex: 1;
+            min-width: 220px;
         }
 
-        .role-user-id {
-            margin-top: 3px;
-            font-size: 12px;
-            color: #999;
-        }
+        .filter-form select { min-width: 175px; }
 
-        .role-email {
-            color: #555;
-        }
-
-
-        /* =====================================================
-           STATUS
-           ===================================================== */
-
-        .role-status {
+        .btn {
             display: inline-flex;
             align-items: center;
-            gap: 7px;
-            padding: 5px 10px;
-            border-radius: 20px;
+            justify-content: center;
+            min-height: 40px;
+            padding: 10px 16px;
+            border: 0;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            color: white;
+            background: #2e7d32;
+        }
+
+        .btn-primary:hover { background: #256628; }
+
+        .btn-secondary {
+            color: #374151;
+            background: #e5e7eb;
+        }
+
+        .btn-secondary:hover { background: #d1d5db; }
+
+        .btn-update {
+            color: white;
+            background: #2e7d32;
+            padding: 9px 12px;
             font-size: 12px;
-            font-weight: 600;
         }
 
-        .role-status-dot {
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
+        .btn-update:hover { background: #256628; }
+
+        .btn-protected {
+            color: #6b7280;
+            background: #e5e7eb;
+            padding: 9px 12px;
+            font-size: 12px;
+            cursor: not-allowed;
         }
 
-        .role-status-active {
-            background: #e8f7ed;
-            color: #218838;
+        .notice {
+            padding: 13px 16px;
+            margin-bottom: 18px;
+            border-radius: 7px;
+            font-size: 14px;
         }
 
-        .role-status-active .role-status-dot {
-            background: #28a745;
+        .notice-error {
+            color: #b42318;
+            background: #fef3f2;
+            border: 1px solid #fecdca;
         }
 
-        .role-status-inactive {
-            background: #f3f3f3;
-            color: #777;
+        .notice-success {
+            color: #18733b;
+            background: #eaf7ed;
+            border: 1px solid #a6e3b5;
         }
 
-        .role-status-inactive .role-status-dot {
-            background: #999;
+        .panel-heading {
+            padding: 20px;
+            border-bottom: 1px solid #e5e7eb;
         }
 
+        .panel-heading h2 {
+            margin: 0 0 6px;
+            font-size: 18px;
+        }
 
-        /* =====================================================
-           CURRENT ROLE
-           ===================================================== */
+        .table-scroll { overflow-x: auto; }
+
+        table {
+            width: 100%;
+            min-width: 950px;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 15px 16px;
+            text-align: left;
+            border-bottom: 1px solid #edf0f2;
+            font-size: 13px;
+        }
+
+        th {
+            color: #4b5563;
+            background: #f9fafb;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        tbody tr:hover { background: #f9fcf8; }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 9px;
+            border-radius: 5px;
+            font-size: 11px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
 
         .role-badge {
-            display: inline-block;
-            padding: 6px 11px;
-            border-radius: 6px;
-            background: #f1f1f1;
-            color: #444;
-            font-size: 12px;
-            font-weight: 600;
+            color: #1d4ed8;
+            background: #eff6ff;
         }
 
+        .admin-badge {
+            color: #4b5563;
+            background: #f3f4f6;
+        }
 
-        /* =====================================================
-           CHANGE ROLE
-           ===================================================== */
+        .active {
+            color: #166534;
+            background: #dcfce7;
+        }
 
-        .role-change {
+        .locked {
+            color: #991b1b;
+            background: #fee2e2;
+        }
+
+        .other {
+            color: #4b5563;
+            background: #f3f4f6;
+        }
+
+        .role-form {
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
-        .role-change select {
-            height: 36px;
+        .role-select {
             min-width: 140px;
-            border: 1px solid #d8d8d8;
+            max-width: 180px;
+            min-height: 40px;
+            padding: 9px 10px;
+            border: 1px solid #d1d5db;
             border-radius: 6px;
-            padding: 0 10px;
             background: white;
             font-size: 13px;
-            cursor: pointer;
         }
 
-        .role-change select:focus {
+        .role-select:focus {
             outline: none;
-            border-color: #ff7a00;
+            border-color: #2e7d32;
+            box-shadow: 0 0 0 2px #2e7d3222;
         }
 
-        .role-change select:disabled {
-            background: #f3f3f3;
-            color: #888;
-            cursor: not-allowed;
+        .role-select:disabled {
+            background: #f3f4f6;
+            color: #6b7280;
         }
 
-        .role-update-btn {
-            height: 36px;
-            padding: 0 14px;
-            border: none;
-            border-radius: 6px;
-            background: #333;
-            color: white;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        .role-update-btn:hover {
-            background: #111;
-        }
-
-        .role-update-btn:disabled {
-            background: #999;
-            color: #eee;
-            cursor: not-allowed;
-        }
-
-
-        /* =====================================================
-           EMPTY
-           ===================================================== */
-
-        .role-empty {
+        .empty {
+            padding: 40px 20px;
+            color: #6b7280;
             text-align: center;
-            padding: 60px 20px !important;
-            color: #888;
         }
 
-        .role-empty-icon {
-            font-size: 40px;
-            margin-bottom: 10px;
+        @media (max-width: 650px) {
+            .container { width: 95%; margin: 22px auto; }
+            .filter-form { flex-direction: column; }
+            .filter-form input,
+            .filter-form select,
+            .filter-form .btn { width: 100%; }
+            .navbar { flex-wrap: wrap; }
+            h1 { font-size: 24px; }
+            .role-form { flex-wrap: wrap; }
         }
-
-        .role-empty strong {
-            display: block;
-            font-size: 16px;
-            color: #555;
-            margin-bottom: 5px;
-        }
-
-        .role-empty span {
-            font-size: 13px;
-        }
-
-
-        /* =====================================================
-           RESPONSIVE
-           ===================================================== */
-
-        @media (max-width: 768px) {
-
-            .role-page {
-                padding: 25px 15px;
-            }
-
-            .role-search-form {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .role-search-btn,
-            .role-reset-btn {
-                width: 100%;
-                justify-content: center;
-                box-sizing: border-box;
-            }
-        }
-
     </style>
-
 </head>
-
 
 <body>
 
-
-<!-- =========================================================
-     NAVBAR
-     ========================================================= -->
-
 <header class="navbar">
+    <div class="logo">FreshFruit</div>
 
-    <div class="logo">
-        🍊 FreshFruit
-    </div>
-
-    <div class="nav-actions">
-
-        <a href="${pageContext.request.contextPath}/admin/dashboard">
-            Dashboard
-        </a>
-
-        <a href="${pageContext.request.contextPath}/logout"
-           class="logout">
-            Logout
-        </a>
-
-    </div>
-
+    <nav class="nav-links">
+        <a href="<%=cp%>/admin/dashboard">Dashboard</a>
+        <a href="<%=cp%>/logout">Logout</a>
+    </nav>
 </header>
 
+<main class="container">
 
-<!-- =========================================================
-     MAIN
-     ========================================================= -->
-
-<main class="role-page">
-
-
-    <!-- =====================================================
-         HEADER
-         ===================================================== -->
-
-    <div class="role-header">
-
-        <div>
-
-            <h1>Role Management</h1>
-
-            <p>
-                Search user accounts and manage their assigned roles.
-            </p>
-
-        </div>
-
+    <div class="page-header">
+        <h1>Role Management</h1>
+        <p class="muted">
+            Search users and manage their system roles.
+        </p>
     </div>
 
-
-    <!-- =====================================================
-         ERROR MESSAGE
-         ===================================================== -->
-
-    <% if (request.getAttribute("error") != null) { %>
-
-        <div class="role-message role-error">
-
-            <%= request.getAttribute("error") %>
-
+    <% if (!error.isBlank()) { %>
+        <div class="notice notice-error" role="alert">
+            <%=escapeHtml(error)%>
         </div>
-
     <% } %>
 
-
-    <!-- =====================================================
-         SUCCESS MESSAGE
-         ===================================================== -->
-
-    <% if (request.getAttribute("success") != null) { %>
-
-        <div class="role-message role-success">
-
-            <%= request.getAttribute("success") %>
-
+    <% if (!message.isBlank()) { %>
+        <div class="notice notice-success" role="status">
+            <%=escapeHtml(message)%>
         </div>
-
     <% } %>
 
+    <!-- SEARCH PANEL -->
+    <section class="panel filters">
+        <form class="filter-form"
+              method="post"
+              action="<%=cp%>/admin/roles">
 
-    <!-- =====================================================
-         SEARCH USER
-         ===================================================== -->
+            <input type="hidden" name="action" value="search">
 
-    <section class="role-search-box">
+            <input type="text"
+                   name="email"
+                   value="<%=escapeHtml(searchEmail)%>"
+                   placeholder="Search by email...">
 
-        <div class="role-search-title">
-
-            <h2>Search User</h2>
-
-            <p>
-                Enter any keyword from the user's Gmail address.
-            </p>
-
-        </div>
-
-
-        <form
-            action="${pageContext.request.contextPath}/admin/roles"
-            method="post"
-            class="role-search-form">
-
-            <input
-                type="hidden"
-                name="action"
-                value="search">
-
-
-            <div class="role-input-wrapper">
-
-                <input
-                    type="text"
-                    name="email"
-                    value="<%= request.getAttribute("searchEmail") != null
-                            ? request.getAttribute("searchEmail")
-                            : "" %>"
-                    placeholder="Search by Gmail keyword..."
-                    autocomplete="off">
-
-            </div>
-
-
-            <button
-                type="submit"
-                class="role-search-btn">
-
+            <button class="btn btn-primary" type="submit">
                 Search
-
             </button>
 
-
-            <a
-                href="${pageContext.request.contextPath}/admin/roles"
-                class="role-reset-btn">
-
+            <a class="btn btn-secondary"
+               href="<%=cp%>/admin/roles">
                 Reset
-
             </a>
-
         </form>
-
     </section>
 
+    <!-- ROLE LIST PANEL -->
+    <section class="panel">
 
-    <!-- =====================================================
-         USER LIST
-         ===================================================== -->
-
-    <section class="role-users-box">
-
-
-        <div class="role-users-header">
-
-            <h2>User Accounts</h2>
-
-            <p>
-                Select a role and update the account directly.
+        <div class="panel-heading">
+            <h2>User Role List</h2>
+            <p class="muted">
+                Select a role and choose Update to change a user's role.
             </p>
-
         </div>
 
-
-        <%
-
-            List<UserRoleInfo> users =
-                    (List<UserRoleInfo>)
-                    request.getAttribute("users");
-
-            List<Role> roles =
-                    (List<Role>)
-                    request.getAttribute("roles");
-
-        %>
-
-
-        <div class="role-table-wrapper">
-
-            <table class="role-table">
-
-
-                <!-- =================================================
-                     TABLE HEADER
-                     ================================================= -->
-
+        <div class="table-scroll">
+            <table>
                 <thead>
-
                     <tr>
-
-                        <th>
-                            User
-                        </th>
-
-                        <th>
-                            Email
-                        </th>
-
-                        <th>
-                            Phone
-                        </th>
-
-                        <th>
-                            Status
-                        </th>
-
-                        <th>
-                            Current Role
-                        </th>
-
-                        <th>
-                            Change Role
-                        </th>
-
+                        <th>User ID</th>
+                        <th>Full Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Current Role</th>
+                        <th>Change Role</th>
+                        <th>Action</th>
                     </tr>
-
                 </thead>
 
-
-                <!-- =================================================
-                     TABLE BODY
-                     ================================================= -->
-
                 <tbody>
-
-
-                <% if (users != null && !users.isEmpty()) { %>
-
-
-                    <% for (UserRoleInfo user : users) { %>
-
-
-                        <tr>
-
-
-                            <!-- =====================================
-                                 USER
-                                 ===================================== -->
-
-                            <td>
-
-                                <div class="role-user">
-
-
-                                    <div class="role-avatar">
-
-                                        <%= user.getFullName() != null
-                                                && !user.getFullName().isEmpty()
-                                                ? user.getFullName()
-                                                    .substring(0, 1)
-                                                    .toUpperCase()
-                                                : "U" %>
-
-                                    </div>
-
-
-                                    <div>
-
-                                        <div class="role-user-name">
-
-                                            <%= user.getFullName() != null
-                                                    ? user.getFullName()
-                                                    : "-" %>
-
-                                        </div>
-
-
-                                        <div class="role-user-id">
-
-                                            ID #<%= user.getUserId() %>
-
-                                        </div>
-
-                                    </div>
-
-
-                                </div>
-
-                            </td>
-
-
-                            <!-- =====================================
-                                 EMAIL
-                                 ===================================== -->
-
-                            <td>
-
-                                <span class="role-email">
-
-                                    <%= user.getEmail() != null
-                                            ? user.getEmail()
-                                            : "-" %>
-
-                                </span>
-
-                            </td>
-
-
-                            <!-- =====================================
-                                 PHONE
-                                 ===================================== -->
-
-                            <td>
-
-                                <%= user.getPhone() != null
-                                        && !user.getPhone().isEmpty()
-                                        ? user.getPhone()
-                                        : "-" %>
-
-                            </td>
-
-
-                            <!-- =====================================
-                                 STATUS
-                                 ===================================== -->
-
-                            <td>
-
-                                <%
-
-                                    boolean active =
-                                            "active".equalsIgnoreCase(
-                                                    user.getStatus()
-                                            );
-
-                                %>
-
-
-                                <span class="role-status
-                                    <%= active
-                                            ? "role-status-active"
-                                            : "role-status-inactive" %>">
-
-
-                                    <span class="role-status-dot"></span>
-
-
-                                    <%= user.getStatus() != null
-                                            ? user.getStatus()
-                                            : "Unknown" %>
-
-
-                                </span>
-
-                            </td>
-
-
-                            <!-- =====================================
-                                 CURRENT ROLE
-                                 ===================================== -->
-
-                            <td>
-
-                                <span class="role-badge">
-
-                                    <%= user.getRoleName() != null
-                                            ? user.getRoleName()
-                                            : "No Role" %>
-
-                                </span>
-
-                            </td>
-
-
-                            <!-- =====================================
-                                 CHANGE ROLE
-                                 ===================================== -->
-
-                            <td>
-
-
-                                <%
-
-                                    /*
-                                     * Admin account is protected.
-                                     * If current role is ADMIN:
-                                     * - Disable dropdown
-                                     * - Show Protected button
-                                     * - Do NOT show Update button
-                                     */
-
-                                    boolean isAdmin =
-                                            user.getRoleName() != null
-                                            && "ADMIN".equalsIgnoreCase(
-                                                    user.getRoleName()
-                                            );
-
-                                %>
-
-
-                                <form
-                                    action="${pageContext.request.contextPath}/admin/roles"
-                                    method="post"
-                                    class="role-change">
-
-
-                                    <input
-                                        type="hidden"
-                                        name="action"
-                                        value="update">
-
-
-                                    <input
-                                        type="hidden"
-                                        name="userId"
-                                        value="<%= user.getUserId() %>">
-
-
-                                    <!-- ROLE DROPDOWN -->
-
-                                    <select
-                                        name="roleId"
-                                        <%= isAdmin
-                                                ? "disabled"
-                                                : "" %>>
-
-
-                                        <% if (roles != null) { %>
-
-
-                                            <% for (Role role : roles) { %>
-
-
-                                                <option
-                                                    value="<%= role.getRoleId() %>"
-                                                    <%= role.getRoleId()
-                                                            == user.getRoleId()
-                                                            ? "selected"
-                                                            : "" %>>
-
-                                                    <%= role.getRoleName() %>
-
-                                                </option>
-
-
-                                            <% } %>
-
-
-                                        <% } %>
-
-
-                                    </select>
-
-
-                                    <!-- =================================
-                                         ONLY ONE BUTTON
-                                         ================================= -->
-
-                                    <% if (isAdmin) { %>
-
-
-                                        <!-- ADMIN -->
-
-                                        <button
-                                            type="button"
-                                            class="role-update-btn"
-                                            disabled>
-
-                                            Protected
-
-                                        </button>
-
-
-                                    <% } else { %>
-
-
-                                        <!-- NORMAL USER -->
-
-                                        <button
-                                            type="submit"
-                                            class="role-update-btn">
-
-                                            Update
-
-                                        </button>
-
-
-                                    <% } %>
-
-
-                                </form>
-
-
-                            </td>
-
-
-                        </tr>
-
-
-                    <% } %>
-
-
-                <% } else { %>
-
-
-                    <!-- =========================================
-                         NO USER FOUND
-                         ========================================= -->
-
+                <% if (users != null && !users.isEmpty()) {
+                    for (UserRoleInfo user : users) {
+                        String roleName = user.getRoleName() == null
+                            ? "" : user.getRoleName();
+
+                        String fullName = user.getFullName() == null
+                            ? "" : user.getFullName();
+
+                        boolean isAdmin =
+                            "ADMIN".equalsIgnoreCase(roleName);
+                %>
                     <tr>
+                        <td><%=user.getUserId()%></td>
 
-                        <td
-                            colspan="6"
-                            class="role-empty">
+                        <td><%=escapeHtml(fullName)%></td>
 
+                        <td><%=escapeHtml(user.getEmail())%></td>
 
-                            <div class="role-empty-icon">
-                                👤
-                            </div>
+                        <td><%=escapeHtml(user.getPhone())%></td>
 
-
-                            <strong>
-                                No users found
-                            </strong>
-
-
-                            <span>
-                                Try another Gmail keyword.
+                        <td>
+                            <span class="badge <%=isAdmin
+                                ? "admin-badge"
+                                : "role-badge"%>">
+                                <%=escapeHtml(roleName)%>
                             </span>
-
-
                         </td>
 
+                        <td>
+                            <% if (isAdmin) { %>
+                                <select class="role-select" disabled>
+                                    <option>ADMIN</option>
+                                </select>
+                            <% } else { %>
+                                <form class="role-form"
+                                      id="roleForm<%=user.getUserId()%>"
+                                      method="post"
+                                      action="<%=cp%>/admin/roles"
+                                      onsubmit="return confirmRoleUpdate();">
+
+                                    <input type="hidden"
+                                           name="action"
+                                           value="update">
+
+                                    <input type="hidden"
+                                           name="userId"
+                                           value="<%=user.getUserId()%>">
+
+                                    <select class="role-select"
+                                            name="roleId"
+                                            required>
+
+                                        <% if (roles != null) {
+                                            for (Role role : roles) {
+                                                boolean selected =
+                                                    role.getRoleId()
+                                                    == user.getRoleId();
+                                        %>
+                                            <option
+                                                value="<%=role.getRoleId()%>"
+                                                <%=selected
+                                                    ? "selected"
+                                                    : ""%>>
+                                                <%=escapeHtml(role.getRoleName())%>
+                                            </option>
+                                        <%  }
+                                           }
+                                        %>
+                                    </select>
+                                </form>
+                            <% } %>
+                        </td>
+
+                        <td>
+                            <% if (isAdmin) { %>
+                                <button type="button"
+                                        class="btn btn-protected"
+                                        disabled>
+                                    Protected
+                                </button>
+                            <% } else { %>
+                                <button type="submit"
+                                        form="roleForm<%=user.getUserId()%>"
+                                        class="btn btn-update">
+                                    Update
+                                </button>
+                            <% } %>
+                        </td>
                     </tr>
 
-
+                <%  }
+                   } else { %>
+                    <tr>
+                        <td colspan="7" class="empty">
+                            No users found.
+                        </td>
+                    </tr>
                 <% } %>
-
-
                 </tbody>
-
-
             </table>
-
         </div>
-
     </section>
-
 
 </main>
 
+<script>
+    function confirmRoleUpdate() {
+        return confirm(
+            "Are you sure you want to update this user's role?"
+        );
+    }
+</script>
 
 </body>
-
 </html>

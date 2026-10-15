@@ -256,7 +256,82 @@ public class UserDAO {
 
         return null;
     }
+// =========================================================
+// GET USER BY EMAIL FOR LOGIN
+// =========================================================
 
+public User getUserByEmailForLogin(String email)
+        throws SQLException {
+
+    String sql = """
+            SELECT TOP 1
+                u.user_id,
+                u.full_name,
+                u.email,
+                u.password_hash,
+                u.phone,
+                u.status,
+                r.role_id,
+                r.role_name
+            FROM users u
+            INNER JOIN user_roles ur
+                ON u.user_id = ur.user_id
+            INNER JOIN roles r
+                ON ur.role_id = r.role_id
+            WHERE u.email = ?
+            ORDER BY r.role_id
+            """;
+
+    try (Connection conn = DBConnection.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setString(1, email);
+
+        try (ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+
+                User user = new User();
+
+                user.setUserID(
+                        rs.getInt("user_id")
+                );
+
+                user.setFullName(
+                        rs.getString("full_name")
+                );
+
+                user.setEmail(
+                        rs.getString("email")
+                );
+
+                user.setPasswordHash(
+                        rs.getString("password_hash")
+                );
+
+                user.setPhone(
+                        rs.getString("phone")
+                );
+
+                user.setRoleID(
+                        rs.getInt("role_id")
+                );
+
+                user.setRoleName(
+                        rs.getString("role_name")
+                );
+
+                user.setStatus(
+                        rs.getString("status")
+                );
+
+                return user;
+            }
+        }
+    }
+
+    return null;
+}
 
     // =========================================================
     // LOGIN

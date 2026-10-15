@@ -61,30 +61,34 @@ public class UserService {
     // LOGIN
     // =========================================================
 
-    public User getUserByLogin(
-            String email,
-            String password)
-            throws SQLException {
+    // =========================================================
+// LOGIN
+// =========================================================
 
-        User user =
-                userDAO.getUserByEmail(email);
+public User getUserByLogin(
+        String email,
+        String password)
+        throws SQLException {
 
-        // Account not found
-        if (user == null) {
-            return null;
-        }
+    // Get account including locked accounts
+    User user =
+            userDAO.getUserByEmailForLogin(email);
 
-        // Check password
-        if (BCrypt.checkpw(
-                password,
-                user.getPasswordHash())) {
+    // Account not found
+    if (user == null) {
+        return null;
+    }
 
-            return user;
-        }
+    // Check password
+    if (!BCrypt.checkpw(
+            password,
+            user.getPasswordHash())) {
 
         return null;
     }
 
+    return user;
+}
 
     // =========================================================
     // GET USER BY EMAIL

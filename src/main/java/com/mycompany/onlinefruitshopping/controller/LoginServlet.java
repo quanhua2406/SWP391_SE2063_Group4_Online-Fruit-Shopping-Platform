@@ -32,7 +32,8 @@ public class LoginServlet extends HttpServlet {
         // redirect to home
         HttpSession session = request.getSession(false);
 
-        if (session != null && session.getAttribute("user") != null) {
+        if (session != null
+                && session.getAttribute("user") != null) {
 
             response.sendRedirect(
                     request.getContextPath() + "/home"
@@ -66,7 +67,6 @@ public class LoginServlet extends HttpServlet {
         String email = request.getParameter("email");
         String password = request.getParameter("password");
 
-
         // Handle null
         if (email == null) {
             email = "";
@@ -75,7 +75,6 @@ public class LoginServlet extends HttpServlet {
         if (password == null) {
             password = "";
         }
-
 
         // Remove spaces from email
         email = email.trim();
@@ -192,12 +191,36 @@ public class LoginServlet extends HttpServlet {
 
 
             // =================================================
+            // CHECK ACCOUNT STATUS
+            // =================================================
+
+            if ("locked".equalsIgnoreCase(
+                    user.getStatus())) {
+
+                request.setAttribute(
+                        "error",
+                        "Your account has been blocked."
+                );
+
+                request.setAttribute(
+                        "email",
+                        email
+                );
+
+                request.getRequestDispatcher(
+                        "/login.jsp"
+                ).forward(request, response);
+
+                return;
+            }
+
+
+            // =================================================
             // LOGIN SUCCESS
             // =================================================
 
             HttpSession session =
                     request.getSession(true);
-
 
             // Store user
             session.setAttribute(
@@ -205,13 +228,11 @@ public class LoginServlet extends HttpServlet {
                     user
             );
 
-
             // Store role
             session.setAttribute(
                     "roleName",
                     user.getRoleName()
             );
-
 
             // Redirect to home
             response.sendRedirect(
