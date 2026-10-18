@@ -31,6 +31,7 @@ public class Subscription implements Serializable {
     private boolean    is_custom;            // 0 = combo có sẵn, 1 = custom
     private BigDecimal price_snapshot;       // giá gói lúc đăng ký
     private Date       end_date;             // ngày kết thúc kỳ gói
+    private String     notes;                // ghi chú & tùy chọn giao hàng chi tiết
 
     // Trường phụ (JOIN để hiển thị trên UI)
     private String     planName;
@@ -147,6 +148,14 @@ public class Subscription implements Serializable {
 
     public void setEnd_date(Date end_date) {
         this.end_date = end_date;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
     }
 
     // ── Getters & Setters Display ─────────────────────────────────────────

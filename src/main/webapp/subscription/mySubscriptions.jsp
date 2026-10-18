@@ -155,6 +155,16 @@
                                 </c:choose>
                             </div>
                         </div>
+
+                        <!-- Customer preferences & notes -->
+                        <c:if test="${not empty s.notes}">
+                            <div style="margin-top:12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; font-size:0.83rem; color:#334155;">
+                                <div style="font-weight:700; color:#0f172a; margin-bottom:4px; display:flex; align-items:center; gap:5px;">
+                                    <span>📋</span> Tùy chọn & Ghi chú đã đăng ký:
+                                </div>
+                                <div style="white-space:pre-line; line-height:1.5;"><c:out value="${s.notes}"/></div>
+                            </div>
+                        </c:if>
                     </div>
 
                     <!-- Middle: Schedule Timeline Box -->

@@ -173,6 +173,7 @@ public class ShopOwnerPlanServlet extends HttpServlet {
         SubscriptionService.ServiceResult<Integer> result = subscriptionService.createPlan(plan, items);
         if (!result.isSuccess()) {
             req.setAttribute("availableVariants", subscriptionService.getAvailableVariantsByShop(shopId));
+            plan.setItems(items);
             req.setAttribute("plan",   plan);
             req.setAttribute("mode",   "create");
             req.setAttribute("errors", result.getErrors());
@@ -257,8 +258,18 @@ public class ShopOwnerPlanServlet extends HttpServlet {
         p.setCreatedBy(userId);
         p.setName(trim(req.getParameter("name")));
         p.setDescription(trim(req.getParameter("description")));
-        p.setBillingCycle(trim(req.getParameter("billingCycle")));
-        p.setDurationDays(parseSafe(req.getParameter("durationDays"), 0));
+        String cycle = trim(req.getParameter("billingCycle"));
+        p.setBillingCycle(cycle);
+        int durationDays = parseSafe(req.getParameter("durationDays"), 0);
+        if (durationDays <= 0 && cycle != null) {
+            switch (cycle.toLowerCase()) {
+                case "weekly": durationDays = 7; break;
+                case "quarterly": durationDays = 90; break;
+                case "yearly": durationDays = 365; break;
+                default: durationDays = 30; break;
+            }
+        }
+        p.setDurationDays(durationDays);
         p.setBenefits(trim(req.getParameter("benefits")));
         p.setStatus(trim(req.getParameter("status")));
 
@@ -278,6 +289,7 @@ public class ShopOwnerPlanServlet extends HttpServlet {
         if (variantIds == null) return items;
         for (int i = 0; i < variantIds.length; i++) {
             try {
+                if (variantIds[i] == null || variantIds[i].trim().isEmpty()) continue;
                 int vid = Integer.parseInt(variantIds[i].trim());
                 int qty = (quantities != null && i < quantities.length)
                         ? parseSafe(quantities[i], 1) : 1;

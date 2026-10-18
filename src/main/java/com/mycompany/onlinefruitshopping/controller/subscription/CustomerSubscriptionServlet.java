@@ -215,7 +215,31 @@ public class CustomerSubscriptionServlet extends HttpServlet {
 
         int planId = parseSafeInt(request.getParameter("planId"), -1);
         String deliveryDateStr = trim(request.getParameter("deliveryDate"));
-        String notes = trim(request.getParameter("notes"));
+        String deliveryTimeSlot = trim(request.getParameter("deliveryTimeSlot"));
+        String ripenessPreference = trim(request.getParameter("ripenessPreference"));
+        String fruitPreferences = trim(request.getParameter("fruitPreferences"));
+        String backupPhone = trim(request.getParameter("backupPhone"));
+        String rawNotes = trim(request.getParameter("notes"));
+
+        // Tổng hợp ghi chú chi tiết
+        StringBuilder sbNotes = new StringBuilder();
+        if (deliveryTimeSlot != null && !deliveryTimeSlot.isEmpty()) {
+            sbNotes.append("⏰ Khung giờ: ").append(deliveryTimeSlot).append("\n");
+        }
+        if (ripenessPreference != null && !ripenessPreference.isEmpty()) {
+            sbNotes.append("🥑 Độ chín: ").append(ripenessPreference).append("\n");
+        }
+        if (fruitPreferences != null && !fruitPreferences.isEmpty()) {
+            sbNotes.append("🚫 Dị ứng/Tránh: ").append(fruitPreferences).append("\n");
+        }
+        if (backupPhone != null && !backupPhone.isEmpty()) {
+            sbNotes.append("📞 SĐT phụ: ").append(backupPhone).append("\n");
+        }
+        if (rawNotes != null && !rawNotes.isEmpty()) {
+            sbNotes.append("📝 Ghi chú: ").append(rawNotes);
+        }
+        String combinedNotes = sbNotes.toString().trim();
+        if (combinedNotes.isEmpty()) combinedNotes = null;
 
         // Lưu địa chỉ mới nếu người dùng nhập trực tiếp (khi chưa có sẵn trong sổ địa chỉ)
         String newAddressLine = trim(request.getParameter("addressLine"));
@@ -249,7 +273,7 @@ public class CustomerSubscriptionServlet extends HttpServlet {
 
         // Gọi service xử lý toàn bộ logic nghiệp vụ
         SubscriptionService.ServiceResult<Integer> result =
-                subscriptionService.subscribeToComboPlan(user.getUserID(), planId, firstDeliveryDate, notes);
+                subscriptionService.subscribeToComboPlan(user.getUserID(), planId, firstDeliveryDate, combinedNotes);
 
         if (result.isSuccess()) {
             session.setAttribute("toastSuccess", result.getMessage());
@@ -278,7 +302,11 @@ public class CustomerSubscriptionServlet extends HttpServlet {
             request.setAttribute("defaultDate", defaultDateStr);
             request.setAttribute("minDate", minDateStr);
             request.setAttribute("selectedDate", deliveryDateStr);
-            request.setAttribute("notes", notes);
+            request.setAttribute("selectedTimeSlot", deliveryTimeSlot);
+            request.setAttribute("selectedRipeness", ripenessPreference);
+            request.setAttribute("fruitPreferences", fruitPreferences);
+            request.setAttribute("backupPhone", backupPhone);
+            request.setAttribute("notes", rawNotes);
             request.getRequestDispatcher("/subscription/subscribeCheckout.jsp").forward(request, response);
         }
     }

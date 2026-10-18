@@ -14,7 +14,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -205,10 +207,21 @@ public class SubscriptionService {
 
         if (!SubscriptionPlan.isValidCycle(p.getBillingCycle())) {
             errors.add("Chu kỳ thanh toán không hợp lệ (weekly, monthly, quarterly, yearly).");
-        }
-
-        if (p.getDurationDays() <= 0) {
-            errors.add("Số ngày hiệu lực phải lớn hơn 0.");
+        } else {
+            // Kiểm tra tính nhất quán giữa chu kỳ thanh toán và thời hạn hiệu lực (durationDays)
+            String cycle = p.getBillingCycle().toLowerCase().trim();
+            int days = p.getDurationDays();
+            if (days <= 0) {
+                errors.add("Số ngày hiệu lực phải lớn hơn 0.");
+            } else if ("weekly".equals(cycle) && days != 7) {
+                errors.add("Gói chu kỳ 'Hàng tuần' phải có thời hạn hiệu lực là 7 ngày (hiện tại: " + days + " ngày).");
+            } else if ("monthly".equals(cycle) && (days < 28 || days > 31)) {
+                errors.add("Gói chu kỳ 'Hàng tháng' phải có thời hạn hiệu lực khoảng 30 ngày (28-31 ngày, hiện tại: " + days + " ngày).");
+            } else if ("quarterly".equals(cycle) && (days < 89 || days > 93)) {
+                errors.add("Gói chu kỳ 'Hàng quý' phải có thời hạn hiệu lực khoảng 90 ngày (hiện tại: " + days + " ngày).");
+            } else if ("yearly".equals(cycle) && (days < 365 || days > 366)) {
+                errors.add("Gói chu kỳ 'Hàng năm' phải có thời hạn hiệu lực là 365 ngày (hiện tại: " + days + " ngày).");
+            }
         }
 
         String status = p.getStatus();
@@ -217,6 +230,46 @@ public class SubscriptionService {
                     !SubscriptionPlan.STATUS_ACTIVE.equals(status) &&
                     !SubscriptionPlan.STATUS_INACTIVE.equals(status)) {
                 errors.add("Trạng thái gói không hợp lệ (draft, active, inactive).");
+            }
+        }
+
+        return errors;
+    }
+
+    /**
+     * Kiểm tra tính hợp lệ của danh sách biến thể sản phẩm (items) trong gói đăng ký:
+     * 1. Gói phải có ít nhất 1 biến thể sản phẩm.
+     * 2. Số lượng từng biến thể phải > 0.
+     * 3. Không được chọn trùng biến thể trong cùng một gói.
+     * 4. Toàn bộ biến thể phải thuộc quyền quản lý của shop (shopId) và đang active/published.
+     */
+    public List<String> validatePlanItems(int shopId, List<SubscriptionPlanItem> items) {
+        List<String> errors = new ArrayList<>();
+        if (items == null || items.isEmpty()) {
+            errors.add("Gói đăng ký định kỳ phải chứa ít nhất 1 biến thể sản phẩm.");
+            return errors;
+        }
+
+        // Lấy danh sách các biến thể hợp lệ hiện có của shop
+        List<SubscriptionPlanItem> availableList = planDAO.getAvailableVariantsByShop(shopId);
+        Set<Integer> validVariantIds = new HashSet<>();
+        for (SubscriptionPlanItem v : availableList) {
+            validVariantIds.add(v.getVariantId());
+        }
+
+        Set<Integer> seenVariantIds = new HashSet<>();
+        for (SubscriptionPlanItem item : items) {
+            if (item.getQuantity() <= 0) {
+                errors.add("Số lượng sản phẩm trong combo phải lớn hơn 0.");
+            }
+            if (seenVariantIds.contains(item.getVariantId())) {
+                errors.add("Biến thể ID #" + item.getVariantId() + " bị chọn trùng lặp trong cùng một gói.");
+            } else {
+                seenVariantIds.add(item.getVariantId());
+            }
+
+            if (!validVariantIds.contains(item.getVariantId())) {
+                errors.add("Biến thể ID #" + item.getVariantId() + " không tồn tại, đã ngừng kinh doanh hoặc không thuộc cửa hàng của bạn.");
             }
         }
 
@@ -232,6 +285,7 @@ public class SubscriptionService {
      */
     public ServiceResult<Integer> createPlan(SubscriptionPlan plan, List<SubscriptionPlanItem> items) {
         List<String> errors = validatePlan(plan);
+        errors.addAll(validatePlanItems(plan.getShopId(), items));
         if (!errors.isEmpty()) {
             return ServiceResult.fail("Dữ liệu nhập vào chưa hợp lệ.", errors);
         }
@@ -241,12 +295,12 @@ public class SubscriptionService {
             return ServiceResult.fail("Lỗi hệ thống: Không thể tạo gói đăng ký vào cơ sở dữ liệu.");
         }
 
-        // Lưu danh sách sản phẩm combo nếu có
-        if (items != null && !items.isEmpty()) {
-            boolean itemsSaved = planDAO.insertItems(newId, items);
-            if (!itemsSaved) {
-                LOG.log(Level.WARNING, "Không thể lưu sản phẩm combo cho planId: " + newId);
-            }
+        // Lưu danh sách sản phẩm combo
+        boolean itemsSaved = planDAO.insertItems(newId, items);
+        if (!itemsSaved) {
+            LOG.log(Level.WARNING, "Không thể lưu sản phẩm combo cho planId: " + newId);
+            planDAO.softDeletePlan(newId);
+            return ServiceResult.fail("Không thể lưu chi tiết các biến thể sản phẩm trong gói. Vui lòng thử lại.");
         }
 
         return ServiceResult.ok("Tạo gói đăng ký thành công!", newId);
@@ -272,6 +326,7 @@ public class SubscriptionService {
         updatedPlan.setPlanId(planId);
         updatedPlan.setShopId(shopId);
         List<String> errors = validatePlan(updatedPlan);
+        errors.addAll(validatePlanItems(shopId, items));
         if (!errors.isEmpty()) {
             return ServiceResult.fail("Dữ liệu cập nhật chưa hợp lệ.", errors);
         }
@@ -497,6 +552,7 @@ public class SubscriptionService {
         sub.setNext_delivery_date(firstDeliveryDate);
         sub.setEnd_date(endDate);
         sub.setStatus(Subscription.STATUS_ACTIVE);
+        sub.setNotes(notes);
         // Để thỏa mãn FK NOT NULL variant_id trong DB, lấy variant đầu tiên của combo
         sub.setVariant_id(items.get(0).getVariantId());
 

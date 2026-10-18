@@ -502,8 +502,8 @@ public class SubscriptionPlanDAO {
      */
     public int createSubscription(Subscription sub) {
         String sql = "INSERT INTO subscriptions "
-                   + "(user_id, variant_id, frequency, next_delivery_date, status, created_at, plan_id, is_custom, price_snapshot, end_date) "
-                   + "VALUES (?, ?, ?, ?, ?, GETDATE(), ?, ?, ?, ?)";
+                   + "(user_id, variant_id, frequency, next_delivery_date, status, created_at, plan_id, is_custom, price_snapshot, end_date, notes) "
+                   + "VALUES (?, ?, ?, ?, ?, GETDATE(), ?, ?, ?, ?, ?)";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, sub.getUser_id());
@@ -523,6 +523,11 @@ public class SubscriptionPlanDAO {
             } else {
                 ps.setNull(9, Types.DATE);
             }
+            if (sub.getNotes() != null && !sub.getNotes().trim().isEmpty()) {
+                ps.setString(10, sub.getNotes().trim());
+            } else {
+                ps.setNull(10, Types.NVARCHAR);
+            }
 
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
@@ -541,7 +546,7 @@ public class SubscriptionPlanDAO {
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT sub.subscription_id, sub.user_id, sub.variant_id, sub.frequency, ");
         sb.append("       sub.next_delivery_date, sub.status, sub.created_at, sub.plan_id, ");
-        sb.append("       sub.is_custom, sub.price_snapshot, sub.end_date, ");
+        sb.append("       sub.is_custom, sub.price_snapshot, sub.end_date, sub.notes, ");
         sb.append("       sp.name AS plan_name, sp.description AS plan_description, ");
         sb.append("       sp.duration_days, sp.benefits, sh.shop_name, sh.shop_id, ");
         sb.append("       pv.sku AS variant_name, p.product_name ");
@@ -584,7 +589,7 @@ public class SubscriptionPlanDAO {
     public Subscription getCustomerSubscriptionById(int subscriptionId, int userId) {
         String sql = "SELECT sub.subscription_id, sub.user_id, sub.variant_id, sub.frequency, "
                    + "       sub.next_delivery_date, sub.status, sub.created_at, sub.plan_id, "
-                   + "       sub.is_custom, sub.price_snapshot, sub.end_date, "
+                   + "       sub.is_custom, sub.price_snapshot, sub.end_date, sub.notes, "
                    + "       sp.name AS plan_name, sp.description AS plan_description, "
                    + "       sp.duration_days, sp.benefits, sh.shop_name, sh.shop_id, "
                    + "       pv.sku AS variant_name, p.product_name "
@@ -681,6 +686,7 @@ public class SubscriptionPlanDAO {
         s.setIs_custom(rs.getBoolean("is_custom"));
         s.setPrice_snapshot(rs.getBigDecimal("price_snapshot"));
         s.setEnd_date(rs.getDate("end_date"));
+        try { s.setNotes(rs.getString("notes")); } catch (SQLException ignored) {}
 
         // Join fields
         try { s.setPlanName(rs.getString("plan_name")); } catch (SQLException ignored) {}
