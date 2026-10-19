@@ -18,6 +18,13 @@ import java.util.Map;
 
 public class AdminProductDAO {
 
+    /**
+     * Commission used for new products when the form leaves the
+     * field empty. The admin can still change it per product.
+     */
+    public static final BigDecimal DEFAULT_COMMISSION_RATE =
+            new BigDecimal("10");
+
     public List<Map<String, Object>> getAllProducts(
             String keyword) throws SQLException {
 

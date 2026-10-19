@@ -3,10 +3,12 @@ package com.mycompany.onlinefruitshopping.controller.shopowner;
 import com.mycompany.onlinefruitshopping.dao.inventory.InventoryDAO;
 import com.mycompany.onlinefruitshopping.dao.product.ProductDAO;
 import com.mycompany.onlinefruitshopping.model.User;
+import com.mycompany.onlinefruitshopping.service.inventory.LowStockNotifier;
 import com.mycompany.onlinefruitshopping.utils.Filters;
 import com.mycompany.onlinefruitshopping.utils.Page;
 import com.mycompany.onlinefruitshopping.utils.VariantWeights;
 
+import jakarta.mail.MessagingException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -186,6 +188,8 @@ public class StoreOwnerInventoryServlet extends HttpServlet {
                 result = handleRestock(request, userId);
             } else if ("setThreshold".equals(action)) {
                 result = handleSetThreshold(request, userId);
+            } else if ("notifyLowStock".equals(action)) {
+                result = handleNotifyLowStock(user);
             } else {
                 result = handleUpdate(request, userId);
             }
@@ -295,6 +299,30 @@ public class StoreOwnerInventoryServlet extends HttpServlet {
         boolean ok = inventoryDAO.updateLowStockThreshold(userId, threshold);
 
         return ok ? "threshold-saved" : "failed";
+    }
+
+    /**
+     * Sends the low stock alert email to the owner's account
+     * address. {@code notify-none} when nothing is below the
+     * threshold, {@code notify-failed} when the mail could not be
+     * sent (for example when SMTP is not configured).
+     */
+    private String handleNotifyLowStock(User user) {
+
+        try {
+            int reported = LowStockNotifier.sendAlert(
+                    user.getUserID(), user.getEmail(), null);
+
+            return reported > 0 ? "notified" : "notify-none";
+
+        } catch (MessagingException | SQLException e) {
+
+            getServletContext().log(
+                    "Low stock alert failed for owner "
+                            + user.getUserID(), e);
+
+            return "notify-failed";
+        }
     }
 
     // =====================================================

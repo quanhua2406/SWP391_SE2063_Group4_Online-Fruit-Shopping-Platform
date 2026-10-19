@@ -1,5 +1,6 @@
 package com.mycompany.onlinefruitshopping.dao.inventory;
 
+import com.mycompany.onlinefruitshopping.service.inventory.LowStockNotifier;
 import com.mycompany.onlinefruitshopping.utils.DBConnection;
 
 import java.math.BigDecimal;
@@ -806,6 +807,13 @@ public class InventoryDAO {
             }
 
             conn.commit();
+
+            // Best effort: when the deduction pushed a variant
+            // below the shop's safety threshold, the owner gets a
+            // low stock alert email in the background. Failures
+            // here never affect the order itself.
+            LowStockNotifier.sendAlertAsync(userId);
+
             return true;
 
         } catch (SQLException e) {

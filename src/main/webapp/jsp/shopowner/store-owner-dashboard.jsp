@@ -236,7 +236,7 @@
 
                 <p>
                     Set and edit the selling price of every product
-                    variant (kg, box, piece).
+                    variant (package weight in kg).
                 </p>
 
                 <a href="<%= contextPath %>/store-owner/pricing">

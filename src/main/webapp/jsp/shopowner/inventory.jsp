@@ -151,6 +151,13 @@
         messageText = "Stock quantity updated.";
     } else if ("threshold-saved".equals(message)) {
         messageText = "Low stock threshold updated.";
+    } else if ("notified".equals(message)) {
+        messageText = "Low stock alert email sent to your account address.";
+    } else if ("notify-none".equals(message)) {
+        messageText = "Nothing is below the safety threshold - no alert was sent.";
+    } else if ("notify-failed".equals(message)) {
+        level = "error-message";
+        messageText = "The alert email could not be sent. Please try again later.";
     } else if ("duplicate".equals(message)) {
         level = "error-message";
         messageText = "That batch code already exists for this variant.";
@@ -552,6 +559,22 @@
             <button type="submit" class="btn-sm">
                 Save Threshold
             </button>
+
+        </form>
+
+        <form method="post"
+              action="<%= contextPath %>/store-owner/inventory"
+              class="inline-form">
+
+            <input type="hidden" name="action" value="notifyLowStock">
+
+            <button type="submit" class="btn-sm">
+                ✉️ Email Alert
+            </button>
+
+            <span class="hint">
+                Sends the list below to your account email address.
+            </span>
 
         </form>
 

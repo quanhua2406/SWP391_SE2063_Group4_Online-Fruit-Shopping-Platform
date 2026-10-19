@@ -67,7 +67,7 @@ public class AdminProductAddServlet extends HttpServlet {
             BigDecimal price = new BigDecimal(priceText);
 
             BigDecimal commissionRate = commissionText.isEmpty()
-                    ? BigDecimal.ZERO
+                    ? AdminProductDAO.DEFAULT_COMMISSION_RATE
                     : new BigDecimal(commissionText);
 
             // The first variant of the product: its weight defines the

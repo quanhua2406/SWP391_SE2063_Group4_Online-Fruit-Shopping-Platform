@@ -324,10 +324,11 @@
                            min="0"
                            max="100"
                            step="0.01"
-                           value="0"
+                           value="10"
                            placeholder="e.g. 10">
                     <span class="hint">
-                        Percentage the platform keeps on each sale (0 - 100).
+                        Percentage the platform keeps on each sale
+                        (0 - 100). Defaults to 10 % when left empty.
                     </span>
                 </div>
 

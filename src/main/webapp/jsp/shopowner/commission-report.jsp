@@ -4,8 +4,36 @@
 <%@page import="java.math.BigDecimal"%>
 <%@page import="java.util.Locale"%>
 <%@page import="com.mycompany.onlinefruitshopping.model.Product"%>
+<%@page import="com.mycompany.onlinefruitshopping.utils.QueryUrl"%>
+<%@page import="com.mycompany.onlinefruitshopping.dao.report.CommissionReportDAO"%>
 
 <%!
+    private String statusOptions(String selected) {
+
+        StringBuilder html = new StringBuilder();
+
+        html.append("<option value=\"\"")
+            .append(selected.isEmpty() ? " selected" : "")
+            .append(">Delivered (fee basis)</option>");
+
+        String[][] statuses = {
+            {"pending_confirmation", "Pending confirmation"},
+            {"preparing", "Preparing"},
+            {"shipping", "Shipping"},
+            {"delivered", "Delivered"},
+            {"cancelled", "Cancelled"},
+            {"failed", "Failed"}
+        };
+
+        for (String[] s : statuses) {
+            html.append("<option value=\"").append(s[0]).append('"')
+                .append(s[0].equals(selected) ? " selected" : "")
+                .append('>').append(s[1]).append("</option>");
+        }
+
+        return html.toString();
+    }
+
     private String esc(Object value) {
         if (value == null) {
             return "";
@@ -120,6 +148,24 @@
     Object totalRevenue = request.getAttribute("totalRevenue");
     Object totalFee = request.getAttribute("totalFee");
     Object totalEarning = request.getAttribute("totalEarning");
+    Object serviceFee = request.getAttribute("serviceFee");
+    Object netPayout = request.getAttribute("netPayout");
+
+    @SuppressWarnings("unchecked")
+    Map<String, Object> breakdown =
+            (Map<String, Object>) request.getAttribute("breakdown");
+
+    String from = request.getParameter("from") == null
+            ? ""
+            : request.getParameter("from");
+
+    String to = request.getParameter("to") == null
+            ? ""
+            : request.getParameter("to");
+
+    String status = request.getAttribute("status") == null
+            ? ""
+            : request.getAttribute("status").toString();
 
     boolean hasSales = false;
 
@@ -193,10 +239,39 @@
 
     <p class="action-row">
         <a class="btn-primary"
-           href="<%= contextPath %>/store-owner/commission-report?format=csv">
+           href="<%= QueryUrl.keep(request, contextPath + "/store-owner/commission-report", "from", "to", "status") %>format=csv">
             ⬇️ Export CSV
         </a>
     </p>
+
+    <!-- ==================== REPORT FILTERS ==================== -->
+
+    <form method="get"
+          action="<%= contextPath %>/store-owner/commission-report"
+          class="filter-form">
+
+        <label for="from">From</label>
+
+        <input class="filter-input" type="date" id="from"
+               name="from" value="<%= esc(from) %>">
+
+        <label for="to">To</label>
+
+        <input class="filter-input" type="date" id="to"
+               name="to" value="<%= esc(to) %>">
+
+        <label for="status">Order Status</label>
+
+        <select class="filter-input" id="status" name="status">
+            <%= statusOptions(status) %>
+        </select>
+
+        <button type="submit" class="btn-sm">Apply</button>
+
+        <a class="filter-clear"
+           href="<%= contextPath %>/store-owner/commission-report">Clear</a>
+
+    </form>
 
     <!-- ==================== SUMMARY ==================== -->
 
@@ -227,6 +302,67 @@
         </div>
 
     <% } %>
+
+    <!-- ==================== FEE BREAKDOWN ==================== -->
+
+    <div class="panel">
+
+        <h2>🧾 Fee Breakdown</h2>
+
+        <p class="panel-hint">
+            Settlement for the selected period. Commission is
+            counted on <em>delivered</em> orders only; cancelled and
+            failed orders are reported as refunds. The discount line
+            compares the sold price with the current listed price.
+        </p>
+
+        <div class="table-scroll">
+
+            <table class="data-table">
+
+                <thead>
+                    <tr>
+                        <th>Line</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr>
+                        <td>Gross sales (all orders in period)</td>
+                        <td><%= money(breakdown == null ? null : breakdown.get("gross_sales")) %></td>
+                    </tr>
+                    <tr>
+                        <td>Promotional discount (&minus;)</td>
+                        <td><%= money(breakdown == null ? null : breakdown.get("promotional_discount")) %></td>
+                    </tr>
+                    <tr>
+                        <td>Refunded / cancelled orders</td>
+                        <td><%= money(breakdown == null ? null : breakdown.get("refunds")) %></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Paid revenue (commission basis)</strong></td>
+                        <td><strong><%= money(totalRevenue) %></strong></td>
+                    </tr>
+                    <tr>
+                        <td>Service fee (<%= CommissionReportDAO.SERVICE_FEE_RATE.toPlainString() %> %)</td>
+                        <td><%= money(serviceFee) %></td>
+                    </tr>
+                    <tr>
+                        <td>Platform commission (per product rate)</td>
+                        <td><%= money(totalFee) %></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Net payout to your shop</strong></td>
+                        <td><strong><%= money(netPayout) %></strong></td>
+                    </tr>
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
 
     <!-- ==================== FEE BY PRODUCT ==================== -->
 
@@ -361,10 +497,10 @@
         <h2>🚚 Fee by Order Status</h2>
 
         <p class="panel-hint">
-            Fee counts every order except
-            <em>cancelled</em>/<em>failed</em>. Delivered orders are
-            the money actually due; the other statuses are still
-            being processed.
+            Commission is counted on <em>delivered</em> orders —
+            the money actually due. Every other status is listed
+            here for reference; use the status filter above to
+            inspect a single status.
         </p>
 
         <div class="table-scroll">

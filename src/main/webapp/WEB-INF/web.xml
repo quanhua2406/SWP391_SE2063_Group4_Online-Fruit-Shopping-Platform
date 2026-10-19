@@ -11,4 +11,15 @@
         <session-timeout>30</session-timeout>
     </session-config>
 
+    <!-- Friendly error pages instead of the raw stack trace -->
+    <error-page>
+        <error-code>500</error-code>
+        <location>/jsp/system/error-500.jsp</location>
+    </error-page>
+
+    <error-page>
+        <error-code>404</error-code>
+        <location>/jsp/system/error-404.jsp</location>
+    </error-page>
+
 </web-app>

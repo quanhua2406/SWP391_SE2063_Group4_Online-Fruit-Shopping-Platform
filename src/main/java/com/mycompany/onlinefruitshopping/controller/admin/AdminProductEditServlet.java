@@ -88,7 +88,7 @@ public class AdminProductEditServlet extends HttpServlet {
 
         try {
             BigDecimal commissionRate = commissionText.isEmpty()
-                    ? BigDecimal.ZERO
+                    ? AdminProductDAO.DEFAULT_COMMISSION_RATE
                     : new BigDecimal(commissionText);
 
             boolean validStatus = "draft".equals(status)

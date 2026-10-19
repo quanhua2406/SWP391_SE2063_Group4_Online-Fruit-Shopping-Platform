@@ -304,4 +304,139 @@ public class EmailService {
                 "OTP EMAIL SENT SUCCESSFULLY"
         );
     }
+
+    // =====================================================
+    // NOTIFICATION EMAILS (plain text)
+    // =====================================================
+
+    /**
+     * Sends a plain-text notification email, e.g. the low stock
+     * alert. Uses the same {@code mail.properties} account as the
+     * OTP emails.
+     *
+     * @throws MessagingException when the mail is not configured or
+     *         the SMTP server refuses the message
+     */
+    public static void sendTextEmail(String recipientEmail,
+                                     String subject,
+                                     String text)
+            throws MessagingException {
+
+        if (recipientEmail == null || recipientEmail.isBlank()) {
+
+            throw new MessagingException(
+                    "Recipient email is missing."
+            );
+        }
+
+        if (subject == null || subject.isBlank()) {
+
+            throw new MessagingException(
+                    "Subject is missing."
+            );
+        }
+
+        if (text == null || text.isBlank()) {
+
+            throw new MessagingException(
+                    "Email content is missing."
+            );
+        }
+
+        Properties config = loadMailConfig();
+
+        Session session = createSession(config);
+
+        Message message = new MimeMessage(session);
+
+        message.setFrom(new InternetAddress(
+                config.getProperty("mail.username").trim()
+        ));
+
+        message.setRecipient(
+                Message.RecipientType.TO,
+                new InternetAddress(recipientEmail.trim())
+        );
+
+        message.setSubject(subject);
+
+        message.setText(text);
+
+        Transport.send(message);
+    }
+
+    private static Properties loadMailConfig()
+            throws MessagingException {
+
+        Properties config = new Properties();
+
+        try (InputStream input =
+                     EmailService.class
+                             .getClassLoader()
+                             .getResourceAsStream("mail.properties")) {
+
+            if (input == null) {
+                throw new MessagingException(
+                        "mail.properties not found."
+                );
+            }
+
+            config.load(input);
+
+        } catch (IOException e) {
+
+            throw new MessagingException(
+                    "Cannot load mail.properties.",
+                    e
+            );
+        }
+
+        String username = config.getProperty("mail.username");
+        String password = config.getProperty("mail.password");
+
+        if (username == null || username.isBlank()) {
+            throw new MessagingException("mail.username is missing.");
+        }
+
+        if (password == null || password.isBlank()) {
+            throw new MessagingException("mail.password is missing.");
+        }
+
+        return config;
+    }
+
+    private static Session createSession(Properties config) {
+
+        Properties mailProperties = new Properties();
+
+        mailProperties.put("mail.smtp.auth", "true");
+        mailProperties.put("mail.smtp.starttls.enable", "true");
+        mailProperties.put("mail.smtp.host", "smtp.gmail.com");
+        mailProperties.put("mail.smtp.port", "587");
+        mailProperties.put("mail.smtp.connectiontimeout", "10000");
+        mailProperties.put("mail.smtp.timeout", "10000");
+        mailProperties.put("mail.smtp.writetimeout", "10000");
+
+        final String username =
+                config.getProperty("mail.username").trim();
+
+        final String password =
+                config.getProperty("mail.password").trim();
+
+        return Session.getInstance(
+                mailProperties,
+                new Authenticator() {
+
+                    @Override
+                    protected PasswordAuthentication
+                    getPasswordAuthentication() {
+
+                        return new PasswordAuthentication(
+                                username,
+                                password
+                        );
+                    }
+                }
+        );
+    }
 }
