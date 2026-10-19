@@ -583,6 +583,9 @@
                         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
                     </svg>
                     Giỏ hàng
+                    <span id="navCartBadge" style="background: #ef4444; color: #fff; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 9999px; ${sessionScope.cartCount > 0 ? '' : 'display:none;'}">
+                        ${sessionScope.cartCount}
+                    </span>
                 </a>
                 <a href="${pageContext.request.contextPath}/profile">Tài khoản</a>
                 <a href="${pageContext.request.contextPath}/logout" class="logout">Đăng xuất</a>
@@ -925,8 +928,97 @@
     // Buy now action
     function buyNow() {
         const form = document.getElementById('addToCartForm');
-        document.getElementById('formAction').value = 'buyNow';
+        document.getElementById('formAction').value = 'add';
+        let buyNowInput = document.getElementById('buyNowInput');
+        if (!buyNowInput) {
+            buyNowInput = document.createElement('input');
+            buyNowInput.type = 'hidden';
+            buyNowInput.name = 'buyNow';
+            buyNowInput.id = 'buyNowInput';
+            buyNowInput.value = 'true';
+            form.appendChild(buyNowInput);
+        }
         form.submit();
+    }
+
+    // AJAX Add to Cart
+    const cartForm = document.getElementById('addToCartForm');
+    if (cartForm) {
+        cartForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const variantId = document.getElementById('selectedVariantId').value;
+            const qty = document.getElementById('quantityInput').value;
+
+            const formData = new URLSearchParams();
+            formData.append('action', 'add');
+            formData.append('variantId', variantId);
+            formData.append('quantity', qty);
+
+            fetch('${pageContext.request.contextPath}/cart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: formData.toString()
+            })
+            .then(res => res.json())
+            .then(data => {
+                showToast(data.message, data.success);
+                if (data.success && data.cartCount !== undefined) {
+                    updateNavCartBadge(data.cartCount);
+                }
+            })
+            .catch(err => {
+                cartForm.submit();
+            });
+        });
+    }
+
+    function showToast(message, isSuccess) {
+        let toast = document.getElementById('cartToastNotification');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'cartToastNotification';
+            toast.style.position = 'fixed';
+            toast.style.bottom = '28px';
+            toast.style.right = '28px';
+            toast.style.padding = '16px 22px';
+            toast.style.borderRadius = '14px';
+            toast.style.boxShadow = '0 10px 30px rgba(0,0,0,0.18)';
+            toast.style.zIndex = '9999';
+            toast.style.fontWeight = '600';
+            toast.style.fontSize = '14px';
+            toast.style.display = 'flex';
+            toast.style.alignItems = 'center';
+            toast.style.gap = '14px';
+            toast.style.transition = 'all 0.3s ease';
+            document.body.appendChild(toast);
+        }
+
+        toast.style.background = isSuccess ? '#16a34a' : '#ef4444';
+        toast.style.color = '#ffffff';
+        toast.innerHTML = '<span>' + message + '</span>' + 
+            (isSuccess ? '<a href="${pageContext.request.contextPath}/cart" style="color: #ffffff; text-decoration: underline; font-weight: 700; padding-left: 8px; border-left: 1px solid rgba(255,255,255,0.4);">Xem Giỏ Hàng</a>' : '');
+
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateY(0)';
+        toast.style.display = 'flex';
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(10px)';
+            setTimeout(() => { toast.style.display = 'none'; }, 300);
+        }, 4000);
+    }
+
+    function updateNavCartBadge(count) {
+        const badge = document.getElementById('navCartBadge');
+        if (badge) {
+            badge.textContent = count;
+            badge.style.display = count > 0 ? 'inline-block' : 'none';
+        }
     }
 
     // Tab switcher

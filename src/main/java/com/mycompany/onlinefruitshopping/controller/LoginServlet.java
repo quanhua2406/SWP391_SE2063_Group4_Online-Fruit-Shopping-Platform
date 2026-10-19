@@ -216,6 +216,19 @@ public class LoginServlet extends HttpServlet {
                     user.getRoleName()
             );
 
+            // Merge guest session cart into database cart if present
+            try {
+                com.mycompany.onlinefruitshopping.dao.CartDAO cartDAO = new com.mycompany.onlinefruitshopping.dao.CartDAO();
+                @SuppressWarnings("unchecked")
+                java.util.List<com.mycompany.onlinefruitshopping.model.CartItem> guestCart =
+                        (java.util.List<com.mycompany.onlinefruitshopping.model.CartItem>) session.getAttribute("sessionCart");
+                if (guestCart != null && !guestCart.isEmpty()) {
+                    cartDAO.mergeSessionCart(user.getUserID(), guestCart);
+                    session.removeAttribute("sessionCart");
+                }
+                session.setAttribute("cartCount", cartDAO.getCartCount(user.getUserID()));
+            } catch (Exception ignored) {
+            }
 
             // Check redirectAfterLogin if user was previously trying to access checkout or my-subscriptions
             String redirectUrl = (String) session.getAttribute("redirectAfterLogin");
