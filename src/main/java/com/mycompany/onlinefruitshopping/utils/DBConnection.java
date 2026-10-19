@@ -12,7 +12,6 @@ public class DBConnection {
             + "trustServerCertificate=true";
 
     private static final String USER = "sa";
-    private static final String PASSWORD = "123"; /** Mk: 123 Hoặc Passw0rd@123 **/
 
     public static Connection getConnection() throws SQLException {
 
@@ -22,6 +21,10 @@ public class DBConnection {
             throw new SQLException("SQL Server JDBC Driver not found!", e);
         }
 
-        return DriverManager.getConnection(URL, USER, PASSWORD);
+        try {
+            return DriverManager.getConnection(URL, USER, "Passw0rd@123");
+        } catch (SQLException e) {
+            return DriverManager.getConnection(URL, USER, "123");
+        }
     }
 }

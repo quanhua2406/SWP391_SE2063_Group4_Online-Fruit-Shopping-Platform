@@ -116,23 +116,71 @@ input {
 
 .category-bar {
     background: #ffffff;
-    padding: 14px 6%;
+    padding: 12px 6%;
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 40px;
-    border-bottom: 1px solid #edf1eb;
+    gap: 12px;
+    border-bottom: 1px solid #e8eee6;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+.category-bar::-webkit-scrollbar {
+    display: none;
 }
 
 .category-bar a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     text-decoration: none;
-    color: #555;
-    font-size: 15px;
-    transition: 0.2s;
+    color: #475569;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 8px 18px;
+    border-radius: 9999px;
+    font-size: 13.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
 }
 
 .category-bar a:hover {
-    color: #4caf50;
+    color: #15803d;
+    background: #ecfdf5;
+    border-color: #86efac;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(22, 163, 74, 0.12);
+}
+
+.category-bar a.all-fruits-btn {
+    background: #16a34a;
+    color: #ffffff;
+    border-color: #16a34a;
+    box-shadow: 0 2px 6px rgba(22, 163, 74, 0.25);
+}
+
+.category-bar a.all-fruits-btn:hover {
+    background: #15803d;
+    border-color: #15803d;
+    color: #ffffff;
+}
+
+.category-bar a.category-sub-badge {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    color: #92400e;
+    border: 1px solid #fcd34d;
+    font-weight: 700;
+}
+
+.category-bar a.category-sub-badge:hover {
+    background: linear-gradient(135deg, #fde68a, #fcd34d);
+    color: #78350f;
+    border-color: #fbbf24;
+    box-shadow: 0 3px 8px rgba(217, 119, 6, 0.18);
 }
 
 
@@ -1020,9 +1068,9 @@ input {
     }
 
     .category-bar {
-        gap: 18px;
-        flex-wrap: wrap;
-        justify-content: center;
+        gap: 8px;
+        padding: 10px 4%;
+        justify-content: flex-start;
     }
 
     .hero {

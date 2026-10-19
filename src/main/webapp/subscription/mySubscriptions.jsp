@@ -14,26 +14,26 @@
 <!-- Global Header -->
 <header class="cust-navbar">
     <a href="${pageContext.request.contextPath}/home" class="brand">
-        🍊 <span>FreshFruit</span>
+        <span>FreshFruit</span>
     </a>
     <nav class="nav-links">
-        <a href="${pageContext.request.contextPath}/home" class="nav-link">🏠 Trang chủ</a>
-        <a href="${pageContext.request.contextPath}/subscriptions" class="nav-link">📦 Khám phá gói mới</a>
-        <a href="${pageContext.request.contextPath}/my-subscriptions" class="nav-link active">📋 Gói của tôi</a>
-        <a href="${pageContext.request.contextPath}/profile" class="nav-link">👤 ${sessionScope.user.fullName}</a>
+        <a href="${pageContext.request.contextPath}/home" class="nav-link">Trang chủ</a>
+        <a href="${pageContext.request.contextPath}/subscriptions" class="nav-link">Gói combo</a>
+        <a href="${pageContext.request.contextPath}/my-subscriptions" class="nav-link active">Gói của tôi</a>
+        <a href="${pageContext.request.contextPath}/profile" class="nav-link">${sessionScope.user.fullName}</a>
     </nav>
 </header>
 
 <!-- Toast Notifications -->
 <c:if test="${not empty sessionScope.toastSuccess}">
     <div class="toast success" id="toast" style="display:block; animation: slideUpToast 0.3s ease;">
-        ✅ ${sessionScope.toastSuccess}
+        ${sessionScope.toastSuccess}
     </div>
     <c:remove var="toastSuccess" scope="session"/>
 </c:if>
 <c:if test="${not empty sessionScope.toastError}">
     <div class="toast error" id="toast" style="display:block; animation: slideUpToast 0.3s ease;">
-        ⚠️ ${sessionScope.toastError}
+        ${sessionScope.toastError}
     </div>
     <c:remove var="toastError" scope="session"/>
 </c:if>
@@ -88,13 +88,13 @@
             Tất cả (${totalCount})
         </a>
         <a href="?status=active" class="subs-tab ${currentStatus == 'active' ? 'active' : ''}">
-            🟢 Đang hoạt động (${countActive})
+            Đang hoạt động (${countActive})
         </a>
         <a href="?status=paused" class="subs-tab ${currentStatus == 'paused' ? 'active' : ''}">
-            ⏸️ Đang tạm dừng (${countPaused})
+            Đang tạm dừng (${countPaused})
         </a>
         <a href="?status=cancelled" class="subs-tab ${currentStatus == 'cancelled' ? 'active' : ''}">
-            ✖ Đã hủy (${countCancelled})
+            Đã hủy (${countCancelled})
         </a>
     </div>
 
@@ -102,7 +102,10 @@
     <c:choose>
         <c:when test="${empty subscriptions}">
             <div class="cust-empty-state">
-                <div class="icon">📦</div>
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px;">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                </svg>
                 <h3>Chưa có gói đăng ký nào ở mục này</h3>
                 <p>Khám phá các combo trái cây tươi ngon theo tuần hoặc tháng để nhận ưu đãi tiết kiệm tới 25%.</p>
                 <a href="${pageContext.request.contextPath}/subscriptions" class="btn-subscribe-cta">
@@ -118,7 +121,7 @@
                     <div>
                         <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
                             <span class="${s.statusBadgeClass}">${s.statusLabel}</span>
-                            <span class="badge-shop">🏬 ${s.shopName != null ? s.shopName : 'Shop'}</span>
+                            <span class="badge-shop">${s.shopName != null ? s.shopName : 'Shop'}</span>
                             <span style="font-size:0.82rem; color:var(--text-muted);">
                                 Mã đơn: #${s.subscription_id}
                             </span>
@@ -134,7 +137,7 @@
                         <!-- Items in combo -->
                         <div class="combo-items-box" style="margin-bottom:0;">
                             <div class="combo-items-label">
-                                <span>🧺</span> Trái cây nhận mỗi kỳ:
+                                Trái cây nhận mỗi kỳ:
                             </div>
                             <div class="combo-items-list">
                                 <c:choose>
@@ -159,8 +162,8 @@
                         <!-- Customer preferences & notes -->
                         <c:if test="${not empty s.notes}">
                             <div style="margin-top:12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; font-size:0.83rem; color:#334155;">
-                                <div style="font-weight:700; color:#0f172a; margin-bottom:4px; display:flex; align-items:center; gap:5px;">
-                                    <span>📋</span> Tùy chọn & Ghi chú đã đăng ký:
+                                <div style="font-weight:700; color:#0f172a; margin-bottom:4px;">
+                                    Tùy chọn & Ghi chú đã đăng ký:
                                 </div>
                                 <div style="white-space:pre-line; line-height:1.5;"><c:out value="${s.notes}"/></div>
                             </div>
@@ -171,7 +174,7 @@
                     <div>
                         <div class="sub-schedule-box">
                             <div style="font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">
-                                📅 Đợt giao hàng tiếp theo:
+                                Đợt giao hàng tiếp theo:
                             </div>
                             <div class="sub-schedule-date">
                                 <c:choose>
@@ -213,7 +216,7 @@
                                     <input type="hidden" name="action" value="pause"/>
                                     <input type="hidden" name="id" value="${s.subscription_id}"/>
                                     <button type="submit" class="btn-sub-action btn-sub-pause" style="width:100%;">
-                                        ⏸️ Tạm Dừng Gói
+                                        Tạm Dừng Gói
                                     </button>
                                 </form>
 
@@ -223,7 +226,7 @@
                                     <input type="hidden" name="action" value="cancel"/>
                                     <input type="hidden" name="id" value="${s.subscription_id}"/>
                                     <button type="submit" class="btn-sub-action btn-sub-cancel" style="width:100%;">
-                                        ❌ Hủy Gói
+                                        Hủy Gói
                                     </button>
                                 </form>
                             </c:when>
@@ -235,7 +238,7 @@
                                     <input type="hidden" name="action" value="resume"/>
                                     <input type="hidden" name="id" value="${s.subscription_id}"/>
                                     <button type="submit" class="btn-sub-action btn-sub-resume" style="width:100%;">
-                                        ▶️ Tiếp Tục Nhận
+                                        Tiếp Tục Nhận
                                     </button>
                                 </form>
 
@@ -245,7 +248,7 @@
                                     <input type="hidden" name="action" value="cancel"/>
                                     <input type="hidden" name="id" value="${s.subscription_id}"/>
                                     <button type="submit" class="btn-sub-action btn-sub-cancel" style="width:100%;">
-                                        ❌ Hủy Gói
+                                        Hủy Gói
                                     </button>
                                 </form>
                             </c:when>
@@ -258,7 +261,7 @@
                                     <a href="${pageContext.request.contextPath}/subscription/subscribe?planId=${s.plan_id}"
                                        class="btn-sub-action"
                                        style="background:var(--primary-100); color:var(--primary-900); text-decoration:none;">
-                                        🔄 Đăng ký lại
+                                        Đăng ký lại
                                     </a>
                                 </c:if>
                             </c:otherwise>

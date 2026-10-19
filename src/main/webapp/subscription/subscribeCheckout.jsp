@@ -16,16 +16,16 @@
                 <!-- Navigation -->
                 <header class="cust-navbar">
                     <a href="${pageContext.request.contextPath}/home" class="brand">
-                        🍊 <span>FreshFruit</span>
+                        <span>FreshFruit</span>
                     </a>
                     <nav class="nav-links">
                         <a href="${pageContext.request.contextPath}/subscriptions" class="nav-link">← Xem các gói
                             khác</a>
                         <c:if test="${not empty sessionScope.user}">
-                            <a href="${pageContext.request.contextPath}/my-subscriptions" class="nav-link">📋 Gói của
+                            <a href="${pageContext.request.contextPath}/my-subscriptions" class="nav-link">Gói của
                                 tôi</a>
                             <span style="font-size:0.9rem; font-weight:700; color:var(--primary-900);">
-                                👤 ${sessionScope.user.fullName}
+                                ${sessionScope.user.fullName}
                             </span>
                         </c:if>
                     </nav>
@@ -51,7 +51,7 @@
                     <c:if test="${not empty errorMessage}">
                         <div
                             style="background:#fee2e2; border:1px solid #f87171; color:#991b1b; padding:16px 20px; border-radius:12px; margin-bottom:24px; font-weight:600;">
-                            ⚠️ ${errorMessage}
+                            ${errorMessage}
                             <c:if test="${not empty errorList}">
                                 <ul style="margin:8px 0 0; padding-left:20px;">
                                     <c:forEach var="err" items="${errorList}">
@@ -74,7 +74,7 @@
                                 <!-- 1. Chọn ngày giao hàng đầu tiên -->
                                 <div class="checkout-card">
                                     <h3 class="checkout-card-title">
-                                        <span>📅</span> 1. Lịch giao hàng định kỳ
+                                        1. Lịch giao hàng định kỳ
                                     </h3>
                                     <div class="date-picker-box">
                                         <label for="deliveryDate">Ngày nhận hàng đợt đầu tiên:</label>
@@ -82,7 +82,7 @@
                                             value="${not empty selectedDate ? selectedDate : defaultDate}"
                                             min="${minDate}" required />
                                         <div style="font-size:0.84rem; color:var(--text-muted); margin-top:6px;">
-                                            💡 Các đợt giao tiếp theo sẽ tự động diễn ra theo chu kỳ
+                                            Các đợt giao tiếp theo sẽ tự động diễn ra theo chu kỳ
                                             <strong>${plan.billingCycleLabel}</strong>.
                                             Bạn có thể tạm dừng hoặc thay đổi lịch bất cứ lúc nào.
                                         </div>
@@ -92,7 +92,7 @@
                                 <!-- 2. Địa chỉ nhận hàng -->
                                 <div class="checkout-card">
                                     <h3 class="checkout-card-title">
-                                        <span>📍</span> 2. Địa chỉ nhận hàng
+                                        2. Địa chỉ nhận hàng
                                     </h3>
 
                                     <c:choose>
@@ -167,7 +167,7 @@
                                 <!-- 3. Ghi chú giao hàng -->
                                 <div class="checkout-card">
                                     <h3 class="checkout-card-title">
-                                        <span>📝</span> 3. Ghi chú cho tài xế
+                                        3. Ghi chú cho tài xế
                                     </h3>
                                     <textarea name="notes" rows="3"
                                         placeholder="Vd: Vui lòng bấm chuông cửa hoặc giao trong giờ hành chính..."
@@ -177,12 +177,12 @@
                                 <!-- 4. Phương thức thanh toán -->
                                 <div class="checkout-card">
                                     <h3 class="checkout-card-title">
-                                        <span>💳</span> 4. Phương thức thanh toán
+                                        4. Phương thức thanh toán
                                     </h3>
                                     <label class="address-item-radio selected" style="margin-bottom:8px;">
                                         <input type="radio" name="paymentMethod" value="COD" checked />
                                         <div class="address-info">
-                                            <strong>💵 Thanh toán khi nhận hàng mỗi kỳ (COD)</strong>
+                                            <strong>Thanh toán khi nhận hàng mỗi kỳ (COD)</strong>
                                             <p>Shipper giao trái cây đến nhà, bạn kiểm tra độ tươi ngon rồi mới thanh
                                                 toán tiền mặt hoặc quét mã QR.</p>
                                         </div>
@@ -190,9 +190,9 @@
                                     <label class="address-item-radio" style="opacity:0.75;">
                                         <input type="radio" name="paymentMethod" value="VNPAY" checked />
                                         <div class="address-info">
-                                            <strong>💳 Ví điện tử / Thẻ ngân hàng (Đang thử nghiệm)</strong>
+                                            <strong>Ví điện tử / Thẻ ngân hàng (Đang thử nghiệm)</strong>
                                             <p>Tính năng trừ tiền tự động mỗi kỳ đang được kết nối với cổng thanh toán.
-                                            </p>
+                                             </p>
                                         </div>
                                     </label>
                                 </div>
@@ -214,7 +214,7 @@
                                 <!-- Submit Button -->
                                 <button type="submit" class="btn-subscribe-cta"
                                     style="width:100%; justify-content:center; padding:16px; font-size:1.1rem; border-radius:12px;">
-                                    🔒 Xác Nhận Đăng Ký Gói (${plan.billingCycleLabel})
+                                    Xác Nhận Đăng Ký Gói (${plan.billingCycleLabel})
                                 </button>
                             </form>
                         </div>
@@ -225,7 +225,7 @@
                                 <div class="summary-plan-header">
                                     <div
                                         style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                                        <span class="badge-shop">🏬 ${plan.shopName}</span>
+                                        <span class="badge-shop">${plan.shopName}</span>
                                         <c:if test="${savings != null and savings.savingsPercent > 0}">
                                             <span class="badge-save">Tiết kiệm ${savings.savingsPercent}%</span>
                                         </c:if>
@@ -240,7 +240,7 @@
                                 <div style="margin-bottom:18px;">
                                     <div
                                         style="font-size:0.8rem; font-weight:700; color:var(--primary-800); text-transform:uppercase; margin-bottom:8px;">
-                                        🧺 Danh sách trái cây trong mỗi kỳ giao:
+                                        Danh sách trái cây trong mỗi kỳ giao:
                                     </div>
                                     <div style="display:flex; flex-direction:column; gap:8px;">
                                         <c:forEach var="item" items="${plan.items}">
@@ -291,7 +291,7 @@
                                 <!-- Customer Protection Guarantee -->
                                 <div
                                     style="margin-top:20px; background:#F1F8F2; padding:14px; border-radius:10px; font-size:0.82rem; color:var(--primary-900); line-height:1.45;">
-                                    🛡️ <strong>Cam kết chất lượng:</strong> 100% trái cây thu hoạch loại 1. Được phép
+                                    <strong>Cam kết chất lượng:</strong> 100% trái cây thu hoạch loại 1. Được phép
                                     kiểm tra chất lượng khi nhận hàng và đổi trả miễn phí trong 24 giờ.
                                 </div>
                             </div>
