@@ -19,8 +19,63 @@ public class EmailService {
         // Prevent object creation
     }
 
+    /**
+     * OTP used while creating a new account.
+     */
+    public static void sendRegistrationOTP(
+            String recipientEmail,
+            String otp) throws MessagingException {
+
+        sendOTP(
+                recipientEmail,
+                otp,
+                "FreshFruit - Account Verification OTP",
+                "Your FreshFruit account verification OTP is:",
+                "If you did not try to create a FreshFruit "
+                        + "account, please ignore this email."
+        );
+    }
+
+    /**
+     * OTP used to reset a forgotten password.
+     */
+    public static void sendPasswordResetOTP(
+            String recipientEmail,
+            String otp) throws MessagingException {
+
+        sendOTP(
+                recipientEmail,
+                otp,
+                "FreshFruit - Password Reset OTP",
+                "Your FreshFruit password reset OTP is:",
+                "If you did not request a password reset, "
+                        + "please ignore this email."
+        );
+    }
+
+    /**
+     * Sends an OTP email. Kept public for backwards
+     * compatibility; prefer the two named methods above.
+     */
     public static void sendOTP(String recipientEmail, String otp)
             throws MessagingException {
+
+        sendOTP(
+                recipientEmail,
+                otp,
+                "FreshFruit - Password Reset OTP",
+                "Your FreshFruit password reset OTP is:",
+                "If you did not request a password reset, "
+                        + "please ignore this email."
+        );
+    }
+
+    private static void sendOTP(
+            String recipientEmail,
+            String otp,
+            String subject,
+            String intro,
+            String footer) throws MessagingException {
 
         // =====================================================
         // 1. Load mail.properties from src/main/resources
@@ -222,9 +277,7 @@ public class EmailService {
         );
 
         // Subject
-        message.setSubject(
-                "FreshFruit - Password Reset OTP"
-        );
+        message.setSubject(subject);
 
         // =====================================================
         // 7. Email content
@@ -232,12 +285,11 @@ public class EmailService {
 
         String content =
                 "Hello,\n\n"
-                + "Your FreshFruit password reset OTP is:\n\n"
+                + intro + "\n\n"
                 + finalOtp
                 + "\n\n"
                 + "This OTP will expire in 5 minutes.\n\n"
-                + "If you did not request a password reset, "
-                + "please ignore this email.\n\n"
+                + footer + "\n\n"
                 + "FreshFruit Team";
 
         message.setText(content);

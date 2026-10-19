@@ -18,6 +18,7 @@ public class Product {
     private String packagingType;    // e.g. "Túi 1kg", "Hộp 500g"
     private String sku;
     private double stock;
+    private double commissionRate;   // platform commission % (0 - 100)
     private String imageUrl;
     private Timestamp createdAt;
 
@@ -153,6 +154,33 @@ public class Product {
 
     public void setStock(double stock) {
         this.stock = stock;
+    }
+
+    /**
+     * Platform commission percentage (0 - 100) kept on each sale
+     * of this product.
+     */
+    public double getCommissionRate() {
+        return commissionRate;
+    }
+
+    public void setCommissionRate(double commissionRate) {
+        this.commissionRate = commissionRate;
+    }
+
+    /**
+     * Amount the platform keeps per unit, based on the price and
+     * the commission rate.
+     */
+    public double getPlatformCommission() {
+        return price * commissionRate / 100.0;
+    }
+
+    /**
+     * Amount the shop owner receives per unit after commission.
+     */
+    public double getShopEarning() {
+        return price - getPlatformCommission();
     }
 
     public String getImageUrl() {

@@ -6,19 +6,6 @@
                              https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
          version="6.0">
 
-    <!-- Admin Review Request Servlet -->
-    <servlet>
-        <servlet-name>AdminReviewRequestServlet</servlet-name>
-        <servlet-class>
-            com.mycompany.onlinefruitshopping.controller.AdminReviewRequestServlet
-        </servlet-class>
-    </servlet>
-
-    <servlet-mapping>
-        <servlet-name>AdminReviewRequestServlet</servlet-name>
-        <url-pattern>/admin/review-requests</url-pattern>
-    </servlet-mapping>
-
     <!-- Session Configuration -->
     <session-config>
         <session-timeout>30</session-timeout>

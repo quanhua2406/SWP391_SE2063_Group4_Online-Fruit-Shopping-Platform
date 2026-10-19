@@ -1,4 +1,4 @@
-<%@page import="com.mycompany.onlinefruitshopping.dao.AdminUserDAO.UserInfo"%>
+<%@page import="com.mycompany.onlinefruitshopping.dao.user.AdminUserDAO.UserInfo"%>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 
 <%

@@ -9,21 +9,26 @@ public class ValidationUtil {
     }
 
     /**
-     * Validate Gmail
+     * Validate email address.
+     *
+     * Rules:
+     * - Required
+     * - Any domain is accepted (gmail.com, fpt.edu.vn, ...)
+     * - Same rule used by registration and forgot-password
      */
-   public static boolean isValidEmail(String email) {
+    public static boolean isValidEmail(String email) {
 
-    if (email == null || email.isBlank()) {
-        return false;
+        if (email == null || email.isBlank()) {
+            return false;
+        }
+
+        String value = email.trim();
+
+        String emailRegex =
+                "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
+
+        return Pattern.matches(emailRegex, value);
     }
-
-    String value = email.trim().toLowerCase();
-
-    String emailRegex =
-            "^[A-Za-z0-9._%+-]+@(gmail\\.com|fpt\\.edu\\.vn)$";
-
-    return Pattern.matches(emailRegex, value);
-}
 
     /**
      * Validate Full Name
@@ -127,5 +132,25 @@ public class ValidationUtil {
         String value = address.trim();
 
         return value.length() <= 255;
+    }
+
+    /**
+     * Normalizes a role name so that values like
+     * {@code ShopOwner}, {@code SHOP_OWNER} and {@code Shop Owner}
+     * all become {@code SHOPOWNER}.
+     *
+     * @return an upper-case role name without spaces or
+     *         underscores, or {@code ""} when {@code role} is null.
+     */
+    public static String normalizeRoleName(String role) {
+
+        if (role == null) {
+            return "";
+        }
+
+        return role.trim()
+                .toUpperCase(java.util.Locale.ROOT)
+                .replace("_", "")
+                .replace(" ", "");
     }
 }
