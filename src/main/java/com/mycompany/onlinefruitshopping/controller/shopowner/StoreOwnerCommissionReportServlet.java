@@ -80,6 +80,12 @@ public class StoreOwnerCommissionReportServlet extends HttpServlet {
             request.setAttribute("to", to);
             request.setAttribute("status", status);
 
+            String section =
+                    normalizeSection(request.getParameter("section"),
+                            "overview", "products", "schedule",
+                            "rates", "status");
+            request.setAttribute("section", section);
+
             List<Map<String, Object>> productReport =
                     reportDAO.getProductReportForOwner(
                             userId, from, to, status);
@@ -232,6 +238,18 @@ public class StoreOwnerCommissionReportServlet extends HttpServlet {
         }
 
         return text;
+    }
+
+    private static String normalizeSection(String value, String... allowed) {
+        String section = value == null ? "" : value.trim().toLowerCase();
+
+        for (String s : allowed) {
+            if (s.equals(section)) {
+                return section;
+            }
+        }
+
+        return allowed[0];
     }
 
     private static BigDecimal decimal(Object value) {

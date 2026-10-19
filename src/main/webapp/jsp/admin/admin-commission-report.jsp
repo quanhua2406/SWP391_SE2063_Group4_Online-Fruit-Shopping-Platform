@@ -25,12 +25,31 @@
         };
 
         for (String[] s : statuses) {
-            html.append("<option value=\"").append(s[0]).append('"')
+            html.append("<option value=\"").append(s[0]).append("\"")
                 .append(s[0].equals(selected) ? " selected" : "")
-                .append('>').append(s[1]).append("</option>");
+                .append(">").append(s[1]).append("</option>");
         }
 
         return html.toString();
+    }
+
+    private String secUrl(String base, String section, String from, String to, String status) {
+
+        StringBuilder u = new StringBuilder(base).append("?section=").append(section);
+
+        if (from != null && !from.isEmpty()) {
+            u.append("&from=").append(from);
+        }
+
+        if (to != null && !to.isEmpty()) {
+            u.append("&to=").append(to);
+        }
+
+        if (status != null && !status.isEmpty()) {
+            u.append("&status=").append(status);
+        }
+
+        return u.toString();
     }
 
     private String esc(Object value) {
@@ -192,11 +211,45 @@
         </a>
     </p>
 
+    <%
+        String section = request.getAttribute("section") == null
+                ? "overview"
+                : request.getAttribute("section").toString();
+
+        String reportBase = contextPath + "/admin/commission-report";
+        String secOverview = secUrl(reportBase, "overview", from, to, status);
+        String secShops    = secUrl(reportBase, "shops", from, to, status);
+        String secRates    = secUrl(reportBase, "rates", from, to, status);
+    %>
+
+    <!-- Section navigation: one small page per report view -->
+
+    <nav class="section-nav">
+
+        <a class="<%= "overview".equals(section) ? "active" : "" %>"
+           href="<%= secOverview %>">
+            📊 Overview
+        </a>
+
+        <a class="<%= "shops".equals(section) ? "active" : "" %>"
+           href="<%= secShops %>">
+            🏪 By Shop
+        </a>
+
+        <a class="<%= "rates".equals(section) ? "active" : "" %>"
+           href="<%= secRates %>">
+            📈 By Rate
+        </a>
+
+    </nav>
+
     <!-- ==================== REPORT FILTERS ==================== -->
 
     <form method="get"
           action="<%= contextPath %>/admin/commission-report"
           class="filter-form">
+
+        <input type="hidden" name="section" value="<%= esc(section) %>">
 
         <label for="from">From</label>
 
@@ -217,9 +270,11 @@
         <button type="submit" class="btn-sm">Apply</button>
 
         <a class="filter-clear"
-           href="<%= contextPath %>/admin/commission-report">Clear</a>
+           href="<%= secUrl(reportBase, section, "", "", "") %>">Clear</a>
 
     </form>
+
+    <% if ("overview".equals(section)) { %>
 
     <!-- ==================== SUMMARY ==================== -->
 
@@ -312,6 +367,8 @@
 
     </div>
 
+    <% } else if ("shops".equals(section)) { %>
+
     <!-- ==================== FEE BY SHOP ==================== -->
 
     <div class="panel">
@@ -381,6 +438,8 @@
 
     </div>
 
+    <% } else if ("rates".equals(section)) { %>
+
     <!-- ==================== FEE BY RATE ==================== -->
 
     <div class="panel">
@@ -438,6 +497,8 @@
         </div>
 
     </div>
+
+    <% } %>
 
 </section>
 

@@ -1,0 +1,30 @@
+<!-- Grouped navigation: every stock function is its own small page -->
+
+<nav class="section-nav">
+
+    <a class="<%= "stock".equals(activePage) ? "active" : "" %>"
+       href="<%= contextPath %>/store-owner/inventory">
+        📦 View Stock
+    </a>
+
+    <a class="<%= "update".equals(activePage) ? "active" : "" %>"
+       href="<%= contextPath %>/store-owner/inventory/update">
+        ✏️ Update Stock
+    </a>
+
+    <a class="<%= "restock".equals(activePage) ? "active" : "" %>"
+       href="<%= contextPath %>/store-owner/inventory/restock">
+        📥 Restock
+    </a>
+
+    <a class="<%= "lowstock".equals(activePage) ? "active" : "" %>"
+       href="<%= contextPath %>/store-owner/inventory/low-stock">
+        ⚠️ Low Stock
+    </a>
+
+    <a class="<%= "history".equals(activePage) ? "active" : "" %>"
+       href="<%= contextPath %>/store-owner/inventory/history">
+        🕓 History
+    </a>
+
+</nav>

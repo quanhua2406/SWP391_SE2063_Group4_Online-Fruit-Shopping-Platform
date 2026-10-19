@@ -23,10 +23,24 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Shop owner inventory: view stock, update stock quantity and
- * restock products.
+ * Shop owner inventory, split into small pages:
+ *
+ * <ul>
+ *   <li>{@code /store-owner/inventory} - view stock quantity</li>
+ *   <li>{@code /store-owner/inventory/update} - update a batch's
+ *       stock quantity</li>
+ *   <li>{@code /store-owner/inventory/restock} - record a new
+ *       restock batch</li>
+ *   <li>{@code /store-owner/inventory/low-stock} - threshold and
+ *       low stock monitor</li>
+ *   <li>{@code /store-owner/inventory/history} - inventory change
+ *       log</li>
+ * </ul>
  */
-@WebServlet("/store-owner/inventory")
+@WebServlet(urlPatterns = {
+    "/store-owner/inventory",
+    "/store-owner/inventory/*"
+})
 public class StoreOwnerInventoryServlet extends HttpServlet {
 
     private final InventoryDAO inventoryDAO = new InventoryDAO();
@@ -39,7 +53,80 @@ public class StoreOwnerInventoryServlet extends HttpServlet {
     private static final double MAX_STOCK_QUANTITY = 1_000_000d;
 
     // =====================================================
-    // GET - STOCK OVERVIEW
+    // ROUTING
+    // =====================================================
+
+    /**
+     * Which small page is requested, or {@code null} for an unknown
+     * sub-path.
+     */
+    private String viewOf(HttpServletRequest request) {
+
+        String path = request.getPathInfo();
+
+        if (path == null || path.isEmpty() || "/".equals(path)) {
+            return "stock";
+        }
+
+        if ("/update".equals(path)) {
+            return "update";
+        }
+
+        if ("/restock".equals(path)) {
+            return "restock";
+        }
+
+        if ("/low-stock".equals(path)) {
+            return "low-stock";
+        }
+
+        if ("/history".equals(path)) {
+            return "history";
+        }
+
+        return null;
+    }
+
+    private String jspOf(String view) {
+
+        if ("update".equals(view)) {
+            return "/jsp/shopowner/inventory-update.jsp";
+        }
+
+        if ("restock".equals(view)) {
+            return "/jsp/shopowner/inventory-restock.jsp";
+        }
+
+        if ("low-stock".equals(view)) {
+            return "/jsp/shopowner/inventory-low-stock.jsp";
+        }
+
+        if ("history".equals(view)) {
+            return "/jsp/shopowner/inventory-history.jsp";
+        }
+
+        return "/jsp/shopowner/inventory.jsp";
+    }
+
+    /**
+     * The page that owns each action, so a POST message lands where
+     * the user was working.
+     */
+    private String backOf(String action) {
+
+        if ("restock".equals(action)) {
+            return "/restock";
+        }
+
+        if ("setThreshold".equals(action) || "notifyLowStock".equals(action)) {
+            return "/low-stock";
+        }
+
+        return "/update";
+    }
+
+    // =====================================================
+    // GET - ONE SMALL PAGE PER FUNCTION
     // =====================================================
 
     @Override
@@ -50,6 +137,14 @@ public class StoreOwnerInventoryServlet extends HttpServlet {
         User user = ShopOwnerSupport.currentUser(request, response);
 
         if (user == null) {
+            return;
+        }
+
+        String view = viewOf(request);
+
+        if (view == null) {
+            response.sendRedirect(
+                    request.getContextPath() + "/store-owner/inventory");
             return;
         }
 
@@ -67,89 +162,25 @@ public class StoreOwnerInventoryServlet extends HttpServlet {
 
             int userId = user.getUserID();
 
-            double threshold = inventoryDAO.getLowStockThreshold(userId);
-
-            List<Map<String, Object>> variants =
-                    inventoryDAO.getVariantsForOwner(userId);
-
             request.setAttribute("shopName",
                     shop == null ? null : shop.getShopName());
 
-            // Full list: the restock drop-down must show every variant.
-            request.setAttribute("variants", variants);
+            if ("update".equals(view)) {
+                loadUpdateView(request, userId);
 
-            // ---- View stock: search product/SKU + filter package weight ----
-            String vq = Filters.text(request.getParameter("vq"));
-            String vweight = Filters.text(request.getParameter("vweight"));
+            } else if ("restock".equals(view)) {
+                loadRestockView(request, userId);
 
-            List<Map<String, Object>> variantRows = new ArrayList<>();
+            } else if ("low-stock".equals(view)) {
+                loadLowStockView(request, userId);
 
-            for (Map<String, Object> v : variants) {
-                if (Filters.any(vq, v.get("product_name"), v.get("sku"))
-                        && Filters.same(vweight,
-                                VariantWeights.key(v.get("weight_value")))) {
-                    variantRows.add(v);
-                }
+            } else if ("history".equals(view)) {
+                loadHistoryView(request, userId);
+
+            } else {
+                loadStockView(request, userId);
             }
 
-            request.setAttribute("weightOptions",
-                    VariantWeights.options(variants));
-
-            request.setAttribute("variantsPage", Page.of(
-                    variantRows, Page.parsePage(request.getParameter("vpage"))));
-
-            // ---- Update stock: search batch/product/SKU + filter status ----
-            String bq = Filters.text(request.getParameter("bq"));
-            String bstatus = Filters.text(request.getParameter("bstatus"));
-
-            List<Map<String, Object>> batchRows = new ArrayList<>();
-
-            for (Map<String, Object> b
-                    : inventoryDAO.getBatchesForOwner(userId)) {
-                if (Filters.any(bq, b.get("batch_code"),
-                                b.get("product_name"), b.get("sku"))
-                        && Filters.same(bstatus, b.get("status"))) {
-                    batchRows.add(b);
-                }
-            }
-
-            request.setAttribute("batchesPage", Page.of(
-                    batchRows, Page.parsePage(request.getParameter("bpage"))));
-
-            // ---- Low stock: search product/SKU ----
-            String lq = Filters.text(request.getParameter("lq"));
-
-            List<Map<String, Object>> lowRows = new ArrayList<>();
-
-            for (Map<String, Object> v
-                    : inventoryDAO.getLowStockForOwner(userId, threshold)) {
-                if (Filters.any(lq, v.get("product_name"), v.get("sku"))) {
-                    lowRows.add(v);
-                }
-            }
-
-            request.setAttribute("lowStockPage", Page.of(
-                    lowRows, Page.parsePage(request.getParameter("lpage"))));
-
-            // ---- History: search + filter by movement type ----
-            String hq = Filters.text(request.getParameter("hq"));
-            String htype = Filters.text(request.getParameter("htype"));
-
-            List<Map<String, Object>> historyRows = new ArrayList<>();
-
-            for (Map<String, Object> a
-                    : inventoryDAO.getAdjustmentsForOwner(userId)) {
-                if (Filters.any(hq, a.get("product_name"), a.get("sku"),
-                                a.get("batch_code"), a.get("reason"))
-                        && Filters.same(htype, a.get("adjustment_type"))) {
-                    historyRows.add(a);
-                }
-            }
-
-            request.setAttribute("adjustmentsPage", Page.of(
-                    historyRows, Page.parsePage(request.getParameter("hpage"))));
-
-            request.setAttribute("threshold", threshold);
             request.setAttribute("message", request.getParameter("msg"));
 
         } catch (SQLException e) {
@@ -157,18 +188,140 @@ public class StoreOwnerInventoryServlet extends HttpServlet {
                     "Unable to load your inventory.", e);
         }
 
-        request.getRequestDispatcher(
-                "/jsp/shopowner/inventory.jsp"
-        ).forward(request, response);
+        request.getRequestDispatcher(jspOf(view))
+               .forward(request, response);
+    }
+
+    /**
+     * /store-owner/inventory - View Stock Quantity.
+     */
+    private void loadStockView(HttpServletRequest request, int userId)
+            throws SQLException {
+
+        double threshold = inventoryDAO.getLowStockThreshold(userId);
+
+        List<Map<String, Object>> variants =
+                inventoryDAO.getVariantsForOwner(userId);
+
+        // ---- View stock: search product/SKU + filter package weight ----
+        String vq = Filters.text(request.getParameter("vq"));
+        String vweight = Filters.text(request.getParameter("vweight"));
+
+        List<Map<String, Object>> variantRows = new ArrayList<>();
+
+        for (Map<String, Object> v : variants) {
+            if (Filters.any(vq, v.get("product_name"), v.get("sku"))
+                    && Filters.same(vweight,
+                            VariantWeights.key(v.get("weight_value")))) {
+                variantRows.add(v);
+            }
+        }
+
+        request.setAttribute("weightOptions",
+                VariantWeights.options(variants));
+
+        request.setAttribute("variantsPage", Page.of(
+                variantRows,
+                Page.parsePage(request.getParameter("vpage"))));
+
+        request.setAttribute("threshold", threshold);
+    }
+
+    /**
+     * /store-owner/inventory/update - Update Stock Quantity.
+     */
+    private void loadUpdateView(HttpServletRequest request, int userId)
+            throws SQLException {
+
+        String bq = Filters.text(request.getParameter("bq"));
+        String bstatus = Filters.text(request.getParameter("bstatus"));
+
+        List<Map<String, Object>> batchRows = new ArrayList<>();
+
+        for (Map<String, Object> b
+                : inventoryDAO.getBatchesForOwner(userId)) {
+            if (Filters.any(bq, b.get("batch_code"),
+                            b.get("product_name"), b.get("sku"))
+                    && Filters.same(bstatus, b.get("status"))) {
+                batchRows.add(b);
+            }
+        }
+
+        request.setAttribute("batchesPage", Page.of(
+                batchRows,
+                Page.parsePage(request.getParameter("bpage"))));
+    }
+
+    /**
+     * /store-owner/inventory/restock - Restock Products.
+     */
+    private void loadRestockView(HttpServletRequest request, int userId)
+            throws SQLException {
+
+        // Full list: the drop-down must show every variant.
+        request.setAttribute("variants",
+                inventoryDAO.getVariantsForOwner(userId));
+    }
+
+    /**
+     * /store-owner/inventory/low-stock - Low Stock Monitoring.
+     */
+    private void loadLowStockView(HttpServletRequest request, int userId)
+            throws SQLException {
+
+        double threshold = inventoryDAO.getLowStockThreshold(userId);
+
+        // ---- Low stock: search product/SKU ----
+        String lq = Filters.text(request.getParameter("lq"));
+
+        List<Map<String, Object>> lowRows = new ArrayList<>();
+
+        for (Map<String, Object> v
+                : inventoryDAO.getLowStockForOwner(userId, threshold)) {
+            if (Filters.any(lq, v.get("product_name"), v.get("sku"))) {
+                lowRows.add(v);
+            }
+        }
+
+        request.setAttribute("threshold", threshold);
+
+        request.setAttribute("lowStockPage", Page.of(
+                lowRows,
+                Page.parsePage(request.getParameter("lpage"))));
+    }
+
+    /**
+     * /store-owner/inventory/history - Inventory History.
+     */
+    private void loadHistoryView(HttpServletRequest request, int userId)
+            throws SQLException {
+
+        String hq = Filters.text(request.getParameter("hq"));
+        String htype = Filters.text(request.getParameter("htype"));
+
+        List<Map<String, Object>> historyRows = new ArrayList<>();
+
+        for (Map<String, Object> a
+                : inventoryDAO.getAdjustmentsForOwner(userId)) {
+            if (Filters.any(hq, a.get("product_name"), a.get("sku"),
+                            a.get("batch_code"), a.get("reason"))
+                    && Filters.same(htype, a.get("adjustment_type"))) {
+                historyRows.add(a);
+            }
+        }
+
+        request.setAttribute("adjustmentsPage", Page.of(
+                historyRows,
+                Page.parsePage(request.getParameter("hpage"))));
     }
 
     // =====================================================
-    // POST - UPDATE STOCK OR RESTOCK
+    // POST - UPDATE, RESTOCK, THRESHOLD, ALERT
     // =====================================================
 
     @Override
     protected void doPost(HttpServletRequest request,
-                          HttpServletResponse response)
+                         HttpServletResponse response)
             throws ServletException, IOException {
 
         request.setCharacterEncoding("UTF-8");
@@ -201,7 +354,9 @@ public class StoreOwnerInventoryServlet extends HttpServlet {
 
         response.sendRedirect(
                 request.getContextPath()
-                        + "/store-owner/inventory?msg=" + result
+                        + "/store-owner/inventory"
+                        + backOf(action)
+                        + "?msg=" + result
         );
     }
 

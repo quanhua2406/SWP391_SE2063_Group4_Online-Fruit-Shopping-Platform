@@ -853,6 +853,12 @@ input {
     border-color: #4caf50;
 }
 
+.section-nav a.active {
+    background: #4caf50;
+    color: #ffffff;
+    border-color: #4caf50;
+}
+
 .summary-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));

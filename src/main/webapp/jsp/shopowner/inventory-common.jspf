@@ -1,0 +1,188 @@
+<%@page import="java.util.List"%>
+<%@page import="java.util.Map"%>
+<%@page import="java.math.BigDecimal"%>
+<%@page import="java.util.Locale"%>
+<%@page import="com.mycompany.onlinefruitshopping.utils.Page"%>
+<%@page import="com.mycompany.onlinefruitshopping.utils.Pager"%>
+<%@page import="com.mycompany.onlinefruitshopping.utils.QueryUrl"%>
+<%@page import="com.mycompany.onlinefruitshopping.utils.VariantWeights"%>
+
+<%!
+    private String esc(Object value) {
+        if (value == null) {
+            return "";
+        }
+
+        return value.toString()
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
+    }
+
+    private String qty(Object value) {
+        if (value == null) {
+            return "0";
+        }
+
+        BigDecimal number = value instanceof BigDecimal
+                ? (BigDecimal) value
+                : new BigDecimal(value.toString());
+
+        return number.stripTrailingZeros().toPlainString();
+    }
+
+    private String money(Object value) {
+        if (value == null) {
+            return "0 \u0111";
+        }
+
+        BigDecimal number = value instanceof BigDecimal
+                ? (BigDecimal) value
+                : new BigDecimal(value.toString());
+
+        return String.format(Locale.US, "%,.0f", number) + " \u0111";
+    }
+
+    private String date(Object value) {
+        return value == null ? "-" : value.toString();
+    }
+
+    private String typeLabel(Object value) {
+        if (value == null) {
+            return "";
+        }
+
+        String type = value.toString().toLowerCase();
+
+        switch (type) {
+            case "import":
+                return "Restock";
+            case "export":
+                return "Stock Out";
+            case "discard":
+                return "Discard";
+            default:
+                return value.toString();
+        }
+    }
+
+    private String typePill(Object value) {
+        if (value == null) {
+            return "pill-ok";
+        }
+
+        String type = value.toString().toLowerCase();
+
+        switch (type) {
+            case "export":
+                return "pill-warn";
+            case "discard":
+                return "pill-danger";
+            default:
+                return "pill-ok";
+        }
+    }
+%>
+
+<%
+    String contextPath = request.getContextPath();
+
+    String shopName = request.getAttribute("shopName") == null
+            ? ""
+            : request.getAttribute("shopName").toString();
+
+    Object threshold = request.getAttribute("threshold");
+    String thresholdText = threshold == null ? "0" : threshold.toString();
+
+    String message = request.getAttribute("message") == null
+            ? ""
+            : request.getAttribute("message").toString();
+
+    String level = "success-message";
+    String messageText = null;
+
+    if ("restocked".equals(message)) {
+        messageText = "Product restocked successfully.";
+    } else if ("updated".equals(message)) {
+        messageText = "Stock quantity updated.";
+    } else if ("threshold-saved".equals(message)) {
+        messageText = "Low stock threshold updated.";
+    } else if ("notified".equals(message)) {
+        messageText = "Low stock alert email sent to your account address.";
+    } else if ("notify-none".equals(message)) {
+        messageText = "Nothing is below the safety threshold - no alert was sent.";
+    } else if ("notify-failed".equals(message)) {
+        level = "error-message";
+        messageText = "The alert email could not be sent. Please try again later.";
+    } else if ("duplicate".equals(message)) {
+        level = "error-message";
+        messageText = "That batch code already exists for this variant.";
+    } else if ("expired".equals(message)) {
+        level = "error-message";
+        messageText = "The expiry date cannot be in the past.";
+    } else if ("invalid".equals(message)) {
+        level = "error-message";
+        messageText = "Please enter valid stock information.";
+    } else if ("forbidden".equals(message)) {
+        level = "error-message";
+        messageText = "You are not allowed to modify this item.";
+    } else if ("failed".equals(message)) {
+        level = "error-message";
+        messageText = "The action could not be completed.";
+    }
+%>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Stock Management - FreshFruit</title>
+
+    <link rel="stylesheet"
+          href="<%= contextPath %>/css/style.css">
+</head>
+
+<body>
+
+<header class="navbar">
+
+    <div class="logo">
+        🍊 FreshFruit
+    </div>
+
+    <nav class="nav-actions">
+
+        <a href="<%= contextPath %>/store-owner/dashboard">
+            📊 Dashboard
+        </a>
+
+        <a href="<%= contextPath %>/store-owner/pricing">
+            💲 Pricing
+        </a>
+
+        <a href="<%= contextPath %>/logout"
+           class="logout">
+            Logout
+        </a>
+
+    </nav>
+
+</header>
+
+<section class="dashboard">
+
+    <p class="breadcrumb">
+        <a href="<%= contextPath %>/store-owner/dashboard">
+            ← Shop Owner Dashboard
+        </a>
+    </p>
+
+    <h1>Stock Management</h1>
+
+    <p class="dashboard-welcome">
+        🏪 <%= esc(shopName) %>
+    </p>

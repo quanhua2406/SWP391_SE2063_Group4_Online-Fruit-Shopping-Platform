@@ -34,6 +34,25 @@
         return html.toString();
     }
 
+    private String secUrl(String base, String section, String from, String to, String status) {
+
+        StringBuilder u = new StringBuilder(base).append("?section=").append(section);
+
+        if (from != null && !from.isEmpty()) {
+            u.append("&from=").append(from);
+        }
+
+        if (to != null && !to.isEmpty()) {
+            u.append("&to=").append(to);
+        }
+
+        if (status != null && !status.isEmpty()) {
+            u.append("&status=").append(status);
+        }
+
+        return u.toString();
+    }
+
     private String esc(Object value) {
         if (value == null) {
             return "";
@@ -244,11 +263,57 @@
         </a>
     </p>
 
+    <%
+        String section = request.getAttribute("section") == null
+                ? "overview"
+                : request.getAttribute("section").toString();
+
+        String reportBase = contextPath + "/store-owner/commission-report";
+        String secOverview = secUrl(reportBase, "overview", from, to, status);
+        String secProducts = secUrl(reportBase, "products", from, to, status);
+        String secSchedule = secUrl(reportBase, "schedule", from, to, status);
+        String secRates    = secUrl(reportBase, "rates", from, to, status);
+        String secStatus   = secUrl(reportBase, "status", from, to, status);
+    %>
+
+    <!-- Section navigation: one small page per report view -->
+
+    <nav class="section-nav">
+
+        <a class="<%= "overview".equals(section) ? "active" : "" %>"
+           href="<%= secOverview %>">
+            📊 Overview
+        </a>
+
+        <a class="<%= "products".equals(section) ? "active" : "" %>"
+           href="<%= secProducts %>">
+            💼 By Product
+        </a>
+
+        <a class="<%= "schedule".equals(section) ? "active" : "" %>"
+           href="<%= secSchedule %>">
+            🏷️ Fee Schedule
+        </a>
+
+        <a class="<%= "rates".equals(section) ? "active" : "" %>"
+           href="<%= secRates %>">
+            📈 By Rate
+        </a>
+
+        <a class="<%= "status".equals(section) ? "active" : "" %>"
+           href="<%= secStatus %>">
+            🚚 By Order Status
+        </a>
+
+    </nav>
+
     <!-- ==================== REPORT FILTERS ==================== -->
 
     <form method="get"
           action="<%= contextPath %>/store-owner/commission-report"
           class="filter-form">
+
+        <input type="hidden" name="section" value="<%= esc(section) %>">
 
         <label for="from">From</label>
 
@@ -269,9 +334,11 @@
         <button type="submit" class="btn-sm">Apply</button>
 
         <a class="filter-clear"
-           href="<%= contextPath %>/store-owner/commission-report">Clear</a>
+           href="<%= secUrl(reportBase, section, "", "", "") %>">Clear</a>
 
     </form>
+
+    <% if ("overview".equals(section)) { %>
 
     <!-- ==================== SUMMARY ==================== -->
 
@@ -364,6 +431,8 @@
 
     </div>
 
+    <% } else if ("products".equals(section)) { %>
+
     <!-- ==================== FEE BY PRODUCT ==================== -->
 
     <div class="panel">
@@ -432,6 +501,8 @@
 
     </div>
 
+    <% } else if ("rates".equals(section)) { %>
+
     <!-- ==================== FEE BY RATE ==================== -->
 
     <div class="panel">
@@ -489,6 +560,8 @@
         </div>
 
     </div>
+
+    <% } else if ("status".equals(section)) { %>
 
     <!-- ==================== REVENUE BY ORDER STATUS ==================== -->
 
@@ -550,6 +623,8 @@
 
     </div>
 
+    <% } else if ("schedule".equals(section)) { %>
+
     <!-- ==================== CURRENT FEE SCHEDULE ==================== -->
 
     <div class="panel">
@@ -607,6 +682,8 @@
         </div>
 
     </div>
+
+    <% } %>
 
 </section>
 
