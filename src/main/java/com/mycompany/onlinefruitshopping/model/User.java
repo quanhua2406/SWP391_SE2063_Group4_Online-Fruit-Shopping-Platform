@@ -113,4 +113,18 @@ public class User {
     public void setStatus(String status) {
         this.status = status;
     }
+
+    private boolean isMember;
+
+    public boolean isMember() {
+        return isMember;
+    }
+
+    public boolean getIsMember() {
+        return isMember;
+    }
+
+    public void setIsMember(boolean isMember) {
+        this.isMember = isMember;
+    }
 }

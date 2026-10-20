@@ -15,7 +15,7 @@ import java.sql.SQLException;
  * Admin category management: view, add, edit and delete product
  * categories.
  */
-@WebServlet("/admin/categories")
+@WebServlet("/admin/category-management")
 public class AdminCategoryServlet extends HttpServlet {
 
     private final CategoryService categoryService = new CategoryService();

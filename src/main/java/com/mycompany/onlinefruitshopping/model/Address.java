@@ -97,7 +97,19 @@ public class Address {
         return isDefault;
     }
 
+    public boolean getIsDefault() {
+        return isDefault;
+    }
+
+    public boolean getDefault() {
+        return isDefault;
+    }
+
     public void setDefault(boolean isDefault) {
+        this.isDefault = isDefault;
+    }
+
+    public void setIsDefault(boolean isDefault) {
         this.isDefault = isDefault;
     }
 }

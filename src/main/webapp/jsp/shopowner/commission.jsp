@@ -1,4 +1,4 @@
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
+﻿<%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@page import="java.util.List"%>
 <%@page import="java.math.BigDecimal"%>
 <%@page import="java.util.Locale"%>
@@ -37,7 +37,7 @@
     Page<Product> productsPage =
             (Page<Product>) request.getAttribute("productsPage");
 
-    String pageUrl = contextPath + "/store-owner/products?";
+    String pageUrl = contextPath + "/store-owner/commission?";
 
     String pagerUrl = QueryUrl.keep(request, pageUrl, "q", "status");
 
@@ -64,13 +64,13 @@
 
 <header class="navbar">
 
-    <div class="logo">🍊 FreshFruit</div>
+    <div class="logo">ðŸŠ FreshFruit</div>
 
     <nav class="nav-actions">
-        <a href="<%= contextPath %>/store-owner/dashboard">📊 Dashboard</a>
-        <a href="<%= contextPath %>/store-owner/inventory">📦 Stock</a>
-        <a href="<%= contextPath %>/store-owner/pricing">💲 Pricing</a>
-        <a href="<%= contextPath %>/store-owner/commission-report">💼 Report</a>
+        <a href="<%= contextPath %>/store-owner/dashboard">ðŸ“Š Dashboard</a>
+        <a href="<%= contextPath %>/store-owner/inventory">ðŸ“¦ Stock</a>
+        <a href="<%= contextPath %>/store-owner/pricing">ðŸ’² Pricing</a>
+        <a href="<%= contextPath %>/store-owner/commission-report">ðŸ’¼ Report</a>
         <a href="<%= contextPath %>/logout" class="logout">Logout</a>
     </nav>
 
@@ -80,20 +80,20 @@
 
     <p class="breadcrumb">
         <a href="<%= contextPath %>/store-owner/dashboard">
-            ← Shop Owner Dashboard
+            â† Shop Owner Dashboard
         </a>
     </p>
 
     <h1>Product Management</h1>
 
     <p class="dashboard-welcome">
-        🏪 <%= esc(shopName) %>
-        — the commission rate is set by the platform admin.
+        ðŸª <%= esc(shopName) %>
+        â€” the commission rate is set by the platform admin.
     </p>
 
     <div class="panel">
 
-        <h2>💼 My Products &amp; Commission</h2>
+        <h2>ðŸ’¼ My Products &amp; Commission</h2>
 
         <p class="panel-hint">
             "Platform fee" is the amount the platform keeps on each
@@ -101,7 +101,7 @@
         </p>
 
         <form method="get"
-              action="<%= contextPath %>/store-owner/products"
+              action="<%= contextPath %>/store-owner/commission"
               class="filter-form">
 
             <input type="text" class="filter-input" name="q"
@@ -118,7 +118,7 @@
             <button type="submit" class="btn-sm">Filter</button>
 
             <a class="filter-clear"
-               href="<%= contextPath %>/store-owner/products">Clear</a>
+               href="<%= contextPath %>/store-owner/commission">Clear</a>
 
         </form>
 

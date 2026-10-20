@@ -282,6 +282,8 @@ public class UserDAO {
                             rs.getString("status")
                     );
 
+                    user.setIsMember(false);
+
                     return user;
                 }
             }
@@ -462,6 +464,8 @@ public User getUserByEmailForLogin(String email)
                     user.setStatus(
                             rs.getString("status")
                     );
+
+                    user.setIsMember(false);
 
                     return user;
                 }

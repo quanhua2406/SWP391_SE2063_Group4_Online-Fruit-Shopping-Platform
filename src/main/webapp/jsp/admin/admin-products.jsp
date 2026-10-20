@@ -1,4 +1,4 @@
-
+﻿
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@page import="java.util.List"%>
 <%@page import="java.util.Map"%>
@@ -495,7 +495,7 @@
     <nav class="nav-links">
         <a href="<%=contextPath%>/admin/dashboard">Dashboard</a>
         <a href="<%=contextPath%>/admin/user-management">Users</a>
-        <a href="<%=contextPath%>/admin/categories">Categories</a>
+        <a href="<%=contextPath%>/admin/category-management">Categories</a>
         <a href="<%=contextPath%>/logout">Logout</a>
     </nav>
 </header>
@@ -584,8 +584,8 @@
 
             <div style="display:flex; gap:10px; flex-wrap:wrap">
                 <a class="btn btn-secondary"
-                   href="<%=contextPath%>/admin/categories">
-                    📂 Categories
+                   href="<%=contextPath%>/admin/category-management">
+                    ðŸ“‚ Categories
                 </a>
 
                 <a class="btn btn-primary"

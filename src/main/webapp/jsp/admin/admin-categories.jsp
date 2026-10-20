@@ -1,4 +1,4 @@
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
+﻿<%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@page import="java.util.List"%>
 <%@page import="java.util.Map"%>
 <%@page import="com.mycompany.onlinefruitshopping.utils.Page"%>
@@ -29,7 +29,7 @@
     Page<Map<String, Object>> categoriesPage =
             (Page<Map<String, Object>>) request.getAttribute("categoriesPage");
 
-    String pageUrl = contextPath + "/admin/categories?";
+    String pageUrl = contextPath + "/admin/category-management?";
 
     String pagerUrl = QueryUrl.keep(request, pageUrl, "q");
 
@@ -92,11 +92,11 @@
 
 <header class="navbar">
 
-    <div class="logo">🍊 FreshFruit</div>
+    <div class="logo">ðŸŠ FreshFruit</div>
 
     <nav class="nav-actions">
-        <a href="<%= contextPath %>/admin/dashboard">📊 Dashboard</a>
-        <a href="<%= contextPath %>/admin/product-management">🍎 Products</a>
+        <a href="<%= contextPath %>/admin/dashboard">ðŸ“Š Dashboard</a>
+        <a href="<%= contextPath %>/admin/product-management">ðŸŽ Products</a>
         <a href="<%= contextPath %>/logout" class="logout">Logout</a>
     </nav>
 
@@ -106,7 +106,7 @@
 
     <p class="breadcrumb">
         <a href="<%= contextPath %>/admin/dashboard">
-            ← Admin Dashboard
+            â† Admin Dashboard
         </a>
     </p>
 
@@ -125,11 +125,11 @@
 
     <div class="panel">
 
-        <h2>➕ Add Category</h2>
+        <h2>âž• Add Category</h2>
 
         <p class="panel-hint">Create a new product category.</p>
 
-        <form method="post" action="<%= contextPath %>/admin/categories">
+        <form method="post" action="<%= contextPath %>/admin/category-management">
 
             <input type="hidden" name="action" value="add">
 
@@ -172,10 +172,10 @@
 
     <div class="panel">
 
-        <h2>📂 Category List</h2>
+        <h2>ðŸ“‚ Category List</h2>
 
         <form method="get"
-              action="<%= contextPath %>/admin/categories"
+              action="<%= contextPath %>/admin/category-management"
               class="filter-form">
 
             <input type="text" class="filter-input" name="q"
@@ -185,7 +185,7 @@
             <button type="submit" class="btn-sm">Search</button>
 
             <a class="filter-clear"
-               href="<%= contextPath %>/admin/categories">Clear</a>
+               href="<%= contextPath %>/admin/category-management">Clear</a>
 
         </form>
 
@@ -217,7 +217,7 @@
 
                     <td>
                         <form method="post"
-                              action="<%= contextPath %>/admin/categories"
+                              action="<%= contextPath %>/admin/category-management"
                               class="table-actions">
 
                             <input type="hidden" name="action" value="edit">
@@ -239,7 +239,7 @@
 
                     <td>
                         <form method="post"
-                              action="<%= contextPath %>/admin/categories"
+                              action="<%= contextPath %>/admin/category-management"
                               class="table-actions">
 
                             <input type="hidden" name="action" value="edit">
@@ -280,7 +280,7 @@
 
                     <td>
                         <form method="post"
-                              action="<%= contextPath %>/admin/categories"
+                              action="<%= contextPath %>/admin/category-management"
                               class="table-actions"
                               onsubmit="return confirm('Delete this category?');">
 

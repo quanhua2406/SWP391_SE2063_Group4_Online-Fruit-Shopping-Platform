@@ -128,13 +128,39 @@ public class LoginServlet extends HttpServlet {
             HttpSession session = request.getSession(true);
 
             session.setAttribute("user", user);
+            session.setAttribute("userId", user.getUserID());
             session.setAttribute("roleName", user.getRoleName());
 
-            response.sendRedirect(
-                    request.getContextPath()
-                            + LoginService.dashboardPath(
-                                    user.getRoleName())
-            );
+            // Merge guest session cart into database cart if present
+            try {
+                com.mycompany.onlinefruitshopping.dao.CartDAO cartDAO =
+                        new com.mycompany.onlinefruitshopping.dao.CartDAO();
+                @SuppressWarnings("unchecked")
+                java.util.List<com.mycompany.onlinefruitshopping.model.CartItem> guestCart =
+                        (java.util.List<com.mycompany.onlinefruitshopping.model.CartItem>)
+                                session.getAttribute("sessionCart");
+                if (guestCart != null && !guestCart.isEmpty()) {
+                    cartDAO.mergeSessionCart(user.getUserID(), guestCart);
+                    session.removeAttribute("sessionCart");
+                }
+                session.setAttribute("cartCount",
+                        cartDAO.getCartCount(user.getUserID()));
+            } catch (Exception ignored) {
+            }
+
+            // If the user was previously trying to access a protected page
+            String redirectUrl =
+                    (String) session.getAttribute("redirectAfterLogin");
+            if (redirectUrl != null && !redirectUrl.isBlank()) {
+                session.removeAttribute("redirectAfterLogin");
+                response.sendRedirect(redirectUrl);
+            } else {
+                response.sendRedirect(
+                        request.getContextPath()
+                                + LoginService.dashboardPath(
+                                        user.getRoleName())
+                );
+            }
 
         } catch (SQLException e) {
 

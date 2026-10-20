@@ -97,6 +97,14 @@ public class AuthorizationFilter implements Filter {
         // Guest cannot access protected resources
         if (user == null) {
 
+            // Remember where the user wanted to go
+            // (used after a successful login)
+            session = httpRequest.getSession(true);
+            session.setAttribute(
+                    "redirectAfterLogin",
+                    requestURI
+            );
+
             httpResponse.sendRedirect(
                     contextPath + "/login"
             );
@@ -144,9 +152,25 @@ public class AuthorizationFilter implements Filter {
                 || path.equals("/index.html")
                 || path.equals("/index.jsp")
 
-                // Home
+                // Home (storefront)
                 || path.equals("/home")
+                || path.equals("/home.jsp")
                 || path.startsWith("/jsp/home/")
+
+                // Direct JSP pages kept by the storefront
+                || path.equals("/login.jsp")
+                || path.equals("/register.jsp")
+                || path.equals("/forgot-password.jsp")
+                || path.equals("/verify-otp.jsp")
+                || path.equals("/reset-password.jsp")
+                || path.equals("/product-details.jsp")
+                || path.equals("/product-catalog.jsp")
+
+                // Guest cart (browsing only; actions
+                // check the session themselves)
+                || path.equals("/cart")
+                || path.equals("/cart.jsp")
+                || path.startsWith("/cart/")
 
                 // Authentication
                 || path.equals("/login")

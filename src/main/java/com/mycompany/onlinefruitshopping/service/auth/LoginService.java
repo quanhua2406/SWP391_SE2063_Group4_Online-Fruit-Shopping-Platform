@@ -89,11 +89,21 @@ public class LoginService {
         User user =
                 userDAO.getUserByEmailForLogin(email.trim());
 
-        if (user == null
-                || user.getPasswordHash() == null
-                || !BCrypt.checkpw(
+        boolean passwordMatches = false;
+
+        if (user != null && user.getPasswordHash() != null) {
+            try {
+                passwordMatches = BCrypt.checkpw(
                         password,
-                        user.getPasswordHash())) {
+                        user.getPasswordHash());
+            } catch (IllegalArgumentException e) {
+                // Fallback: password in DB is raw (not BCrypt-hashed yet)
+                passwordMatches =
+                        password.equals(user.getPasswordHash());
+            }
+        }
+
+        if (user == null || !passwordMatches) {
 
             return new LoginResult(
                     Status.INVALID_CREDENTIALS,

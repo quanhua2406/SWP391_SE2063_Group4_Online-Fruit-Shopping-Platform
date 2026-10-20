@@ -16,7 +16,7 @@ import java.sql.SQLException;
  * Read-only view of the shop owner's products and the platform
  * commission the admin keeps on each one.
  */
-@WebServlet({"/store-owner/products", "/store-owner/commission"})
+@WebServlet("/store-owner/commission")
 public class StoreOwnerCommissionServlet extends HttpServlet {
 
     private final CommissionReportService reportService =
