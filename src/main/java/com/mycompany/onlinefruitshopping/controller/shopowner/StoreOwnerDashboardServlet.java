@@ -1,8 +1,7 @@
 package com.mycompany.onlinefruitshopping.controller.shopowner;
 
-import com.mycompany.onlinefruitshopping.dao.inventory.InventoryDAO;
-import com.mycompany.onlinefruitshopping.dao.product.ProductDAO;
 import com.mycompany.onlinefruitshopping.model.User;
+import com.mycompany.onlinefruitshopping.service.shop.ShopService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -13,18 +12,19 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.Map;
 
+/**
+ * Shop-owner dashboard: the shop itself plus a small stock summary,
+ * and one card per inventory / pricing / promotion / report module.
+ */
 @WebServlet("/store-owner/dashboard")
 public class StoreOwnerDashboardServlet extends HttpServlet {
 
-    private final ProductDAO productDAO = new ProductDAO();
-    private final InventoryDAO inventoryDAO = new InventoryDAO();
+    private final ShopService shopService = new ShopService();
 
     @Override
     protected void doGet(HttpServletRequest request,
-                          HttpServletResponse response)
+                         HttpServletResponse response)
             throws ServletException, IOException {
 
         HttpSession session = request.getSession(false);
@@ -44,15 +44,10 @@ public class StoreOwnerDashboardServlet extends HttpServlet {
             return;
         }
 
-        ProductDAO.ShopInfo shop = null;
-        Map<String, Object> stats = Collections.emptyMap();
+        ShopService.Dashboard dashboard;
 
         try {
-            shop = productDAO.getShopForOwner(user.getUserID());
-
-            if (shop != null) {
-                stats = inventoryDAO.getDashboardStats(user.getUserID());
-            }
+            dashboard = shopService.loadDashboard(user.getUserID());
 
         } catch (SQLException e) {
             throw new ServletException(
@@ -61,13 +56,11 @@ public class StoreOwnerDashboardServlet extends HttpServlet {
             );
         }
 
-        String shopStatus = request.getParameter("shop");
-
         request.setAttribute("ownerName", user.getFullName());
-        request.setAttribute("hasShop", shop != null);
-        request.setAttribute("shopName", shop == null ? null : shop.getShopName());
-        request.setAttribute("shopStatus", shopStatus);
-        request.setAttribute("stats", stats);
+        request.setAttribute("hasShop", dashboard.isHasShop());
+        request.setAttribute("shopName", dashboard.getShopName());
+        request.setAttribute("shopStatus", request.getParameter("shop"));
+        request.setAttribute("stats", dashboard.getStats());
 
         request.getRequestDispatcher(
                 "/jsp/shopowner/store-owner-dashboard.jsp"

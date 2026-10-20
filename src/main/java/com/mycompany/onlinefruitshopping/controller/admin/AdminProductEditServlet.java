@@ -1,6 +1,6 @@
 package com.mycompany.onlinefruitshopping.controller.admin;
 
-import com.mycompany.onlinefruitshopping.dao.product.AdminProductDAO;
+import com.mycompany.onlinefruitshopping.service.product.AdminProductService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -9,9 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.sql.SQLException;
-import java.util.Map;
 
 /**
  * Admin product editing (details, category, commission and status).
@@ -19,7 +17,8 @@ import java.util.Map;
 @WebServlet("/admin/product-edit")
 public class AdminProductEditServlet extends HttpServlet {
 
-    private final AdminProductDAO dao = new AdminProductDAO();
+    private final AdminProductService productService =
+            new AdminProductService();
 
     // =====================================================
     // GET - EDIT FORM
@@ -43,9 +42,7 @@ public class AdminProductEditServlet extends HttpServlet {
         }
 
         try {
-            Map<String, Object> product = dao.getProductForEdit(productId);
-
-            if (product == null) {
+            if (productService.getProductForEdit(productId) == null) {
                 response.sendRedirect(
                         request.getContextPath()
                                 + "/admin/product-management?message=notfound"
@@ -53,12 +50,7 @@ public class AdminProductEditServlet extends HttpServlet {
                 return;
             }
 
-            request.setAttribute("product", product);
-            request.setAttribute("categories", dao.getCategories());
-
-            request.getRequestDispatcher(
-                    "/jsp/admin/admin-product-edit.jsp"
-            ).forward(request, response);
+            showForm(request, response, productId);
 
         } catch (SQLException e) {
             throw new ServletException(
@@ -78,51 +70,19 @@ public class AdminProductEditServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
 
         int productId = parseInt(request.getParameter("productId"), -1);
-        int categoryId = parseInt(request.getParameter("categoryId"), -1);
-
-        String productName = trim(request.getParameter("productName"));
-        String description = trim(request.getParameter("description"));
-        String origin = trim(request.getParameter("origin"));
-        String status = trim(request.getParameter("status"));
-        String commissionText = trim(request.getParameter("commissionRate"));
 
         try {
-            BigDecimal commissionRate = commissionText.isEmpty()
-                    ? AdminProductDAO.DEFAULT_COMMISSION_RATE
-                    : new BigDecimal(commissionText);
+            AdminProductService.SaveResult result =
+                    productService.updateProduct(
+                            request.getParameter("productId"),
+                            request.getParameter("categoryId"),
+                            request.getParameter("productName"),
+                            request.getParameter("description"),
+                            request.getParameter("origin"),
+                            request.getParameter("status"),
+                            request.getParameter("commissionRate"));
 
-            boolean validStatus = "draft".equals(status)
-                    || "published".equals(status)
-                    || "hidden".equals(status);
-
-            if (productId <= 0
-                    || categoryId <= 0
-                    || productName.isEmpty()
-                    || productName.length() > 150
-                    || commissionRate.compareTo(BigDecimal.ZERO) < 0
-                    || commissionRate.compareTo(new BigDecimal("100")) > 0
-                    || !validStatus) {
-
-                request.setAttribute(
-                        "error",
-                        "Category, product name, status and commission "
-                        + "(0-100) are invalid."
-                );
-                showForm(request, response, productId);
-                return;
-            }
-
-            boolean updated = dao.updateProduct(
-                    productId,
-                    categoryId,
-                    productName,
-                    description.isEmpty() ? null : description,
-                    origin.isEmpty() ? null : origin,
-                    commissionRate,
-                    status
-            );
-
-            if (updated) {
+            if (result.isSuccess()) {
                 response.sendRedirect(
                         request.getContextPath()
                                 + "/admin/product-management?message=updated"
@@ -130,14 +90,7 @@ public class AdminProductEditServlet extends HttpServlet {
                 return;
             }
 
-            request.setAttribute("error", "Product could not be updated.");
-            showForm(request, response, productId);
-
-        } catch (NumberFormatException e) {
-            request.setAttribute(
-                    "error",
-                    "Commission has an invalid format."
-            );
+            request.setAttribute("error", result.getError());
             showForm(request, response, productId);
 
         } catch (SQLException e) {
@@ -152,8 +105,10 @@ public class AdminProductEditServlet extends HttpServlet {
             throws ServletException, IOException {
 
         try {
-            request.setAttribute("product", dao.getProductForEdit(productId));
-            request.setAttribute("categories", dao.getCategories());
+            request.setAttribute("product",
+                    productService.getProductForEdit(productId));
+            request.setAttribute("categories",
+                    productService.getCategories());
 
             request.getRequestDispatcher(
                     "/jsp/admin/admin-product-edit.jsp"
@@ -167,13 +122,10 @@ public class AdminProductEditServlet extends HttpServlet {
 
     private int parseInt(String value, int fallback) {
         try {
-            return Integer.parseInt(trim(value));
+            return Integer.parseInt(
+                    value == null ? "" : value.trim());
         } catch (NumberFormatException e) {
             return fallback;
         }
-    }
-
-    private String trim(String value) {
-        return value == null ? "" : value.trim();
     }
 }

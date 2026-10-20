@@ -1,10 +1,7 @@
 package com.mycompany.onlinefruitshopping.controller.shopowner;
 
-import com.mycompany.onlinefruitshopping.dao.product.ProductDAO;
-import com.mycompany.onlinefruitshopping.model.Product;
 import com.mycompany.onlinefruitshopping.model.User;
-import com.mycompany.onlinefruitshopping.utils.Filters;
-import com.mycompany.onlinefruitshopping.utils.Page;
+import com.mycompany.onlinefruitshopping.service.report.CommissionReportService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -14,9 +11,6 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Read-only view of the shop owner's products and the platform
@@ -25,7 +19,8 @@ import java.util.List;
 @WebServlet({"/store-owner/products", "/store-owner/commission"})
 public class StoreOwnerCommissionServlet extends HttpServlet {
 
-    private final ProductDAO productDAO = new ProductDAO();
+    private final CommissionReportService reportService =
+            new CommissionReportService();
 
     @Override
     protected void doGet(HttpServletRequest request,
@@ -39,10 +34,14 @@ public class StoreOwnerCommissionServlet extends HttpServlet {
         }
 
         try {
-            ProductDAO.ShopInfo shop =
-                    productDAO.getShopForOwner(user.getUserID());
+            CommissionReportService.OwnerProductsView view =
+                    reportService.loadOwnerProducts(
+                            user.getUserID(),
+                            request.getParameter("q"),
+                            request.getParameter("status"),
+                            request.getParameter("page"));
 
-            if (shop == null) {
+            if (view == null) {
                 response.sendRedirect(
                         request.getContextPath()
                                 + "/store-owner/create-shop"
@@ -50,30 +49,9 @@ public class StoreOwnerCommissionServlet extends HttpServlet {
                 return;
             }
 
-            List<Product> products = Collections.emptyList();
-
-            try {
-                products = productDAO.getProductsByOwner(user.getUserID());
-            } catch (SQLException ignored) {
-                // keep an empty list rather than failing the page
-            }
-
-            String q = Filters.text(request.getParameter("q"));
-            String status = Filters.text(request.getParameter("status"));
-
-            List<Product> filtered = new ArrayList<>();
-
-            for (Product p : products) {
-                if (Filters.any(q, p.getProductName(), p.getSku())
-                        && Filters.same(status, p.getStatus())) {
-                    filtered.add(p);
-                }
-            }
-
-            request.setAttribute("shopName", shop.getShopName());
-            request.setAttribute("products", products);
-            request.setAttribute("productsPage", Page.of(
-                    filtered, Page.parsePage(request.getParameter("page"))));
+            request.setAttribute("shopName", view.getShopName());
+            request.setAttribute("products", view.getProducts());
+            request.setAttribute("productsPage", view.getProductsPage());
 
         } catch (SQLException e) {
             throw new ServletException(

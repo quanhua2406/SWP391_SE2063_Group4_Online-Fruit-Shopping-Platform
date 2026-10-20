@@ -1,14 +1,8 @@
 package com.mycompany.onlinefruitshopping.controller.shopowner;
 
-import com.mycompany.onlinefruitshopping.dao.inventory.InventoryDAO;
-import com.mycompany.onlinefruitshopping.dao.product.ProductDAO;
 import com.mycompany.onlinefruitshopping.model.User;
-import com.mycompany.onlinefruitshopping.service.inventory.LowStockNotifier;
-import com.mycompany.onlinefruitshopping.utils.Filters;
-import com.mycompany.onlinefruitshopping.utils.Page;
-import com.mycompany.onlinefruitshopping.utils.VariantWeights;
+import com.mycompany.onlinefruitshopping.service.inventory.InventoryService;
 
-import jakarta.mail.MessagingException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -16,11 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.sql.Date;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Shop owner inventory, split into small pages:
@@ -36,6 +26,10 @@ import java.util.Map;
  *   <li>{@code /store-owner/inventory/history} - inventory change
  *       log</li>
  * </ul>
+ *
+ * <p>The controller only reads the request and renders the response:
+ * every rule and every query goes through
+ * {@link InventoryService}.</p>
  */
 @WebServlet(urlPatterns = {
     "/store-owner/inventory",
@@ -43,14 +37,7 @@ import java.util.Map;
 })
 public class StoreOwnerInventoryServlet extends HttpServlet {
 
-    private final InventoryDAO inventoryDAO = new InventoryDAO();
-    private final ProductDAO productDAO = new ProductDAO();
-
-    /**
-     * Upper bound for any single stock figure, to reject absurd
-     * input before it reaches the database.
-     */
-    private static final double MAX_STOCK_QUANTITY = 1_000_000d;
+    private final InventoryService inventoryService = new InventoryService();
 
     // =====================================================
     // ROUTING
@@ -149,7 +136,7 @@ public class StoreOwnerInventoryServlet extends HttpServlet {
         }
 
         try {
-            if (!inventoryDAO.hasShop(user.getUserID())) {
+            if (!inventoryService.hasShop(user.getUserID())) {
                 response.sendRedirect(
                         request.getContextPath()
                                 + "/store-owner/create-shop"
@@ -157,13 +144,10 @@ public class StoreOwnerInventoryServlet extends HttpServlet {
                 return;
             }
 
-            ProductDAO.ShopInfo shop =
-                    productDAO.getShopForOwner(user.getUserID());
-
             int userId = user.getUserID();
 
             request.setAttribute("shopName",
-                    shop == null ? null : shop.getShopName());
+                    inventoryService.shopName(userId));
 
             if ("update".equals(view)) {
                 loadUpdateView(request, userId);
@@ -192,127 +176,61 @@ public class StoreOwnerInventoryServlet extends HttpServlet {
                .forward(request, response);
     }
 
-    /**
-     * /store-owner/inventory - View Stock Quantity.
-     */
     private void loadStockView(HttpServletRequest request, int userId)
             throws SQLException {
 
-        double threshold = inventoryDAO.getLowStockThreshold(userId);
+        InventoryService.StockView view = inventoryService.loadStock(
+                userId,
+                request.getParameter("vq"),
+                request.getParameter("vweight"),
+                request.getParameter("vpage"));
 
-        List<Map<String, Object>> variants =
-                inventoryDAO.getVariantsForOwner(userId);
-
-        // ---- View stock: search product/SKU + filter package weight ----
-        String vq = Filters.text(request.getParameter("vq"));
-        String vweight = Filters.text(request.getParameter("vweight"));
-
-        List<Map<String, Object>> variantRows = new ArrayList<>();
-
-        for (Map<String, Object> v : variants) {
-            if (Filters.any(vq, v.get("product_name"), v.get("sku"))
-                    && Filters.same(vweight,
-                            VariantWeights.key(v.get("weight_value")))) {
-                variantRows.add(v);
-            }
-        }
-
-        request.setAttribute("weightOptions",
-                VariantWeights.options(variants));
-
-        request.setAttribute("variantsPage", Page.of(
-                variantRows,
-                Page.parsePage(request.getParameter("vpage"))));
-
-        request.setAttribute("threshold", threshold);
+        request.setAttribute("threshold", view.getThreshold());
+        request.setAttribute("weightOptions", view.getWeightOptions());
+        request.setAttribute("variantsPage", view.getVariantsPage());
     }
 
-    /**
-     * /store-owner/inventory/update - Update Stock Quantity.
-     */
     private void loadUpdateView(HttpServletRequest request, int userId)
             throws SQLException {
 
-        String bq = Filters.text(request.getParameter("bq"));
-        String bstatus = Filters.text(request.getParameter("bstatus"));
+        InventoryService.BatchesView view = inventoryService.loadBatches(
+                userId,
+                request.getParameter("bq"),
+                request.getParameter("bstatus"),
+                request.getParameter("bpage"));
 
-        List<Map<String, Object>> batchRows = new ArrayList<>();
-
-        for (Map<String, Object> b
-                : inventoryDAO.getBatchesForOwner(userId)) {
-            if (Filters.any(bq, b.get("batch_code"),
-                            b.get("product_name"), b.get("sku"))
-                    && Filters.same(bstatus, b.get("status"))) {
-                batchRows.add(b);
-            }
-        }
-
-        request.setAttribute("batchesPage", Page.of(
-                batchRows,
-                Page.parsePage(request.getParameter("bpage"))));
+        request.setAttribute("batchesPage", view.getBatchesPage());
     }
 
-    /**
-     * /store-owner/inventory/restock - Restock Products.
-     */
     private void loadRestockView(HttpServletRequest request, int userId)
             throws SQLException {
 
-        // Full list: the drop-down must show every variant.
         request.setAttribute("variants",
-                inventoryDAO.getVariantsForOwner(userId));
+                inventoryService.loadRestockVariants(userId));
     }
 
-    /**
-     * /store-owner/inventory/low-stock - Low Stock Monitoring.
-     */
     private void loadLowStockView(HttpServletRequest request, int userId)
             throws SQLException {
 
-        double threshold = inventoryDAO.getLowStockThreshold(userId);
+        InventoryService.LowStockView view = inventoryService.loadLowStock(
+                userId,
+                request.getParameter("lq"),
+                request.getParameter("lpage"));
 
-        // ---- Low stock: search product/SKU ----
-        String lq = Filters.text(request.getParameter("lq"));
-
-        List<Map<String, Object>> lowRows = new ArrayList<>();
-
-        for (Map<String, Object> v
-                : inventoryDAO.getLowStockForOwner(userId, threshold)) {
-            if (Filters.any(lq, v.get("product_name"), v.get("sku"))) {
-                lowRows.add(v);
-            }
-        }
-
-        request.setAttribute("threshold", threshold);
-
-        request.setAttribute("lowStockPage", Page.of(
-                lowRows,
-                Page.parsePage(request.getParameter("lpage"))));
+        request.setAttribute("threshold", view.getThreshold());
+        request.setAttribute("lowStockPage", view.getLowStockPage());
     }
 
-    /**
-     * /store-owner/inventory/history - Inventory History.
-     */
     private void loadHistoryView(HttpServletRequest request, int userId)
             throws SQLException {
 
-        String hq = Filters.text(request.getParameter("hq"));
-        String htype = Filters.text(request.getParameter("htype"));
+        InventoryService.AdjustmentsView view = inventoryService.loadHistory(
+                userId,
+                request.getParameter("hq"),
+                request.getParameter("htype"),
+                request.getParameter("hpage"));
 
-        List<Map<String, Object>> historyRows = new ArrayList<>();
-
-        for (Map<String, Object> a
-                : inventoryDAO.getAdjustmentsForOwner(userId)) {
-            if (Filters.any(hq, a.get("product_name"), a.get("sku"),
-                            a.get("batch_code"), a.get("reason"))
-                    && Filters.same(htype, a.get("adjustment_type"))) {
-                historyRows.add(a);
-            }
-        }
-
-        request.setAttribute("adjustmentsPage", Page.of(
-                historyRows,
-                Page.parsePage(request.getParameter("hpage"))));
+        request.setAttribute("adjustmentsPage", view.getAdjustmentsPage());
     }
 
     // =====================================================
@@ -338,13 +256,27 @@ public class StoreOwnerInventoryServlet extends HttpServlet {
 
         try {
             if ("restock".equals(action)) {
-                result = handleRestock(request, userId);
+                result = inventoryService.restock(
+                        userId,
+                        request.getParameter("variantId"),
+                        request.getParameter("quantity"),
+                        request.getParameter("batchCode"),
+                        request.getParameter("expiryDate"),
+                        request.getParameter("reason"));
+
             } else if ("setThreshold".equals(action)) {
-                result = handleSetThreshold(request, userId);
+                result = inventoryService.setThreshold(
+                        userId, request.getParameter("threshold"));
+
             } else if ("notifyLowStock".equals(action)) {
-                result = handleNotifyLowStock(user);
+                result = inventoryService.notifyLowStock(user);
+
             } else {
-                result = handleUpdate(request, userId);
+                result = inventoryService.updateBatch(
+                        userId,
+                        request.getParameter("batchId"),
+                        request.getParameter("quantity"),
+                        request.getParameter("reason"));
             }
 
         } catch (SQLException e) {
@@ -360,145 +292,9 @@ public class StoreOwnerInventoryServlet extends HttpServlet {
         );
     }
 
-    private String handleRestock(HttpServletRequest request, int userId)
-            throws SQLException {
-
-        int variantId = parseInt(request.getParameter("variantId"), -1);
-        double quantity = parseDouble(request.getParameter("quantity"), -1);
-        String batchCode = trim(request.getParameter("batchCode"));
-        String expiryRaw = trim(request.getParameter("expiryDate"));
-        String reason = trim(request.getParameter("reason"));
-
-        if (variantId <= 0 || quantity <= 0 || batchCode.isEmpty()) {
-            return "invalid";
-        }
-
-        if (quantity > MAX_STOCK_QUANTITY) {
-            return "invalid";
-        }
-
-        if (batchCode.length() > 50) {
-            return "invalid";
-        }
-
-        if (!inventoryDAO.variantBelongsToOwner(variantId, userId)) {
-            return "forbidden";
-        }
-
-        if (inventoryDAO.batchCodeExists(variantId, batchCode)) {
-            return "duplicate";
-        }
-
-        Date expiry;
-        try {
-            expiry = Date.valueOf(expiryRaw);
-        } catch (IllegalArgumentException e) {
-            return "invalid";
-        }
-
-        if (expiry.before(new Date(System.currentTimeMillis()))) {
-            return "expired";
-        }
-
-        if (reason.isEmpty()) {
-            reason = "Restock " + batchCode;
-        }
-
-        boolean ok = inventoryDAO.restock(
-                variantId, batchCode, quantity, expiry, userId, reason);
-
-        return ok ? "restocked" : "failed";
-    }
-
-    private String handleUpdate(HttpServletRequest request, int userId)
-            throws SQLException {
-
-        int batchId = parseInt(request.getParameter("batchId"), -1);
-        double quantity = parseDouble(request.getParameter("quantity"), -1);
-        String reason = trim(request.getParameter("reason"));
-
-        if (batchId <= 0 || quantity < 0) {
-            return "invalid";
-        }
-
-        if (quantity > MAX_STOCK_QUANTITY) {
-            return "invalid";
-        }
-
-        if (!inventoryDAO.batchBelongsToOwner(batchId, userId)) {
-            return "forbidden";
-        }
-
-        if (reason.isEmpty()) {
-            reason = "Manual stock update";
-        }
-
-        boolean ok = inventoryDAO.setBatchQuantity(
-                batchId, quantity, userId, reason);
-
-        return ok ? "updated" : "failed";
-    }
-
-    /**
-     * Stores the shop's own "low stock" safety threshold.
-     */
-    private String handleSetThreshold(HttpServletRequest request, int userId)
-            throws SQLException {
-
-        double threshold = parseDouble(request.getParameter("threshold"), -1);
-
-        if (threshold < 0 || threshold > MAX_STOCK_QUANTITY) {
-            return "invalid";
-        }
-
-        boolean ok = inventoryDAO.updateLowStockThreshold(userId, threshold);
-
-        return ok ? "threshold-saved" : "failed";
-    }
-
-    /**
-     * Sends the low stock alert email to the owner's account
-     * address. {@code notify-none} when nothing is below the
-     * threshold, {@code notify-failed} when the mail could not be
-     * sent (for example when SMTP is not configured).
-     */
-    private String handleNotifyLowStock(User user) {
-
-        try {
-            int reported = LowStockNotifier.sendAlert(
-                    user.getUserID(), user.getEmail(), null);
-
-            return reported > 0 ? "notified" : "notify-none";
-
-        } catch (MessagingException | SQLException e) {
-
-            getServletContext().log(
-                    "Low stock alert failed for owner "
-                            + user.getUserID(), e);
-
-            return "notify-failed";
-        }
-    }
-
     // =====================================================
     // HELPERS
     // =====================================================
-
-    private int parseInt(String value, int fallback) {
-        try {
-            return Integer.parseInt(trim(value));
-        } catch (NumberFormatException e) {
-            return fallback;
-        }
-    }
-
-    private double parseDouble(String value, double fallback) {
-        try {
-            return Double.parseDouble(trim(value));
-        } catch (NumberFormatException e) {
-            return fallback;
-        }
-    }
 
     private String trim(String value) {
         return value == null ? "" : value.trim();

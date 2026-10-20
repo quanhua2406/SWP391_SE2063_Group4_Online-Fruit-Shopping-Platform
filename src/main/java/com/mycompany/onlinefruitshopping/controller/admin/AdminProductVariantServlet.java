@@ -1,10 +1,7 @@
 package com.mycompany.onlinefruitshopping.controller.admin;
 
-import com.mycompany.onlinefruitshopping.dao.product.AdminProductDAO;
-import com.mycompany.onlinefruitshopping.utils.Filters;
-import com.mycompany.onlinefruitshopping.utils.Page;
+import com.mycompany.onlinefruitshopping.service.product.AdminProductService;
 import com.mycompany.onlinefruitshopping.utils.QueryUrl;
-import com.mycompany.onlinefruitshopping.utils.VariantWeights;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -13,11 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Admin management of the variants of a product.
@@ -29,7 +22,8 @@ import java.util.Map;
 @WebServlet("/admin/product-variants")
 public class AdminProductVariantServlet extends HttpServlet {
 
-    private final AdminProductDAO dao = new AdminProductDAO();
+    private final AdminProductService productService =
+            new AdminProductService();
 
     // =====================================================
     // GET - VARIANT LIST
@@ -53,9 +47,14 @@ public class AdminProductVariantServlet extends HttpServlet {
         }
 
         try {
-            Map<String, Object> product = dao.getProductForEdit(productId);
+            AdminProductService.VariantListView view =
+                    productService.loadVariants(
+                            productId,
+                            request.getParameter("q"),
+                            request.getParameter("weight"),
+                            request.getParameter("page"));
 
-            if (product == null) {
+            if (view.getProduct() == null) {
                 response.sendRedirect(
                         request.getContextPath()
                                 + "/admin/product-management?message=notfound"
@@ -63,31 +62,11 @@ public class AdminProductVariantServlet extends HttpServlet {
                 return;
             }
 
-            request.setAttribute("product", product);
-
-            String q = Filters.text(request.getParameter("q"));
-            String weight = Filters.text(request.getParameter("weight"));
-
-            List<Map<String, Object>> variants =
-                    dao.getVariantsByProduct(productId);
-
-            List<Map<String, Object>> filtered = new ArrayList<>();
-
-            for (Map<String, Object> v : variants) {
-                if (Filters.any(q, v.get("sku"), v.get("packaging_type"))
-                        && Filters.same(weight,
-                                VariantWeights.key(v.get("weight_value")))) {
-                    filtered.add(v);
-                }
-            }
-
-            request.setAttribute("variants", variants);
-            request.setAttribute("variantsPage", Page.of(
-                    filtered, Page.parsePage(request.getParameter("page"))));
+            request.setAttribute("product", view.getProduct());
+            request.setAttribute("variants", view.getVariants());
+            request.setAttribute("variantsPage", view.getVariantsPage());
+            request.setAttribute("weightOptions", view.getWeightOptions());
             request.setAttribute("message", request.getParameter("message"));
-
-            request.setAttribute("weightOptions",
-                    VariantWeights.options(variants));
 
             // Keep the search and filters when moving between pages.
             request.setAttribute("pagerUrl", QueryUrl.keep(
@@ -125,11 +104,25 @@ public class AdminProductVariantServlet extends HttpServlet {
 
         try {
             if ("add".equals(action)) {
-                result = add(request, productId);
+                result = productService.addVariant(
+                        productId,
+                        request.getParameter("sku"),
+                        request.getParameter("price"),
+                        request.getParameter("weightValue"),
+                        request.getParameter("packagingType"));
+
             } else if ("edit".equals(action)) {
-                result = edit(request);
+                result = productService.updateVariant(
+                        request.getParameter("variantId"),
+                        request.getParameter("sku"),
+                        request.getParameter("price"),
+                        request.getParameter("weightValue"),
+                        request.getParameter("packagingType"));
+
             } else if ("delete".equals(action)) {
-                result = delete(request);
+                result = productService.deleteVariant(
+                        request.getParameter("variantId"));
+
             } else {
                 result = "failed";
             }
@@ -146,113 +139,9 @@ public class AdminProductVariantServlet extends HttpServlet {
         );
     }
 
-    private String add(HttpServletRequest request, int productId)
-            throws SQLException {
-
-        if (productId <= 0) {
-            return "invalid";
-        }
-
-        String sku = trim(request.getParameter("sku"));
-
-        BigDecimal price = parseDecimal(request.getParameter("price"));
-        BigDecimal weight = parseDecimal(request.getParameter("weightValue"));
-
-        // A variant is one selling package, so its weight is what
-        // identifies it and is therefore mandatory.
-        if (sku.isEmpty() || sku.length() > 50
-                || price == null
-                || price.compareTo(BigDecimal.ZERO) <= 0
-                || weight == null
-                || weight.compareTo(BigDecimal.ZERO) <= 0) {
-
-            return "invalid";
-        }
-
-        if (dao.skuExists(sku, 0)) {
-            return "duplicate";
-        }
-
-        boolean ok = dao.addVariant(
-                productId,
-                sku,
-                VariantWeights.UNIT,
-                weight,
-                trimOrNull(request.getParameter("packagingType")),
-                price
-        );
-
-        return ok ? "created" : "failed";
-    }
-
-    private String edit(HttpServletRequest request) throws SQLException {
-
-        int variantId = parseInt(request.getParameter("variantId"), -1);
-
-        String sku = trim(request.getParameter("sku"));
-
-        BigDecimal price = parseDecimal(request.getParameter("price"));
-        BigDecimal weight = parseDecimal(request.getParameter("weightValue"));
-
-        if (variantId <= 0
-                || sku.isEmpty() || sku.length() > 50
-                || price == null
-                || price.compareTo(BigDecimal.ZERO) <= 0
-                || weight == null
-                || weight.compareTo(BigDecimal.ZERO) <= 0) {
-
-            return "invalid";
-        }
-
-        if (dao.skuExists(sku, variantId)) {
-            return "duplicate";
-        }
-
-        boolean ok = dao.updateVariant(
-                variantId,
-                sku,
-                VariantWeights.UNIT,
-                weight,
-                trimOrNull(request.getParameter("packagingType")),
-                price
-        );
-
-        return ok ? "updated" : "failed";
-    }
-
-    private String delete(HttpServletRequest request) throws SQLException {
-
-        int variantId = parseInt(request.getParameter("variantId"), -1);
-
-        if (variantId <= 0) {
-            return "invalid";
-        }
-
-        return dao.deleteVariant(variantId);
-    }
-
     // =====================================================
     // HELPERS
     // =====================================================
-
-    private BigDecimal parseDecimal(String value) {
-        String text = trim(value);
-
-        if (text.isEmpty()) {
-            return null;
-        }
-
-        try {
-            return new BigDecimal(text);
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    private String trimOrNull(String value) {
-        String text = trim(value);
-        return text.isEmpty() ? null : text;
-    }
 
     private int parseInt(String value, int fallback) {
         try {

@@ -1,6 +1,6 @@
 package com.mycompany.onlinefruitshopping.controller.admin;
 
-import com.mycompany.onlinefruitshopping.dao.product.AdminProductDAO;
+import com.mycompany.onlinefruitshopping.service.product.AdminProductService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -20,7 +20,8 @@ import java.sql.SQLException;
 @WebServlet("/admin/product-status")
 public class AdminProductStatusServlet extends HttpServlet {
 
-    private final AdminProductDAO dao = new AdminProductDAO();
+    private final AdminProductService productService =
+            new AdminProductService();
 
     @Override
     protected void doPost(HttpServletRequest request,
@@ -29,25 +30,12 @@ public class AdminProductStatusServlet extends HttpServlet {
 
         request.setCharacterEncoding("UTF-8");
 
-        int productId = parseInt(request.getParameter("productId"), -1);
-        String status = request.getParameter("status") == null
-                ? ""
-                : request.getParameter("status").trim();
-
-        boolean validStatus = "published".equals(status)
-                || "hidden".equals(status)
-                || "draft".equals(status);
-
         String result;
 
         try {
-            if (productId <= 0 || !validStatus) {
-                result = "invalid";
-            } else {
-                result = dao.updateProductStatus(productId, status)
-                        ? "status_" + status
-                        : "failed";
-            }
+            result = productService.changeStatus(
+                    request.getParameter("productId"),
+                    request.getParameter("status"));
 
         } catch (SQLException e) {
             throw new ServletException(
@@ -58,13 +46,5 @@ public class AdminProductStatusServlet extends HttpServlet {
                 request.getContextPath()
                         + "/admin/product-management?message=" + result
         );
-    }
-
-    private int parseInt(String value, int fallback) {
-        try {
-            return Integer.parseInt(value == null ? "" : value.trim());
-        } catch (NumberFormatException e) {
-            return fallback;
-        }
     }
 }

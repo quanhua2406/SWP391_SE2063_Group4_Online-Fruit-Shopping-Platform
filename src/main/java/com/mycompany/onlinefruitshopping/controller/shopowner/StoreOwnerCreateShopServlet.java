@@ -1,14 +1,13 @@
 package com.mycompany.onlinefruitshopping.controller.shopowner;
 
-import com.mycompany.onlinefruitshopping.dao.product.ProductDAO;
 import com.mycompany.onlinefruitshopping.model.User;
+import com.mycompany.onlinefruitshopping.service.shop.ShopService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -22,7 +21,7 @@ import java.sql.SQLException;
 @WebServlet("/store-owner/create-shop")
 public class StoreOwnerCreateShopServlet extends HttpServlet {
 
-    private final ProductDAO productDAO = new ProductDAO();
+    private final ShopService shopService = new ShopService();
 
     // =====================================================
     // GET - SHOW CREATE SHOP FORM
@@ -30,17 +29,17 @@ public class StoreOwnerCreateShopServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request,
-                          HttpServletResponse response)
+                         HttpServletResponse response)
             throws ServletException, IOException {
 
-        User user = currentUser(request, response);
+        User user = ShopOwnerSupport.currentUser(request, response);
 
         if (user == null) {
             return;
         }
 
         try {
-            if (productDAO.getShopForOwner(user.getUserID()) != null) {
+            if (shopService.hasShop(user.getUserID())) {
                 response.sendRedirect(
                         request.getContextPath()
                                 + "/store-owner/dashboard?shop=exists"
@@ -69,7 +68,7 @@ public class StoreOwnerCreateShopServlet extends HttpServlet {
 
         request.setCharacterEncoding("UTF-8");
 
-        User user = currentUser(request, response);
+        User user = ShopOwnerSupport.currentUser(request, response);
 
         if (user == null) {
             return;
@@ -78,7 +77,7 @@ public class StoreOwnerCreateShopServlet extends HttpServlet {
         String shopName = trim(request.getParameter("shopName"));
         String description = trim(request.getParameter("description"));
 
-        String error = validate(shopName, description);
+        String error = shopService.validateShop(shopName, description);
 
         if (error != null) {
             showForm(request, response, shopName, description, error);
@@ -86,11 +85,8 @@ public class StoreOwnerCreateShopServlet extends HttpServlet {
         }
 
         try {
-            boolean created = productDAO.createShopForOwner(
-                    user.getUserID(),
-                    shopName,
-                    description
-            );
+            boolean created = shopService.createShop(
+                    user.getUserID(), shopName, description);
 
             if (!created) {
                 response.sendRedirect(
@@ -115,42 +111,6 @@ public class StoreOwnerCreateShopServlet extends HttpServlet {
     // =====================================================
     // HELPERS
     // =====================================================
-
-    private User currentUser(HttpServletRequest request,
-                              HttpServletResponse response)
-            throws IOException {
-
-        HttpSession session = request.getSession(false);
-
-        if (session != null
-                && session.getAttribute("user") instanceof User) {
-
-            return (User) session.getAttribute("user");
-        }
-
-        response.sendRedirect(
-                request.getContextPath() + "/login"
-        );
-
-        return null;
-    }
-
-    private String validate(String shopName, String description) {
-
-        if (shopName == null || shopName.isBlank()) {
-            return "Shop name cannot be empty.";
-        }
-
-        if (shopName.length() < 2 || shopName.length() > 150) {
-            return "Shop name must be between 2 and 150 characters.";
-        }
-
-        if (description != null && description.length() > 255) {
-            return "Description cannot exceed 255 characters.";
-        }
-
-        return null;
-    }
 
     private void showForm(HttpServletRequest request,
                            HttpServletResponse response,

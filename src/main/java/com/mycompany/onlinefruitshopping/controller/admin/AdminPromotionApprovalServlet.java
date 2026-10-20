@@ -1,9 +1,7 @@
 package com.mycompany.onlinefruitshopping.controller.admin;
 
-import com.mycompany.onlinefruitshopping.dao.inventory.InventoryDAO;
 import com.mycompany.onlinefruitshopping.model.User;
-import com.mycompany.onlinefruitshopping.utils.Filters;
-import com.mycompany.onlinefruitshopping.utils.Page;
+import com.mycompany.onlinefruitshopping.service.promotion.PromotionReviewService;
 import com.mycompany.onlinefruitshopping.utils.QueryUrl;
 
 import jakarta.servlet.ServletException;
@@ -14,13 +12,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.sql.Date;
 import java.sql.SQLException;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Admin review of the promotional prices requested by shop owners.
@@ -34,7 +26,8 @@ import java.util.Map;
 @WebServlet("/admin/promotion-approvals")
 public class AdminPromotionApprovalServlet extends HttpServlet {
 
-    private final InventoryDAO inventoryDAO = new InventoryDAO();
+    private final PromotionReviewService reviewService =
+            new PromotionReviewService();
 
     // =====================================================
     // GET - THE REVIEW QUEUE
@@ -45,53 +38,18 @@ public class AdminPromotionApprovalServlet extends HttpServlet {
                          HttpServletResponse response)
             throws ServletException, IOException {
 
-        String status = Filters.text(request.getParameter("status"));
-        String q = Filters.text(request.getParameter("q"));
-
         try {
-            List<Map<String, Object>> all =
-                    inventoryDAO.getPromotionsForAdmin();
+            PromotionReviewService.ReviewQueue queue =
+                    reviewService.loadQueue(
+                            request.getParameter("status"),
+                            request.getParameter("q"),
+                            request.getParameter("page"));
 
-            // Counters describe every request, not only the rows the
-            // current filter keeps.
-            int pending = 0;
-            int approved = 0;
-            int rejected = 0;
-
-            for (Map<String, Object> row : all) {
-                String value = row.get("status") == null
-                        ? ""
-                        : row.get("status").toString();
-
-                if ("approved".equals(value)) {
-                    approved++;
-                } else if ("rejected".equals(value)) {
-                    rejected++;
-                } else {
-                    pending++;
-                }
-            }
-
-            List<Map<String, Object>> rows = new ArrayList<>();
-
-            for (Map<String, Object> row : all) {
-                if (Filters.same(status, row.get("status"))
-                        && Filters.any(q,
-                                row.get("product_name"),
-                                row.get("sku"),
-                                row.get("shop_name"))) {
-                    rows.add(row);
-                }
-            }
-
-            request.setAttribute("pendingCount", pending);
-            request.setAttribute("approvedCount", approved);
-            request.setAttribute("rejectedCount", rejected);
-            request.setAttribute("totalCount", all.size());
-
-            request.setAttribute("promotionsPage", Page.of(
-                    rows, Page.parsePage(request.getParameter("page"))));
-
+            request.setAttribute("pendingCount", queue.getPendingCount());
+            request.setAttribute("approvedCount", queue.getApprovedCount());
+            request.setAttribute("rejectedCount", queue.getRejectedCount());
+            request.setAttribute("totalCount", queue.getTotalCount());
+            request.setAttribute("promotionsPage", queue.getPromotionsPage());
             request.setAttribute("message", request.getParameter("msg"));
 
         } catch (SQLException e) {
@@ -126,9 +84,14 @@ public class AdminPromotionApprovalServlet extends HttpServlet {
 
         try {
             if ("reject".equals(action)) {
-                result = rejectPromotion(request, admin.getUserID());
+                result = reviewService.reject(
+                        admin.getUserID(),
+                        request.getParameter("promoId"),
+                        request.getParameter("reviewNote"));
             } else {
-                result = approvePromotion(request, admin.getUserID());
+                result = reviewService.approve(
+                        admin.getUserID(),
+                        request.getParameter("promoId"));
             }
 
         } catch (SQLException e) {
@@ -141,70 +104,6 @@ public class AdminPromotionApprovalServlet extends HttpServlet {
                 "status", "q", "page") + "msg=" + result;
 
         response.sendRedirect(url);
-    }
-
-    private String approvePromotion(HttpServletRequest request, int adminId)
-            throws SQLException {
-
-        int promoId = parseInt(request.getParameter("promoId"), -1);
-
-        if (promoId <= 0) {
-            return "invalid";
-        }
-
-        Map<String, Object> promo =
-                inventoryDAO.getPromotionForReview(promoId);
-
-        if (promo == null) {
-            return "invalid";
-        }
-
-        if (!"pending".equals(String.valueOf(promo.get("status")))) {
-            return "not-pending";
-        }
-
-        // A promotion whose time window is already over cannot be
-        // made effective, so it is refused instead of approved.
-        Date endDate = (Date) promo.get("end_date");
-
-        if (endDate != null
-                && endDate.toLocalDate().isBefore(LocalDate.now())) {
-            return "approve-expired";
-        }
-
-        // The offer must still be a discount: the shop owner may
-        // have lowered the normal price while the request waited.
-        BigDecimal promoPrice = (BigDecimal) promo.get("promo_price");
-        BigDecimal price = (BigDecimal) promo.get("price");
-
-        if (promoPrice == null || price == null
-                || promoPrice.compareTo(price) >= 0) {
-            return "approve-not-discount";
-        }
-
-        return inventoryDAO.reviewPromotion(
-                promoId, "approved", null, adminId)
-                ? "approved" : "not-pending";
-    }
-
-    private String rejectPromotion(HttpServletRequest request, int adminId)
-            throws SQLException {
-
-        int promoId = parseInt(request.getParameter("promoId"), -1);
-
-        if (promoId <= 0) {
-            return "invalid";
-        }
-
-        String note = request.getParameter("reviewNote");
-
-        if (note != null && note.length() > 255) {
-            note = note.substring(0, 255);
-        }
-
-        return inventoryDAO.reviewPromotion(
-                promoId, "rejected", note, adminId)
-                ? "rejected" : "not-pending";
     }
 
     // =====================================================
@@ -230,13 +129,5 @@ public class AdminPromotionApprovalServlet extends HttpServlet {
         response.sendRedirect(
                 request.getContextPath() + "/login");
         return null;
-    }
-
-    private int parseInt(String value, int fallback) {
-        try {
-            return Integer.parseInt(value == null ? "" : value.trim());
-        } catch (NumberFormatException e) {
-            return fallback;
-        }
     }
 }

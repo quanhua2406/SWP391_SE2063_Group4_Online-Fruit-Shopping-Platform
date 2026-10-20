@@ -1,6 +1,6 @@
 package com.mycompany.onlinefruitshopping.controller.admin;
 
-import com.mycompany.onlinefruitshopping.dao.product.AdminProductDAO;
+import com.mycompany.onlinefruitshopping.service.product.AdminProductService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -17,7 +17,8 @@ import java.sql.SQLException;
 @WebServlet("/admin/product-delete")
 public class AdminProductDeleteServlet extends HttpServlet {
 
-    private final AdminProductDAO dao = new AdminProductDAO();
+    private final AdminProductService productService =
+            new AdminProductService();
 
     @Override
     protected void doPost(HttpServletRequest request,
@@ -26,15 +27,11 @@ public class AdminProductDeleteServlet extends HttpServlet {
 
         request.setCharacterEncoding("UTF-8");
 
-        int productId = parseInt(request.getParameter("productId"), -1);
         String result;
 
         try {
-            if (productId <= 0) {
-                result = "invalid";
-            } else {
-                result = dao.deleteProduct(productId);
-            }
+            result = productService.deleteProduct(
+                    request.getParameter("productId"));
 
         } catch (SQLException e) {
             throw new ServletException(
@@ -45,13 +42,5 @@ public class AdminProductDeleteServlet extends HttpServlet {
                 request.getContextPath()
                         + "/admin/product-management?message=" + result
         );
-    }
-
-    private int parseInt(String value, int fallback) {
-        try {
-            return Integer.parseInt(value == null ? "" : value.trim());
-        } catch (NumberFormatException e) {
-            return fallback;
-        }
     }
 }

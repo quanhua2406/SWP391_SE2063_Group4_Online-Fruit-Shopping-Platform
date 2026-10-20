@@ -1,7 +1,7 @@
 
 package com.mycompany.onlinefruitshopping.controller.admin;
 
-import com.mycompany.onlinefruitshopping.dao.product.AdminProductDAO;
+import com.mycompany.onlinefruitshopping.service.product.AdminProductService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -10,13 +10,17 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.sql.SQLException;
 
+/**
+ * Admin "add product" form: creates a product together with its
+ * first selling package (variant).
+ */
 @WebServlet("/admin/product-add")
 public class AdminProductAddServlet extends HttpServlet {
 
-    private final AdminProductDAO dao = new AdminProductDAO();
+    private final AdminProductService productService =
+            new AdminProductService();
 
     @Override
     protected void doGet(
@@ -36,97 +40,30 @@ public class AdminProductAddServlet extends HttpServlet {
 
         request.setCharacterEncoding("UTF-8");
 
-        String productName = trim(request.getParameter("productName"));
-        String description = trim(request.getParameter("description"));
-        String origin = trim(request.getParameter("origin"));
-        String sku = trim(request.getParameter("sku"));
-        String weightText = trim(request.getParameter("weightValue"));
-        String packagingType = trim(request.getParameter("packagingType"));
-        String priceText = trim(request.getParameter("price"));
-        String commissionText = trim(request.getParameter("commissionRate"));
-        String imageUrl = trim(request.getParameter("imageUrl"));
-
         try {
-            String shopText = trim(request.getParameter("shopId"));
-            String categoryText = trim(request.getParameter("categoryId"));
+            AdminProductService.SaveResult result =
+                    productService.createProduct(
+                            request.getParameter("shopId"),
+                            request.getParameter("categoryId"),
+                            request.getParameter("productName"),
+                            request.getParameter("description"),
+                            request.getParameter("origin"),
+                            request.getParameter("sku"),
+                            request.getParameter("weightValue"),
+                            request.getParameter("packagingType"),
+                            request.getParameter("price"),
+                            request.getParameter("commissionRate"),
+                            request.getParameter("imageUrl"));
 
-            if (shopText.isEmpty() || categoryText.isEmpty()
-                    || productName.isEmpty() || sku.isEmpty()
-                    || priceText.isEmpty() || weightText.isEmpty()) {
-
-                request.setAttribute(
-                        "error",
-                        "Please fill in all required fields."
-                );
-                showForm(request, response);
-                return;
-            }
-
-            int shopId = Integer.parseInt(shopText);
-            int categoryId = Integer.parseInt(categoryText);
-            BigDecimal price = new BigDecimal(priceText);
-
-            BigDecimal commissionRate = commissionText.isEmpty()
-                    ? AdminProductDAO.DEFAULT_COMMISSION_RATE
-                    : new BigDecimal(commissionText);
-
-            // The first variant of the product: its weight defines the
-            // package that is sold.
-            BigDecimal weightValue = new BigDecimal(weightText);
-
-            if (shopId <= 0
-                    || categoryId <= 0
-                    || productName.length() > 150
-                    || sku.length() > 50
-                    || price.compareTo(BigDecimal.ZERO) <= 0
-                    || commissionRate.compareTo(BigDecimal.ZERO) < 0
-                    || commissionRate.compareTo(
-                            new BigDecimal("100")) > 0
-                    || weightValue.compareTo(BigDecimal.ZERO) <= 0) {
-
-                request.setAttribute(
-                        "error",
-                        "Shop, category, product name, SKU, price, "
-                        + "weight or commission (0-100) is invalid."
-                );
-                showForm(request, response);
-                return;
-            }
-
-            boolean created = dao.createProduct(
-                    shopId,
-                    categoryId,
-                    productName,
-                    description.isEmpty() ? null : description,
-                    origin.isEmpty() ? null : origin,
-                    sku,
-                    "kg",
-                    weightValue,
-                    packagingType.isEmpty() ? null : packagingType,
-                    price,
-                    commissionRate,
-                    imageUrl.isEmpty() ? null : imageUrl
-            );
-
-            if (created) {
+            if (result.isSuccess()) {
                 response.sendRedirect(
                         request.getContextPath()
-                        + "/admin/product-management?message=created"
+                                + "/admin/product-management?message=created"
                 );
                 return;
             }
 
-            request.setAttribute(
-                    "error",
-                    "Product could not be created."
-            );
-            showForm(request, response);
-
-        } catch (NumberFormatException e) {
-            request.setAttribute(
-                    "error",
-                    "Shop, category, price, weight or commission has an invalid format."
-            );
+            request.setAttribute("error", result.getError());
             showForm(request, response);
 
         } catch (SQLException e) {
@@ -143,8 +80,8 @@ public class AdminProductAddServlet extends HttpServlet {
             throws ServletException, IOException {
 
         try {
-            request.setAttribute("categories", dao.getCategories());
-            request.setAttribute("shops", dao.getShops());
+            request.setAttribute("categories", productService.getCategories());
+            request.setAttribute("shops", productService.getShops());
 
             request.getRequestDispatcher(
                     "/jsp/admin/admin-product-form.jsp"
@@ -156,9 +93,5 @@ public class AdminProductAddServlet extends HttpServlet {
                     e
             );
         }
-    }
-
-    private String trim(String value) {
-        return value == null ? "" : value.trim();
     }
 }

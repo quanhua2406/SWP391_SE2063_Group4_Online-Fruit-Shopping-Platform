@@ -1,9 +1,7 @@
 
 package com.mycompany.onlinefruitshopping.controller.admin;
 
-import com.mycompany.onlinefruitshopping.dao.product.AdminProductDAO;
-import com.mycompany.onlinefruitshopping.utils.Filters;
-import com.mycompany.onlinefruitshopping.utils.Page;
+import com.mycompany.onlinefruitshopping.service.product.AdminProductService;
 import com.mycompany.onlinefruitshopping.utils.QueryUrl;
 
 import jakarta.servlet.ServletException;
@@ -14,15 +12,16 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeSet;
 
+/**
+ * Admin product list: search, status / category filters and one page
+ * of products at a time.
+ */
 @WebServlet("/admin/product-management")
 public class AdminProductServlet extends HttpServlet {
 
-    private final AdminProductDAO productDAO = new AdminProductDAO();
+    private final AdminProductService productService =
+            new AdminProductService();
 
     @Override
     protected void doGet(
@@ -32,42 +31,18 @@ public class AdminProductServlet extends HttpServlet {
 
         request.setCharacterEncoding("UTF-8");
 
-        String keyword = request.getParameter("keyword");
-
         try {
-            List<Map<String, Object>> products =
-                    productDAO.getAllProducts(keyword);
+            AdminProductService.ProductListView view =
+                    productService.loadProducts(
+                            request.getParameter("keyword"),
+                            request.getParameter("status"),
+                            request.getParameter("category"),
+                            request.getParameter("page"));
 
-            // Category options for the filter come from the loaded
-            // rows, so no extra query is needed.
-            TreeSet<String> categoryOptions = new TreeSet<>();
-
-            for (Map<String, Object> row : products) {
-                if (row.get("category_name") != null) {
-                    categoryOptions.add(row.get("category_name").toString());
-                }
-            }
-
-            String status = Filters.text(request.getParameter("status"));
-            String category = Filters.text(request.getParameter("category"));
-
-            List<Map<String, Object>> filtered = new ArrayList<>();
-
-            for (Map<String, Object> row : products) {
-                if (Filters.same(status, row.get("status"))
-                        && Filters.same(category, row.get("category_name"))) {
-                    filtered.add(row);
-                }
-            }
-
-            request.setAttribute("products", products);
-            request.setAttribute("productsPage", Page.of(
-                    filtered, Page.parsePage(request.getParameter("page"))));
-            request.setAttribute("categoryOptions", categoryOptions);
-            request.setAttribute(
-                    "keyword",
-                    keyword == null ? "" : keyword
-            );
+            request.setAttribute("products", view.getProducts());
+            request.setAttribute("productsPage", view.getProductsPage());
+            request.setAttribute("categoryOptions", view.getCategoryOptions());
+            request.setAttribute("keyword", view.getKeyword());
 
             // Keep the search and filters when moving between pages.
             request.setAttribute("pagerUrl", QueryUrl.keep(

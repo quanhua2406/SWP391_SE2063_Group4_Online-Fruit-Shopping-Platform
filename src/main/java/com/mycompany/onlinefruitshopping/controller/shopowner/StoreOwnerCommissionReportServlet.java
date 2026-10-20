@@ -1,9 +1,7 @@
 package com.mycompany.onlinefruitshopping.controller.shopowner;
 
-import com.mycompany.onlinefruitshopping.dao.product.ProductDAO;
-import com.mycompany.onlinefruitshopping.dao.report.CommissionReportDAO;
-import com.mycompany.onlinefruitshopping.model.Product;
 import com.mycompany.onlinefruitshopping.model.User;
+import com.mycompany.onlinefruitshopping.service.report.CommissionReportService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -12,12 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Shop-owner "commission report": how much fee the shop has to
@@ -31,8 +24,8 @@ import java.util.Map;
 @WebServlet("/store-owner/commission-report")
 public class StoreOwnerCommissionReportServlet extends HttpServlet {
 
-    private final CommissionReportDAO reportDAO = new CommissionReportDAO();
-    private final ProductDAO productDAO = new ProductDAO();
+    private final CommissionReportService reportService =
+            new CommissionReportService();
 
     @Override
     protected void doGet(HttpServletRequest request,
@@ -48,10 +41,15 @@ public class StoreOwnerCommissionReportServlet extends HttpServlet {
         }
 
         try {
-            ProductDAO.ShopInfo shop =
-                    productDAO.getShopForOwner(user.getUserID());
+            CommissionReportService.OwnerReport report =
+                    reportService.loadOwnerReport(
+                            user.getUserID(),
+                            request.getParameter("from"),
+                            request.getParameter("to"),
+                            request.getParameter("status"),
+                            request.getParameter("section"));
 
-            if (shop == null) {
+            if (report == null) {
                 response.sendRedirect(
                         request.getContextPath()
                                 + "/store-owner/create-shop"
@@ -59,90 +57,26 @@ public class StoreOwnerCommissionReportServlet extends HttpServlet {
                 return;
             }
 
-            int userId = user.getUserID();
-
-            // ---- Report filters (date range + order status) ----
-            String from =
-                    CommissionReportDAO.normalizeDate(request.getParameter("from"));
-            String to =
-                    CommissionReportDAO.normalizeDate(request.getParameter("to"));
-            String status =
-                    CommissionReportDAO.normalizeStatus(request.getParameter("status"));
-
-            // Friendly behaviour: an inverted range is swapped.
-            if (!from.isEmpty() && !to.isEmpty() && from.compareTo(to) > 0) {
-                String swap = from;
-                from = to;
-                to = swap;
-            }
-
-            request.setAttribute("from", from);
-            request.setAttribute("to", to);
-            request.setAttribute("status", status);
-
-            String section =
-                    normalizeSection(request.getParameter("section"),
-                            "overview", "products", "schedule",
-                            "rates", "status");
-            request.setAttribute("section", section);
-
-            List<Map<String, Object>> productReport =
-                    reportDAO.getProductReportForOwner(
-                            userId, from, to, status);
-
-            List<Map<String, Object>> rateReport =
-                    reportDAO.getRateReportForOwner(
-                            userId, from, to, status);
-
-            List<Map<String, Object>> statusReport =
-                    reportDAO.getStatusReportForOwner(
-                            userId, from, to, status);
-
-            Map<String, Object> breakdown =
-                    reportDAO.getFeeBreakdownForOwner(
-                            userId, from, to, status);
-
-            List<Product> products = Collections.emptyList();
-
-            try {
-                products = productDAO.getProductsByOwner(userId);
-            } catch (SQLException ignored) {
-                // keep the report even when the price list fails
-            }
-
-            BigDecimal totalRevenue = BigDecimal.ZERO;
-            BigDecimal totalFee = BigDecimal.ZERO;
-
-            for (Map<String, Object> row : productReport) {
-                totalRevenue = totalRevenue.add(decimal(row.get("revenue")));
-                totalFee = totalFee.add(decimal(row.get("platform_fee")));
-            }
-
-            BigDecimal serviceFee =
-                    totalRevenue.multiply(
-                            CommissionReportDAO.SERVICE_FEE_RATE)
-                    .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
-
-            request.setAttribute("shopName", shop.getShopName());
-            request.setAttribute("productReport", productReport);
-            request.setAttribute("rateReport", rateReport);
-            request.setAttribute("statusReport", statusReport);
-            request.setAttribute("breakdown", breakdown);
-            request.setAttribute("products", products);
-            request.setAttribute("totalRevenue", totalRevenue);
-            request.setAttribute("totalFee", totalFee);
-            request.setAttribute("serviceFee", serviceFee);
-            request.setAttribute("netPayout",
-                    totalRevenue.subtract(serviceFee).subtract(totalFee));
-            request.setAttribute("totalEarning",
-                    totalRevenue.subtract(totalFee));
-
             if ("csv".equalsIgnoreCase(request.getParameter("format"))) {
-                writeCsv(response, shop.getShopName(), productReport,
-                        totalRevenue, totalFee, serviceFee,
-                        breakdown, from, to, status);
+                writeCsv(response, report);
                 return;
             }
+
+            request.setAttribute("from", report.getFrom());
+            request.setAttribute("to", report.getTo());
+            request.setAttribute("status", report.getStatus());
+            request.setAttribute("section", report.getSection());
+            request.setAttribute("shopName", report.getShopName());
+            request.setAttribute("productReport", report.getProductReport());
+            request.setAttribute("rateReport", report.getRateReport());
+            request.setAttribute("statusReport", report.getStatusReport());
+            request.setAttribute("breakdown", report.getBreakdown());
+            request.setAttribute("products", report.getProducts());
+            request.setAttribute("totalRevenue", report.getTotalRevenue());
+            request.setAttribute("totalFee", report.getTotalFee());
+            request.setAttribute("serviceFee", report.getServiceFee());
+            request.setAttribute("netPayout", report.getNetPayout());
+            request.setAttribute("totalEarning", report.getTotalEarning());
 
         } catch (SQLException e) {
             throw new ServletException(
@@ -155,110 +89,16 @@ public class StoreOwnerCommissionReportServlet extends HttpServlet {
     }
 
     /**
-     * Streams the per-product commission report as a CSV download,
-     * including the active filters and the fee breakdown.
+     * Streams the per-product commission report as a CSV download.
      */
     private void writeCsv(HttpServletResponse response,
-                          String shopName,
-                          List<Map<String, Object>> rows,
-                          BigDecimal totalRevenue,
-                          BigDecimal totalFee,
-                          BigDecimal serviceFee,
-                          Map<String, Object> breakdown,
-                          String from,
-                          String to,
-                          String status)
+                          CommissionReportService.OwnerReport report)
             throws IOException {
 
         response.setContentType("text/csv; charset=UTF-8");
         response.setHeader("Content-Disposition",
                 "attachment; filename=\"commission-report.csv\"");
 
-        StringBuilder csv = new StringBuilder();
-
-        csv.append('\uFEFF');
-        csv.append("Shop,").append(csv(shopName)).append('\n');
-
-        if (!from.isEmpty() || !to.isEmpty() || !status.isEmpty()) {
-            csv.append("Filter,\"")
-               .append(from.isEmpty() ? "..." : from)
-               .append(" to ")
-               .append(to.isEmpty() ? "..." : to)
-               .append("; status: ")
-               .append(status.isEmpty() ? "delivered (fee basis)" : status)
-               .append("\"\n");
-        }
-
-        csv.append("Product,Quantity Sold,Revenue,Commission %,Platform Fee,Shop Earning\n");
-
-        for (Map<String, Object> row : rows) {
-            csv.append(csv(row.get("product_name"))).append(',')
-               .append(csv(row.get("sold_qty"))).append(',')
-               .append(csv(row.get("revenue"))).append(',')
-               .append(csv(row.get("commission_rate"))).append(',')
-               .append(csv(row.get("platform_fee"))).append(',')
-               .append(csv(row.get("shop_earning"))).append('\n');
-        }
-
-        csv.append("TOTAL,,")
-           .append(csv(totalRevenue)).append(',')
-           .append(',')
-           .append(csv(totalFee)).append(',')
-           .append(csv(totalRevenue.subtract(totalFee))).append('\n');
-
-        csv.append('\n');
-        csv.append("Fee Breakdown\n");
-        csv.append("Gross sales,").append(csv(breakdown.get("gross_sales"))).append('\n');
-        csv.append("Promotional discount,")
-           .append(csv(breakdown.get("promotional_discount"))).append('\n');
-        csv.append("Refunds (cancelled/failed),")
-           .append(csv(breakdown.get("refunds"))).append('\n');
-        csv.append("Paid revenue (commission basis),")
-           .append(csv(totalRevenue)).append('\n');
-        csv.append("Service fee (")
-           .append(CommissionReportDAO.SERVICE_FEE_RATE.toPlainString())
-           .append(" %),").append(csv(serviceFee)).append('\n');
-        csv.append("Platform commission,").append(csv(totalFee)).append('\n');
-        csv.append("Net payout to shop,")
-           .append(csv(totalRevenue.subtract(serviceFee).subtract(totalFee)))
-           .append('\n');
-
-        response.getWriter().write(csv.toString());
-    }
-
-    private static String csv(Object value) {
-        if (value == null) {
-            return "";
-        }
-
-        String text = value.toString();
-
-        if (text.contains(",") || text.contains("\"") || text.contains("\n")) {
-            return '"' + text.replace("\"", "\"\"") + '"';
-        }
-
-        return text;
-    }
-
-    private static String normalizeSection(String value, String... allowed) {
-        String section = value == null ? "" : value.trim().toLowerCase();
-
-        for (String s : allowed) {
-            if (s.equals(section)) {
-                return section;
-            }
-        }
-
-        return allowed[0];
-    }
-
-    private static BigDecimal decimal(Object value) {
-        if (value == null) {
-            return BigDecimal.ZERO;
-        }
-
-        return value instanceof BigDecimal
-                ? (BigDecimal) value
-                : new BigDecimal(value.toString());
+        response.getWriter().write(reportService.buildOwnerCsv(report));
     }
 }
