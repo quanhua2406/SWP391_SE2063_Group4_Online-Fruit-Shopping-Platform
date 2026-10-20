@@ -60,7 +60,7 @@
 
         <input type="hidden" name="action" value="notifyLowStock">
 
-        <button type="submit" class="btn-sm">
+        <button type="submit" class="btn-sm btn-sm-warning">
             ✉️ Email Alert
         </button>
 

@@ -61,7 +61,7 @@
         }
 
         .nav-actions a:hover {
-            color: #4caf50;
+            color: #2e7d32;
         }
 
         .nav-actions .logout {
@@ -166,7 +166,7 @@
             align-self: flex-start;
             width: fit-content;
 
-            background: #4caf50;
+            background: #2e7d32;
             color: #ffffff;
 
             padding: 10px 17px;
@@ -179,7 +179,7 @@
         }
 
         .dashboard-card a.action-btn:hover {
-            background: #388e3c;
+            background: #256628;
             transform: translateY(-1px);
         }
 

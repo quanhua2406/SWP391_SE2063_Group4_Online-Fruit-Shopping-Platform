@@ -170,14 +170,15 @@
                     Save Changes
                 </button>
 
-                <a class="btn-sm"
-                   style="display:inline-block; margin-left:10px; text-decoration:none"
+                <a class="btn-sm btn-sm-info"
+                   style="margin-left:10px"
                    href="<%= contextPath %>/admin/product-variants?productId=<%= esc(product.get("product_id")) %>">
                     Manage Variants
                 </a>
 
-                <a href="<%= contextPath %>/admin/product-management"
-                   style="margin-left:10px">
+                <a class="btn-secondary"
+                   style="margin-left:10px"
+                   href="<%= contextPath %>/admin/product-management">
                     Cancel
                 </a>
             </div>

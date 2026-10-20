@@ -114,6 +114,9 @@
 
     <title>Product Management - FreshFruit</title>
 
+    <link rel="stylesheet"
+          href="<%=contextPath%>/css/style.css">
+
     <style>
         * {
             box-sizing: border-box;
@@ -268,12 +271,15 @@
         }
 
         .btn-secondary {
-            background: #f0f2f4;
+            background: #fff;
             color: #374151;
+            border: 1px solid #cfd8cb;
         }
 
         .btn-secondary:hover {
-            background: #e2e6e9;
+            background: #f1f5f0;
+            border-color: #b3c1b0;
+            color: #2e7d32;
         }
 
         .table-heading {
@@ -577,13 +583,12 @@
             </div>
 
             <div style="display:flex; gap:10px; flex-wrap:wrap">
-                <a class="add-button"
-                   href="<%=contextPath%>/admin/categories"
-                   style="background:#455a64">
+                <a class="btn btn-secondary"
+                   href="<%=contextPath%>/admin/categories">
                     📂 Categories
                 </a>
 
-                <a class="add-button"
+                <a class="btn btn-primary"
                    href="<%=contextPath%>/admin/product-add">
                     + Add Product
                 </a>
@@ -631,14 +636,12 @@
                             <td>
                                 <div class="table-actions">
 
-                                    <a class="btn-sm"
-                                       style="text-decoration:none"
+                                    <a class="btn-sm btn-sm-secondary"
                                        href="<%=contextPath%>/admin/product-edit?id=<%=escapeHtml(productId)%>">
                                         Edit
                                     </a>
 
-                                    <a class="btn-sm"
-                                       style="text-decoration:none; background:#0288d1"
+                                    <a class="btn-sm btn-sm-info"
                                        href="<%=contextPath%>/admin/product-variants?productId=<%=escapeHtml(productId)%>">
                                         Variants
                                     </a>
@@ -664,8 +667,7 @@
                                             <input type="hidden" name="status"
                                                    value="hidden">
                                             <button type="submit"
-                                                    class="btn-sm"
-                                                    style="background:#f57c00">
+                                                    class="btn-sm btn-sm-warning">
                                                 Hide
                                             </button>
                                         </form>

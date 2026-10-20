@@ -205,7 +205,7 @@
     </p>
 
     <p class="action-row">
-        <a class="btn-primary"
+        <a class="btn-secondary"
            href="<%= QueryUrl.keep(request, contextPath + "/admin/commission-report", "from", "to", "status") %>format=csv">
             ⬇️ Export CSV
         </a>

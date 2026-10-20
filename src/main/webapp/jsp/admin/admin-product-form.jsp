@@ -180,8 +180,15 @@
         }
 
         .secondary {
-            color: #444;
-            background: #f1f3f5;
+            color: #374151;
+            background: #ffffff;
+            border: 1px solid #cfd8cb;
+        }
+
+        .secondary:hover {
+            background: #f1f5f0;
+            border-color: #b3c1b0;
+            color: #2e7d32;
         }
 
         @media (max-width: 650px) {
