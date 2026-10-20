@@ -66,13 +66,13 @@
 <header class="navbar">
 
     <div class="logo">
-        ðŸŠ FreshFruit
+        🍊 FreshFruit
     </div>
 
     <nav class="nav-actions">
 
         <a href="<%= contextPath %>/home">
-            ðŸ  Home
+            🏠 Home
         </a>
 
         <a href="<%= contextPath %>/logout"
@@ -97,13 +97,13 @@
     <% if ("created".equals(shopStatus)) { %>
 
         <div class="success-message">
-            âœ… Your shop was created successfully.
+            ✅ Your shop was created successfully.
         </div>
 
     <% } else if ("exists".equals(shopStatus)) { %>
 
         <div class="success-message">
-            â„¹ï¸ You already have a shop.
+            ℹ️ You already have a shop.
         </div>
 
     <% } %>
@@ -119,7 +119,7 @@
 
             <div class="dashboard-card">
 
-                <div class="dashboard-icon">ðŸª</div>
+                <div class="dashboard-icon">🏪</div>
 
                 <h3>Create Shop</h3>
 
@@ -139,7 +139,7 @@
     <% } else { %>
 
         <p class="breadcrumb">
-            ðŸª Your shop:
+            🏪 Your shop:
             <strong><%= esc(shopName) %></strong>
         </p>
 
@@ -192,7 +192,7 @@
 
             <div class="dashboard-card">
 
-                <div class="dashboard-icon">ðŸŽ</div>
+                <div class="dashboard-icon">🍎</div>
 
                 <h3>Product Management</h3>
 
@@ -211,7 +211,7 @@
 
             <div class="dashboard-card">
 
-                <div class="dashboard-icon">ðŸ“¦</div>
+                <div class="dashboard-icon">📦</div>
 
                 <h3>Stock Management</h3>
 
@@ -230,7 +230,7 @@
 
             <div class="dashboard-card">
 
-                <div class="dashboard-icon">ðŸ’²</div>
+                <div class="dashboard-icon">💲</div>
 
                 <h3>Pricing Management</h3>
 
@@ -249,7 +249,7 @@
 
             <div class="dashboard-card">
 
-                <div class="dashboard-icon">ðŸ’¼</div>
+                <div class="dashboard-icon">💼</div>
 
                 <h3>Commission Report</h3>
 
@@ -268,7 +268,7 @@
 
             <div class="dashboard-card">
 
-                <div class="dashboard-icon">ðŸŽ</div>
+                <div class="dashboard-icon">🎁</div>
 
                 <h3>Promotion Management</h3>
 
@@ -288,7 +288,7 @@
 
             <div class="dashboard-card">
 
-                <div class="dashboard-icon">ðŸŽŸï¸</div>
+                <div class="dashboard-icon">🎟️</div>
 
                 <h3>Coupon Management</h3>
 
@@ -306,7 +306,7 @@
 
             <div class="dashboard-card">
 
-                <div class="dashboard-icon">ðŸ“‹</div>
+                <div class="dashboard-icon">📋</div>
 
                 <h3>Order Management</h3>
 
@@ -325,7 +325,7 @@
 
             <div class="dashboard-card">
 
-                <div class="dashboard-icon">ðŸ”„</div>
+                <div class="dashboard-icon">🔄</div>
 
                 <h3>Subscription</h3>
 
@@ -344,7 +344,7 @@
 
             <div class="dashboard-card">
 
-                <div class="dashboard-icon">ðŸ””</div>
+                <div class="dashboard-icon">🔔</div>
 
                 <h3>Notifications</h3>
 

@@ -218,17 +218,17 @@
 <header class="navbar">
 
     <div class="logo">
-        ðŸŠ FreshFruit
+        🍊 FreshFruit
     </div>
 
     <nav class="nav-actions">
 
         <a href="<%= contextPath %>/store-owner/dashboard">
-            ðŸ“Š Dashboard
+            📊 Dashboard
         </a>
 
         <a href="<%= contextPath %>/store-owner/commission">
-            ðŸŽ Products
+            🍎 Products
         </a>
 
         <a href="<%= contextPath %>/logout"
@@ -244,22 +244,22 @@
 
     <p class="breadcrumb">
         <a href="<%= contextPath %>/store-owner/dashboard">
-            â† Shop Owner Dashboard
+            ← Shop Owner Dashboard
         </a>
     </p>
 
     <h1>Commission Report</h1>
 
     <p class="dashboard-welcome">
-        ðŸª <%= esc(shopName) %>
-        â€” the platform fee is <strong>commission&nbsp;%</strong>
+        🏪 <%= esc(shopName) %>
+        — the platform fee is <strong>commission&nbsp;%</strong>
         of every sale.
     </p>
 
     <p class="action-row">
         <a class="btn-secondary"
            href="<%= QueryUrl.keep(request, contextPath + "/store-owner/commission-report", "from", "to", "status") %>format=csv">
-            â¬‡ï¸ Export CSV
+            ⬇️ Export CSV
         </a>
     </p>
 
@@ -282,27 +282,27 @@
 
         <a class="<%= "overview".equals(section) ? "active" : "" %>"
            href="<%= secOverview %>">
-            ðŸ“Š Overview
+            📊 Overview
         </a>
 
         <a class="<%= "products".equals(section) ? "active" : "" %>"
            href="<%= secProducts %>">
-            ðŸ’¼ By Product
+            💼 By Product
         </a>
 
         <a class="<%= "schedule".equals(section) ? "active" : "" %>"
            href="<%= secSchedule %>">
-            ðŸ·ï¸ Fee Schedule
+            🏷️ Fee Schedule
         </a>
 
         <a class="<%= "rates".equals(section) ? "active" : "" %>"
            href="<%= secRates %>">
-            ðŸ“ˆ By Rate
+            📈 By Rate
         </a>
 
         <a class="<%= "status".equals(section) ? "active" : "" %>"
            href="<%= secStatus %>">
-            ðŸšš By Order Status
+            🚚 By Order Status
         </a>
 
     </nav>
@@ -364,7 +364,7 @@
     <% if (!hasSales) { %>
 
         <div class="success-message">
-            â„¹ï¸ No sales yet â€” the figures below become non-zero as
+            ℹ️ No sales yet — the figures below become non-zero as
             soon as your products are ordered.
         </div>
 
@@ -374,7 +374,7 @@
 
     <div class="panel">
 
-        <h2>ðŸ§¾ Fee Breakdown</h2>
+        <h2>🧾 Fee Breakdown</h2>
 
         <p class="panel-hint">
             Settlement for the selected period. Commission is
@@ -437,7 +437,7 @@
 
     <div class="panel">
 
-        <h2>ðŸ’¼ Platform Fee by Product</h2>
+        <h2>💼 Platform Fee by Product</h2>
 
         <p class="panel-hint">
             Fee = revenue &times; commission %. This is the amount
@@ -507,7 +507,7 @@
 
     <div class="panel">
 
-        <h2>ðŸ“Š Platform Fee by Commission Rate</h2>
+        <h2>📊 Platform Fee by Commission Rate</h2>
 
         <p class="panel-hint">
             The same fee, grouped by the commission percentage the
@@ -567,10 +567,10 @@
 
     <div class="panel">
 
-        <h2>ðŸšš Fee by Order Status</h2>
+        <h2>🚚 Fee by Order Status</h2>
 
         <p class="panel-hint">
-            Commission is counted on <em>delivered</em> orders â€”
+            Commission is counted on <em>delivered</em> orders —
             the money actually due. Every other status is listed
             here for reference; use the status filter above to
             inspect a single status.
@@ -629,7 +629,7 @@
 
     <div class="panel">
 
-        <h2>ðŸ·ï¸ Current Fee Schedule (listed price)</h2>
+        <h2>🏷️ Current Fee Schedule (listed price)</h2>
 
         <p class="panel-hint">
             The commission applied to each product's listed price,

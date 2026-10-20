@@ -1,3 +1,4 @@
+<%@page pageEncoding="UTF-8"%>
 <!-- Grouped navigation: every stock function is its own small page -->
 
 <nav class="section-nav">

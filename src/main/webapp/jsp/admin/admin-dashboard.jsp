@@ -235,13 +235,13 @@
     <header class="navbar">
 
         <div class="logo">
-            ðŸŠ FreshFruit
+            🍊 FreshFruit
         </div>
 
         <nav class="nav-actions">
 
             <a href="${pageContext.request.contextPath}/home">
-                ðŸ  Home
+                🏠 Home
             </a>
 
             <a href="${pageContext.request.contextPath}/logout"
@@ -269,7 +269,7 @@
 
             <div class="dashboard-card">
 
-                <div class="dashboard-icon">ðŸ‘¥</div>
+                <div class="dashboard-icon">👥</div>
 
                 <h3>User Management</h3>
 
@@ -289,7 +289,7 @@
 
             <div class="dashboard-card">
 
-                <div class="dashboard-icon">ðŸ”</div>
+                <div class="dashboard-icon">🔐</div>
 
                 <h3>Role Management</h3>
 
@@ -309,7 +309,7 @@
 
             <div class="dashboard-card">
 
-                <div class="dashboard-icon">ðŸŽ</div>
+                <div class="dashboard-icon">🍎</div>
 
                 <h3>Product Management</h3>
 
@@ -329,7 +329,7 @@
 
             <div class="dashboard-card">
 
-                <div class="dashboard-icon">ðŸ“‚</div>
+                <div class="dashboard-icon">📂</div>
 
                 <h3>Category Management</h3>
 
@@ -349,7 +349,7 @@
 
             <div class="dashboard-card">
 
-                <div class="dashboard-icon">ðŸ·ï¸</div>
+                <div class="dashboard-icon">🏷️</div>
 
                 <h3>Promotion Approvals</h3>
 
@@ -369,7 +369,7 @@
 
             <div class="dashboard-card">
 
-                <div class="dashboard-icon">ðŸ›’</div>
+                <div class="dashboard-icon">🛒</div>
 
                 <h3>Order Management</h3>
 
@@ -387,7 +387,7 @@
 
             <div class="dashboard-card">
 
-                <div class="dashboard-icon">ðŸ’³</div>
+                <div class="dashboard-icon">💳</div>
 
                 <h3>Payments</h3>
 
@@ -405,7 +405,7 @@
 
             <div class="dashboard-card">
 
-                <div class="dashboard-icon">ðŸ’°</div>
+                <div class="dashboard-icon">💰</div>
 
                 <h3>Commission Report</h3>
 
@@ -425,7 +425,7 @@
 
             <div class="dashboard-card">
 
-                <div class="dashboard-icon">ðŸ“Š</div>
+                <div class="dashboard-icon">📊</div>
 
                 <h3>Reports</h3>
 

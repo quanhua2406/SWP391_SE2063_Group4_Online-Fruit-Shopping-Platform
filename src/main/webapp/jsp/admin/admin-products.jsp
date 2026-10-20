@@ -585,7 +585,7 @@
             <div style="display:flex; gap:10px; flex-wrap:wrap">
                 <a class="btn btn-secondary"
                    href="<%=contextPath%>/admin/category-management">
-                    ðŸ“‚ Categories
+                    📂 Categories
                 </a>
 
                 <a class="btn btn-primary"

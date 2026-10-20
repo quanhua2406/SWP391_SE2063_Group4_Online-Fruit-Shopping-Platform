@@ -92,11 +92,11 @@
 
 <header class="navbar">
 
-    <div class="logo">ðŸŠ FreshFruit</div>
+    <div class="logo">🍊 FreshFruit</div>
 
     <nav class="nav-actions">
-        <a href="<%= contextPath %>/admin/dashboard">ðŸ“Š Dashboard</a>
-        <a href="<%= contextPath %>/admin/product-management">ðŸŽ Products</a>
+        <a href="<%= contextPath %>/admin/dashboard">📊 Dashboard</a>
+        <a href="<%= contextPath %>/admin/product-management">🍎 Products</a>
         <a href="<%= contextPath %>/logout" class="logout">Logout</a>
     </nav>
 
@@ -106,7 +106,7 @@
 
     <p class="breadcrumb">
         <a href="<%= contextPath %>/admin/dashboard">
-            â† Admin Dashboard
+            ← Admin Dashboard
         </a>
     </p>
 
@@ -125,7 +125,7 @@
 
     <div class="panel">
 
-        <h2>âž• Add Category</h2>
+        <h2>➕ Add Category</h2>
 
         <p class="panel-hint">Create a new product category.</p>
 
@@ -172,7 +172,7 @@
 
     <div class="panel">
 
-        <h2>ðŸ“‚ Category List</h2>
+        <h2>📂 Category List</h2>
 
         <form method="get"
               action="<%= contextPath %>/admin/category-management"

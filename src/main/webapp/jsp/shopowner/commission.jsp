@@ -64,13 +64,13 @@
 
 <header class="navbar">
 
-    <div class="logo">ðŸŠ FreshFruit</div>
+    <div class="logo">🍊 FreshFruit</div>
 
     <nav class="nav-actions">
-        <a href="<%= contextPath %>/store-owner/dashboard">ðŸ“Š Dashboard</a>
-        <a href="<%= contextPath %>/store-owner/inventory">ðŸ“¦ Stock</a>
-        <a href="<%= contextPath %>/store-owner/pricing">ðŸ’² Pricing</a>
-        <a href="<%= contextPath %>/store-owner/commission-report">ðŸ’¼ Report</a>
+        <a href="<%= contextPath %>/store-owner/dashboard">📊 Dashboard</a>
+        <a href="<%= contextPath %>/store-owner/inventory">📦 Stock</a>
+        <a href="<%= contextPath %>/store-owner/pricing">💲 Pricing</a>
+        <a href="<%= contextPath %>/store-owner/commission-report">💼 Report</a>
         <a href="<%= contextPath %>/logout" class="logout">Logout</a>
     </nav>
 
@@ -80,20 +80,20 @@
 
     <p class="breadcrumb">
         <a href="<%= contextPath %>/store-owner/dashboard">
-            â† Shop Owner Dashboard
+            ← Shop Owner Dashboard
         </a>
     </p>
 
     <h1>Product Management</h1>
 
     <p class="dashboard-welcome">
-        ðŸª <%= esc(shopName) %>
-        â€” the commission rate is set by the platform admin.
+        🏪 <%= esc(shopName) %>
+        — the commission rate is set by the platform admin.
     </p>
 
     <div class="panel">
 
-        <h2>ðŸ’¼ My Products &amp; Commission</h2>
+        <h2>💼 My Products &amp; Commission</h2>
 
         <p class="panel-hint">
             "Platform fee" is the amount the platform keeps on each
