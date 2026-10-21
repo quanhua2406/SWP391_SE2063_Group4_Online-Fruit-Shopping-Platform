@@ -12,7 +12,7 @@
         <c:set var="homePath" value="/shopowner/shop/deliveries"/>
         <c:set var="roleLabel" value="Chủ cửa hàng"/>
     </c:when>
-    <c:when test="${sessionScope.shopUser.role == 'Shipper'}">
+    <c:when test="${sessionScope.shopUser.role == 'DeliveryStaff'}">
         <c:set var="homePath" value="/shopowner/delivery/list"/>
         <c:set var="roleLabel" value="Nhân viên giao hàng"/>
     </c:when>
@@ -46,7 +46,7 @@
         <a href="${ctx}/shopowner/shop/promotions" class="${fn:startsWith(currentPath, '/shopowner//shop/promotions') ? 'is-active' : ''}" ${fn:startsWith(currentPath, '/shopowner//shop/promotions') ? 'aria-current="page"' : ''}><svg class="icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="${ctx}/assets/icons.svg#gift"/></svg> Khuyến mãi</a>
         <a href="${ctx}/shopowner/shop/coupons" class="${fn:startsWith(currentPath, '/shopowner//shop/coupons') ? 'is-active' : ''}" ${fn:startsWith(currentPath, '/shopowner//shop/coupons') ? 'aria-current="page"' : ''}><svg class="icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="${ctx}/assets/icons.svg#ticket"/></svg> Mã giảm giá</a>
     </c:if>
-    <c:if test="${sessionScope.shopUser.role == 'Shipper'}">
+    <c:if test="${sessionScope.shopUser.role == 'DeliveryStaff'}">
         <a href="${ctx}/shopowner/delivery/list" class="${fn:startsWith(currentPath, '/shopowner//delivery/') ? 'is-active' : ''}" ${fn:startsWith(currentPath, '/shopowner//delivery/') ? 'aria-current="page"' : ''}><svg class="icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="${ctx}/assets/icons.svg#truck"/></svg> Giao hàng của tôi</a>
     </c:if>
     <c:if test="${sessionScope.shopUser.role == 'Customer'}">

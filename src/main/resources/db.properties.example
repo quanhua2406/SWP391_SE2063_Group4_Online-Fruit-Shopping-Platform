@@ -1,9 +1,0 @@
-# Cau hinh ket noi SQL Server cho DBConnection.
-#
-# Copy file nay thanh db.properties (cung thu muc) va dien gia tri that.
-# File db.properties da duoc .gitignore - khong commit len GitHub.
-#
-# Thu tu uu tien: bien moi truong (DB_URL/DB_USER/DB_PASSWORD) > file nay > mac dinh localhost.
-db.url=jdbc:sqlserver://localhost:1433;databaseName=FruitShoppingShopOwnerDB;encrypt=true;trustServerCertificate=true
-db.user=sa
-db.password=

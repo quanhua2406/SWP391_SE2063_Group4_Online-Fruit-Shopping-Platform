@@ -1,6 +1,6 @@
 package com.mycompany.onlinefruitshopping.shopowner.dao;
 
-import com.mycompany.onlinefruitshopping.shopowner.utils.DBConnection;
+import com.mycompany.onlinefruitshopping.utils.DBConnection;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,13 +14,13 @@ public class AssignmentDAO {
         String sql = """
             SELECT o.order_id, o.shop_id, s.shop_name, o.receiver_name,
                    o.shipping_address, o.total_amount
-            FROM Orders o JOIN Shops s ON s.shop_id = o.shop_id
-            WHERE s.owner_account_id = ? AND s.status = N'Active'
+            FROM orders o JOIN shops s ON s.shop_id = o.shop_id
+            WHERE s.owner_id = ? AND s.status = N'active'
               AND (o.order_status = N'Confirmed' OR (o.order_status = N'Shipping'
-                   AND EXISTS (SELECT 1 FROM Deliveries d WHERE d.order_id = o.order_id
+                   AND EXISTS (SELECT 1 FROM deliveries d WHERE d.order_id = o.order_id
                                AND d.delivery_status = N'Failed')))
               AND NOT EXISTS (
-                  SELECT 1 FROM Deliveries d WHERE d.order_id = o.order_id AND
+                  SELECT 1 FROM deliveries d WHERE d.order_id = o.order_id AND
                   (d.delivery_status IS NULL
                    OR d.delivery_status NOT IN (N'Failed', N'Rejected', N'Assigned')
                    OR (d.delivery_status = N'Assigned' AND d.shipper_id IS NOT NULL))
@@ -48,13 +48,14 @@ public class AssignmentDAO {
     public List<Staff> findActiveStaff(int ownerId) throws SQLException {
         List<Staff> list = new ArrayList<>();
         String sql = """
-            SELECT a.account_id, a.full_name, t.shop_id
-            FROM ShopDeliveryStaff t
-            JOIN Shops s ON s.shop_id = t.shop_id
-            JOIN Accounts a ON a.account_id = t.shipper_id
-            JOIN Roles r ON r.role_id = a.role_id
-            WHERE s.owner_account_id = ? AND s.status = N'Active'
-              AND t.status = N'Active' AND a.status = N'Active' AND r.role_name = N'Shipper'
+            SELECT a.user_id, a.full_name, t.shop_id
+            FROM shop_delivery_staff t
+            JOIN shops s ON s.shop_id = t.shop_id
+            JOIN users a ON a.user_id = t.shipper_id
+            JOIN user_roles ur ON ur.user_id = a.user_id
+            JOIN roles r ON r.role_id = ur.role_id AND r.role_name = N'DeliveryStaff'
+            WHERE s.owner_id = ? AND s.status = N'active'
+              AND t.status = N'Active' AND a.status = N'active'
             ORDER BY t.shop_id, a.full_name
             """;
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
@@ -62,7 +63,7 @@ public class AssignmentDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     Staff staff = new Staff();
-                    staff.setId(rs.getInt("account_id"));
+                    staff.setId(rs.getInt("user_id"));
                     staff.setShopId(rs.getInt("shop_id"));
                     staff.setFullName(rs.getString("full_name"));
                     list.add(staff);
@@ -79,12 +80,13 @@ public class AssignmentDAO {
                 // Không nhận shop_id từ form. Lấy shop thật của đơn trong database.
                 String orderSql = """
                     SELECT o.shop_id, o.order_status
-                    FROM Orders o WITH (UPDLOCK, HOLDLOCK)
-                    JOIN Shops s WITH (HOLDLOCK) ON s.shop_id = o.shop_id
-                    JOIN Accounts a WITH (HOLDLOCK) ON a.account_id = s.owner_account_id
-                    JOIN Roles r ON r.role_id = a.role_id
-                    WHERE o.order_id = ? AND s.owner_account_id = ? AND s.status = N'Active'
-                      AND a.status = N'Active' AND r.role_name = N'ShopOwner'
+                    FROM orders o WITH (UPDLOCK, HOLDLOCK)
+                    JOIN shops s WITH (HOLDLOCK) ON s.shop_id = o.shop_id
+                    JOIN users a WITH (HOLDLOCK) ON a.user_id = s.owner_id
+                    JOIN user_roles ur ON ur.user_id = a.user_id
+                    JOIN roles r ON r.role_id = ur.role_id AND r.role_name = N'ShopOwner'
+                    WHERE o.order_id = ? AND s.owner_id = ? AND s.status = N'active'
+                      AND a.status = N'active'
                     """;
                 int shopId;
                 String orderStatus;
@@ -102,11 +104,12 @@ public class AssignmentDAO {
                 }
 
                 String staffSql = """
-                    SELECT a.account_id FROM ShopDeliveryStaff t WITH (HOLDLOCK)
-                    JOIN Accounts a WITH (HOLDLOCK) ON a.account_id = t.shipper_id
-                    JOIN Roles r ON r.role_id = a.role_id
+                    SELECT a.user_id FROM shop_delivery_staff t WITH (HOLDLOCK)
+                    JOIN users a WITH (HOLDLOCK) ON a.user_id = t.shipper_id
+                    JOIN user_roles ur ON ur.user_id = a.user_id
+                    JOIN roles r ON r.role_id = ur.role_id AND r.role_name = N'DeliveryStaff'
                     WHERE t.shop_id = ? AND t.shipper_id = ? AND t.status = N'Active'
-                      AND a.status = N'Active' AND r.role_name = N'Shipper'
+                      AND a.status = N'active'
                     """;
                 try (PreparedStatement ps = c.prepareStatement(staffSql)) {
                     ps.setInt(1, shopId);
@@ -122,7 +125,7 @@ public class AssignmentDAO {
                 boolean hasFailed = false;
                 String attemptsSql = """
                     SELECT delivery_id, delivery_status, shipper_id
-                    FROM Deliveries WITH (UPDLOCK, HOLDLOCK) WHERE order_id = ?
+                    FROM deliveries WITH (UPDLOCK, HOLDLOCK) WHERE order_id = ?
                     """;
                 try (PreparedStatement ps = c.prepareStatement(attemptsSql)) {
                     ps.setInt(1, orderId);
@@ -147,7 +150,7 @@ public class AssignmentDAO {
 
                 if (unassignedId == 0) {
                     String insert = """
-                        INSERT INTO Deliveries(shop_id, order_id, shipper_id, delivery_status, note)
+                        INSERT INTO deliveries(shop_id, order_id, shipper_id, delivery_status, note)
                         VALUES (?, ?, ?, N'Assigned', N'Đã phân công; chờ shipper nhận đơn.')
                         """;
                     try (PreparedStatement ps = c.prepareStatement(insert)) {
@@ -158,7 +161,7 @@ public class AssignmentDAO {
                     }
                 } else {
                     String update = """
-                        UPDATE Deliveries SET shipper_id = ?, delivery_status = N'Assigned',
+                        UPDATE deliveries SET shipper_id = ?, delivery_status = N'Assigned',
                             pickup_time = NULL, delivered_time = NULL,
                             note = N'Đã phân công; chờ shipper nhận đơn.'
                         WHERE delivery_id = ? AND shipper_id IS NULL
@@ -169,7 +172,7 @@ public class AssignmentDAO {
                         if (ps.executeUpdate() != 1) throw new SQLException("Phân công đã thay đổi.");
                     }
                 }
-                try (PreparedStatement ps = c.prepareStatement("UPDATE Orders SET order_status = N'Confirmed' WHERE order_id = ?")) {
+                try (PreparedStatement ps = c.prepareStatement("UPDATE orders SET order_status = N'Confirmed' WHERE order_id = ?")) {
                     ps.setInt(1, orderId);
                     ps.executeUpdate();
                 }

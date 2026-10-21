@@ -1,6 +1,6 @@
 package com.mycompany.onlinefruitshopping.shopowner.dao;
 
-import com.mycompany.onlinefruitshopping.shopowner.utils.DBConnection;
+import com.mycompany.onlinefruitshopping.utils.DBConnection;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,18 +14,19 @@ import com.mycompany.onlinefruitshopping.shopowner.utils.PromotionRules;
 public class CouponDAO {
     private static final String FIELDS = """
         SELECT p.*, s.shop_name,
-          (SELECT COUNT(*) FROM CouponUsages u JOIN Orders o ON o.order_id = u.order_id
+          (SELECT COUNT(*) FROM coupon_usages u JOIN orders o ON o.order_id = u.order_id
            WHERE u.coupon_id = p.coupon_id AND u.usage_status = 'Applied'
              AND o.order_status <> N'Cancelled') AS used_count,
-          (SELECT COUNT(*) FROM CouponUsages u WHERE u.coupon_id = p.coupon_id) AS history_count
-        FROM Coupons p
+          (SELECT COUNT(*) FROM coupon_usages u WHERE u.coupon_id = p.coupon_id) AS history_count
+        FROM coupons p
         """;
     private static final String OWNER = """
-        JOIN Shops s ON s.shop_id = p.shop_id
-        JOIN Accounts a ON a.account_id = s.owner_account_id
-        JOIN Roles r ON r.role_id = a.role_id
-        WHERE s.owner_account_id = ? AND s.status = N'Active'
-          AND a.status = N'Active' AND r.role_name = N'ShopOwner'
+        JOIN shops s ON s.shop_id = p.shop_id
+        JOIN users a ON a.user_id = s.owner_id
+        JOIN user_roles ur ON ur.user_id = a.user_id
+        JOIN roles r ON r.role_id = ur.role_id AND r.role_name = N'ShopOwner'
+        WHERE s.owner_id = ? AND s.status = N'active'
+          AND a.status = N'active'
         """;
 
     public List<Coupon> findAll(int ownerId) throws SQLException {
@@ -65,7 +66,7 @@ public class CouponDAO {
                         throw new IllegalArgumentException("Mã đã có lịch sử dùng: chỉ sửa tên, mô tả hoặc bật/tắt. Hãy tạo mã mới để đổi điều kiện.");
                 }
                 if (p.isActive() && (old == null || !old.isActive() || old.getHistoryCount() == 0)) checkNotExpired(p);
-                String duplicate = "SELECT coupon_id FROM Coupons WHERE shop_id = ? AND code = ? AND coupon_id <> ?";
+                String duplicate = "SELECT coupon_id FROM coupons WHERE shop_id = ? AND code = ? AND coupon_id <> ?";
                 try (PreparedStatement ps = c.prepareStatement(duplicate)) {
                     ps.setInt(1, p.getShopId()); ps.setString(2, p.getCode()); ps.setInt(3, p.getId());
                     try (ResultSet rs = ps.executeQuery()) {
@@ -76,7 +77,7 @@ public class CouponDAO {
                 Timestamp now = Timestamp.valueOf(PromotionRules.now());
                 if (id == 0) {
                     String sql = """
-                        INSERT INTO Coupons(code, coupon_name, description, discount_type, discount_value,
+                        INSERT INTO coupons(code, coupon_name, description, discount_type, discount_value,
                           max_discount, min_order_amount, total_limit, per_customer_limit, starts_at, ends_at,
                           is_active, shop_id, created_at, updated_at)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -91,7 +92,7 @@ public class CouponDAO {
                     }
                 } else {
                     String sql = """
-                        UPDATE Coupons SET code = ?, coupon_name = ?, description = ?, discount_type = ?,
+                        UPDATE coupons SET code = ?, coupon_name = ?, description = ?, discount_type = ?,
                           discount_value = ?, max_discount = ?, min_order_amount = ?, total_limit = ?,
                           per_customer_limit = ?, starts_at = ?, ends_at = ?, is_active = ?,
                           updated_at = ?, version = version + 1
@@ -120,7 +121,7 @@ public class CouponDAO {
                 if (deleted) active = false;
                 if (active) checkNotExpired(p);
                 try (PreparedStatement ps = c.prepareStatement("""
-                        UPDATE Coupons SET is_active = ?, is_deleted = ?, updated_at = ?, version = version + 1
+                        UPDATE coupons SET is_active = ?, is_deleted = ?, updated_at = ?, version = version + 1
                         WHERE coupon_id = ? AND shop_id = ? AND version = ? AND is_deleted = 0
                         """)) {
                     ps.setBoolean(1, active); ps.setBoolean(2, deleted);
@@ -140,7 +141,7 @@ public class CouponDAO {
         int id;
         String normalized = CouponRules.normalizeCode(code);
         try (PreparedStatement ps = c.prepareStatement(
-                "SELECT coupon_id FROM Coupons WHERE shop_id = ? AND code = ?")) {
+                "SELECT coupon_id FROM coupons WHERE shop_id = ? AND code = ?")) {
             ps.setInt(1, shopId); ps.setString(2, normalized);
             try (ResultSet rs = ps.executeQuery()) {
                 if (!rs.next()) throw new IllegalArgumentException("Mã không tồn tại tại cửa hàng của đơn này.");
@@ -148,7 +149,7 @@ public class CouponDAO {
             }
         }
         lockCoupon(c, id, shopId);
-        String sql = FIELDS + " JOIN Shops s ON s.shop_id = p.shop_id WHERE p.coupon_id = ?";
+        String sql = FIELDS + " JOIN shops s ON s.shop_id = p.shop_id WHERE p.coupon_id = ?";
         try (PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
@@ -163,7 +164,7 @@ public class CouponDAO {
 
     static void lockCoupon(Connection c, int id, int shopId) throws SQLException {
         try (PreparedStatement ps = c.prepareStatement(
-                "SELECT coupon_id FROM Coupons WITH (UPDLOCK, HOLDLOCK) WHERE coupon_id = ? AND shop_id = ?")) {
+                "SELECT coupon_id FROM coupons WITH (UPDLOCK, HOLDLOCK) WHERE coupon_id = ? AND shop_id = ?")) {
             ps.setInt(1, id); ps.setInt(2, shopId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (!rs.next()) throw new IllegalArgumentException("Không tìm thấy mã thuộc cửa hàng này.");
@@ -173,7 +174,7 @@ public class CouponDAO {
 
     int countForCustomer(Connection c, int couponId, int customerId) throws SQLException {
         try (PreparedStatement ps = c.prepareStatement("""
-                SELECT COUNT(*) FROM CouponUsages u JOIN Orders o ON o.order_id = u.order_id
+                SELECT COUNT(*) FROM coupon_usages u JOIN orders o ON o.order_id = u.order_id
                 WHERE u.coupon_id = ? AND u.customer_id = ? AND u.usage_status = 'Applied'
                   AND o.order_status <> N'Cancelled'
                 """)) {
@@ -185,15 +186,16 @@ public class CouponDAO {
     public List<CouponUsage> findUsage(int ownerId, Integer couponId) throws SQLException {
         List<CouponUsage> list = new ArrayList<>();
         String sql = """
-            SELECT u.*, a.full_name, s.shop_name, o.order_status FROM CouponUsages u
-            JOIN Coupons p ON p.coupon_id = u.coupon_id
-            JOIN Shops s ON s.shop_id = u.shop_id
-            JOIN Accounts owner ON owner.account_id = s.owner_account_id
-            JOIN Roles r ON r.role_id = owner.role_id
-            JOIN Accounts a ON a.account_id = u.customer_id
-            JOIN Orders o ON o.order_id = u.order_id
-            WHERE s.owner_account_id = ? AND s.status = N'Active'
-              AND owner.status = N'Active' AND r.role_name = N'ShopOwner'
+            SELECT u.*, a.full_name, s.shop_name, o.order_status FROM coupon_usages u
+            JOIN coupons p ON p.coupon_id = u.coupon_id
+            JOIN shops s ON s.shop_id = u.shop_id
+            JOIN users owner ON owner.user_id = s.owner_id
+            JOIN user_roles ur ON ur.user_id = owner.user_id
+            JOIN roles r ON r.role_id = ur.role_id AND r.role_name = N'ShopOwner'
+            JOIN users a ON a.user_id = u.customer_id
+            JOIN orders o ON o.order_id = u.order_id
+            WHERE s.owner_id = ? AND s.status = N'active'
+              AND owner.status = N'active'
             """;
         if (couponId != null) sql += " AND u.coupon_id = ?";
         sql += " ORDER BY u.used_at DESC, u.usage_id DESC";
@@ -224,11 +226,12 @@ public class CouponDAO {
 
     private void lockShop(Connection c, int ownerId, int shopId) throws SQLException {
         String sql = """
-            SELECT s.shop_id FROM Shops s WITH (UPDLOCK, HOLDLOCK)
-            JOIN Accounts a WITH (HOLDLOCK) ON a.account_id = s.owner_account_id
-            JOIN Roles r ON r.role_id = a.role_id
-            WHERE s.shop_id = ? AND s.owner_account_id = ? AND s.status = N'Active'
-              AND a.status = N'Active' AND r.role_name = N'ShopOwner'
+            SELECT s.shop_id FROM shops s WITH (UPDLOCK, HOLDLOCK)
+            JOIN users a WITH (HOLDLOCK) ON a.user_id = s.owner_id
+            JOIN user_roles ur ON ur.user_id = a.user_id
+            JOIN roles r ON r.role_id = ur.role_id AND r.role_name = N'ShopOwner'
+            WHERE s.shop_id = ? AND s.owner_id = ? AND s.status = N'active'
+              AND a.status = N'active'
             """;
         try (PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, shopId); ps.setInt(2, ownerId);

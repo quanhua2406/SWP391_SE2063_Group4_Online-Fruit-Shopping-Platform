@@ -167,7 +167,7 @@ public class PromotionController extends HttpServlet {
         if (p.getId() == 0 && p.getShopId() == 0 && !shops.isEmpty()) p.setShopId(shops.get(0).getId());
         request.setAttribute("promotion", p);
         request.setAttribute("shops", shops);
-        request.setAttribute("products", promotionService.findProducts());
+        request.setAttribute("products", promotionService.findProducts(WebUtil.user(request).getId()));
         request.getRequestDispatcher("/WEB-INF/shopowner/views/promotion-form.jsp").forward(request, response);
     }
 

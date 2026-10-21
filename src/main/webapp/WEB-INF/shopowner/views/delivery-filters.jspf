@@ -1,7 +1,7 @@
 <%@ page pageEncoding="UTF-8" %>
 <c:set var="deliveryListPath" value="${sessionScope.shopUser.role == 'ShopOwner' ? '/shopowner//shop/deliveries' : '/shopowner//delivery/list'}"/>
 <form method="get" action="${ctx}${deliveryListPath}#delivery-list" class="delivery-filters" aria-label="Bộ lọc giao hàng">
-    <div class="filter-fields ${sessionScope.shopUser.role == 'Shipper' ? 'filter-fields-shipper' : ''}">
+    <div class="filter-fields ${sessionScope.shopUser.role == 'DeliveryStaff' ? 'filter-fields-shipper' : ''}">
         <div class="filter-field">
             <label for="deliveryKeyword">Tìm kiếm</label>
             <input id="deliveryKeyword" type="search" name="keyword" maxlength="100"

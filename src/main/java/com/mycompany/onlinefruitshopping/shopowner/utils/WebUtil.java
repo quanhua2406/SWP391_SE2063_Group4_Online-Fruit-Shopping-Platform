@@ -12,7 +12,7 @@ public class WebUtil {
 
     public static String home(Account user) {
         if ("ShopOwner".equals(user.getRole())) return "/shopowner/shop/deliveries";
-        if ("Shipper".equals(user.getRole())) return "/shopowner/delivery/list";
+        if ("DeliveryStaff".equals(user.getRole())) return "/shopowner/delivery/list";
         return "/shopowner/notifications";
     }
 

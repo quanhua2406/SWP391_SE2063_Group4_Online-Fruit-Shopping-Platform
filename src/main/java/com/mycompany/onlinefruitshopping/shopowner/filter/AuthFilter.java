@@ -52,7 +52,7 @@ public class AuthFilter implements Filter {
             session.setAttribute("shopUser", user);
             boolean wrongShopRole = path.startsWith("/shopowner/shop/") && !"ShopOwner".equals(user.getRole());
             boolean wrongDeliveryRole = path.startsWith("/shopowner/delivery/")
-                    && !"ShopOwner".equals(user.getRole()) && !"Shipper".equals(user.getRole());
+                    && !"ShopOwner".equals(user.getRole()) && !"DeliveryStaff".equals(user.getRole());
             boolean wrongCustomerRole = path.startsWith("/shopowner/customer/") && !"Customer".equals(user.getRole());
             if (wrongShopRole || wrongDeliveryRole || wrongCustomerRole) {
                 res.sendError(403);

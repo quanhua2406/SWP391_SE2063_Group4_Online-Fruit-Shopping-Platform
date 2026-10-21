@@ -47,7 +47,7 @@
     </div>
     <p class="muted">Tổng tiền đơn phía trên đã tính giảm giá theo dữ liệu của cửa hàng.</p>
 </section>
-<c:if test="${sessionScope.shopUser.role == 'Shipper'}">
+<c:if test="${sessionScope.shopUser.role == 'DeliveryStaff'}">
 <section class="card">
     <h2>Cập nhật tiến độ</h2>
     <c:choose>

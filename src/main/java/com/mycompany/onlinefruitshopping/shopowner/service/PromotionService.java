@@ -44,8 +44,9 @@ public class PromotionService {
         return promotionDAO.findShops(ownerId);
     }
 
-    public List<PromotionProduct> findProducts() throws SQLException {
-        return promotionDAO.findProducts();
+    public List<PromotionProduct> findProducts(int ownerId) throws SQLException {
+        ServiceChecks.positiveId(ownerId);
+        return promotionDAO.findProducts(ownerId);
     }
 
     public List<PromotionPrice> previewPrices(int ownerId, int id) throws SQLException {

@@ -1,6 +1,6 @@
 package com.mycompany.onlinefruitshopping.shopowner.dao;
 
-import com.mycompany.onlinefruitshopping.shopowner.utils.DBConnection;
+import com.mycompany.onlinefruitshopping.utils.DBConnection;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,24 +14,26 @@ import com.mycompany.onlinefruitshopping.shopowner.utils.PromotionRules;
 public class PromotionDAO {
     private static final String OWNED_PROMOTIONS = """
         SELECT p.*, s.shop_name,
-               (SELECT COUNT(*) FROM PromotionProducts pp
+               (SELECT COUNT(*) FROM promotion_products pp
                 WHERE pp.promotion_id = p.promotion_id) AS product_count
-        FROM Promotions p
-        JOIN Shops s ON s.shop_id = p.shop_id
-        JOIN Accounts a ON a.account_id = s.owner_account_id
-        JOIN Roles r ON r.role_id = a.role_id
-        WHERE s.owner_account_id = ? AND s.status = N'Active'
-          AND a.status = N'Active' AND r.role_name = N'ShopOwner' AND p.is_deleted = 0
+        FROM promotions p
+        JOIN shops s ON s.shop_id = p.shop_id
+        JOIN users a ON a.user_id = s.owner_id
+        JOIN user_roles ur ON ur.user_id = a.user_id
+        JOIN roles r ON r.role_id = ur.role_id AND r.role_name = N'ShopOwner'
+        WHERE s.owner_id = ? AND s.status = N'active'
+          AND a.status = N'active' AND p.is_deleted = 0
         """;
 
     public List<ShopOption> findShops(int ownerId) throws SQLException {
         List<ShopOption> list = new ArrayList<>();
         String sql = """
-            SELECT s.shop_id, s.shop_name FROM Shops s
-            JOIN Accounts a ON a.account_id = s.owner_account_id
-            JOIN Roles r ON r.role_id = a.role_id
-            WHERE s.owner_account_id = ? AND s.status = N'Active'
-              AND a.status = N'Active' AND r.role_name = N'ShopOwner'
+            SELECT s.shop_id, s.shop_name FROM shops s
+            JOIN users a ON a.user_id = s.owner_id
+            JOIN user_roles ur ON ur.user_id = a.user_id
+            JOIN roles r ON r.role_id = ur.role_id AND r.role_name = N'ShopOwner'
+            WHERE s.owner_id = ? AND s.status = N'active'
+              AND a.status = N'active'
             ORDER BY s.shop_id
             """;
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
@@ -48,17 +50,29 @@ public class PromotionDAO {
         return list;
     }
 
-    public List<PromotionProduct> findProducts() throws SQLException {
+    /** Chỉ liệt kê sản phẩm của các shop mà owner quản lý; trạng thái bán là N'published'. */
+    public List<PromotionProduct> findProducts(int ownerId) throws SQLException {
         List<PromotionProduct> list = new ArrayList<>();
-        String sql = "SELECT product_id, product_name, status FROM Products ORDER BY product_name, product_id";
-        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                PromotionProduct p = new PromotionProduct();
-                p.setId(rs.getInt("product_id"));
-                p.setName(rs.getString("product_name"));
-                p.setActive("Active".equals(rs.getString("status")));
-                list.add(p);
+        String sql = """
+            SELECT pr.product_id, pr.product_name, pr.status
+            FROM products pr
+            JOIN shops s ON s.shop_id = pr.shop_id
+            JOIN users a ON a.user_id = s.owner_id
+            JOIN user_roles ur ON ur.user_id = a.user_id
+            JOIN roles r ON r.role_id = ur.role_id AND r.role_name = N'ShopOwner'
+            WHERE s.owner_id = ? AND s.status = N'active' AND a.status = N'active'
+            ORDER BY pr.product_name, pr.product_id
+            """;
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, ownerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    PromotionProduct p = new PromotionProduct();
+                    p.setId(rs.getInt("product_id"));
+                    p.setName(rs.getString("product_name"));
+                    p.setActive("published".equals(rs.getString("status")));
+                    list.add(p);
+                }
             }
         }
         return list;
@@ -93,7 +107,7 @@ public class PromotionDAO {
             }
         }
         try (PreparedStatement ps = c.prepareStatement(
-                "SELECT product_id FROM PromotionProducts WHERE promotion_id = ? ORDER BY product_id")) {
+                "SELECT product_id FROM promotion_products WHERE promotion_id = ? ORDER BY product_id")) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) p.getProductIds().add(rs.getInt(1));
@@ -124,7 +138,7 @@ public class PromotionDAO {
                 int id = p.getId();
                 if (id == 0) {
                     String sql = """
-                        INSERT INTO Promotions(shop_id, promotion_name, description, discount_type,
+                        INSERT INTO promotions(shop_id, promotion_name, description, discount_type,
                             discount_value, starts_at, ends_at, is_active, created_at, updated_at)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """;
@@ -141,7 +155,7 @@ public class PromotionDAO {
                     }
                 } else {
                     String sql = """
-                        UPDATE Promotions SET promotion_name = ?, description = ?, discount_type = ?,
+                        UPDATE promotions SET promotion_name = ?, description = ?, discount_type = ?,
                             discount_value = ?, starts_at = ?, ends_at = ?, is_active = ?,
                             updated_at = ?, version = version + 1
                         WHERE promotion_id = ? AND shop_id = ? AND is_deleted = 0 AND version = ?
@@ -154,13 +168,13 @@ public class PromotionDAO {
                         ps.setInt(11, p.getVersion());
                         checkChanged(ps.executeUpdate());
                     }
-                    try (PreparedStatement ps = c.prepareStatement("DELETE FROM PromotionProducts WHERE promotion_id = ?")) {
+                    try (PreparedStatement ps = c.prepareStatement("DELETE FROM promotion_products WHERE promotion_id = ?")) {
                         ps.setInt(1, id);
                         ps.executeUpdate();
                     }
                 }
                 try (PreparedStatement ps = c.prepareStatement(
-                        "INSERT INTO PromotionProducts(promotion_id, product_id) VALUES (?, ?)")) {
+                        "INSERT INTO promotion_products(promotion_id, product_id) VALUES (?, ?)")) {
                     for (int productId : p.getProductIds()) {
                         ps.setInt(1, id);
                         ps.setInt(2, productId);
@@ -201,7 +215,7 @@ public class PromotionDAO {
                     checkOverlap(c, p);
                 }
                 String sql = """
-                    UPDATE Promotions SET is_active = ?, is_deleted = ?, updated_at = ?, version = version + 1
+                    UPDATE promotions SET is_active = ?, is_deleted = ?, updated_at = ?, version = version + 1
                     WHERE promotion_id = ? AND shop_id = ? AND is_deleted = 0 AND version = ?
                     """;
                 try (PreparedStatement ps = c.prepareStatement(sql)) {
@@ -233,11 +247,12 @@ public class PromotionDAO {
         // Mọi lần tạo/sửa/bật/tắt/xóa của cùng shop đi qua khóa này.
         // Hai yêu cầu đồng thời không thể cùng bỏ qua bước kiểm tra trùng lịch.
         String sql = """
-            SELECT s.shop_id FROM Shops s WITH (UPDLOCK, HOLDLOCK)
-            JOIN Accounts a WITH (HOLDLOCK) ON a.account_id = s.owner_account_id
-            JOIN Roles r ON r.role_id = a.role_id
-            WHERE s.shop_id = ? AND s.owner_account_id = ? AND s.status = N'Active'
-              AND a.status = N'Active' AND r.role_name = N'ShopOwner'
+            SELECT s.shop_id FROM shops s WITH (UPDLOCK, HOLDLOCK)
+            JOIN users a WITH (HOLDLOCK) ON a.user_id = s.owner_id
+            JOIN user_roles ur ON ur.user_id = a.user_id
+            JOIN roles r ON r.role_id = ur.role_id AND r.role_name = N'ShopOwner'
+            WHERE s.shop_id = ? AND s.owner_id = ? AND s.status = N'active'
+              AND a.status = N'active'
             """;
         try (PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, shopId);
@@ -249,17 +264,20 @@ public class PromotionDAO {
     }
 
     private void validateProducts(Connection c, Promotion p) throws SQLException {
+        // Sản phẩm phải thuộc đúng shop của chương trình (shop đã khóa và kiểm tra quyền ở lockShop),
+        // đang bán và đã có biến thể.
         String sql = """
-            SELECT product_id FROM Products WITH (HOLDLOCK)
-            WHERE product_id = ? AND status = N'Active'
-              AND EXISTS (SELECT 1 FROM ProductVariants v WHERE v.product_id = Products.product_id)
+            SELECT product_id FROM products WITH (HOLDLOCK)
+            WHERE product_id = ? AND shop_id = ? AND status = N'published'
+              AND EXISTS (SELECT 1 FROM product_variants v WHERE v.product_id = products.product_id)
             """;
         try (PreparedStatement ps = c.prepareStatement(sql)) {
             for (int productId : p.getProductIds()) {
                 ps.setInt(1, productId);
+                ps.setInt(2, p.getShopId());
                 try (ResultSet rs = ps.executeQuery()) {
                     if (!rs.next()) throw new IllegalArgumentException(
-                            "Sản phẩm #" + productId + " không tồn tại, ngừng bán hoặc chưa có biến thể. Hãy bỏ chọn sản phẩm này.");
+                            "Sản phẩm #" + productId + " không thuộc cửa hàng này, ngừng bán hoặc chưa có biến thể. Hãy bỏ chọn sản phẩm này.");
                 }
             }
         }
@@ -269,7 +287,7 @@ public class PromotionDAO {
         // [bắt đầu, kết thúc): chương trình mới có thể bắt đầu đúng lúc chương trình cũ hết hạn.
         String sql = """
             SELECT TOP (1) other.promotion_id
-            FROM Promotions other JOIN PromotionProducts pp ON pp.promotion_id = other.promotion_id
+            FROM promotions other JOIN promotion_products pp ON pp.promotion_id = other.promotion_id
             WHERE other.shop_id = ? AND other.promotion_id <> ?
               AND other.is_active = 1 AND other.is_deleted = 0 AND pp.product_id = ?
               AND other.starts_at < ? AND other.ends_at > ?
@@ -297,9 +315,9 @@ public class PromotionDAO {
             Promotion p = findById(c, ownerId, id);
             if (p == null) throw new IllegalArgumentException("Không tìm thấy chương trình thuộc cửa hàng của bạn.");
             String sql = """
-                SELECT pr.product_name, pr.status, v.variant_name, v.price
-                FROM PromotionProducts pp JOIN Products pr ON pr.product_id = pp.product_id
-                JOIN ProductVariants v ON v.product_id = pr.product_id
+                SELECT pr.product_name, pr.status, v.sku AS variant_name, v.price
+                FROM promotion_products pp JOIN products pr ON pr.product_id = pp.product_id
+                JOIN product_variants v ON v.product_id = pr.product_id
                 WHERE pp.promotion_id = ? ORDER BY pr.product_name, v.variant_id
                 """;
             try (PreparedStatement ps = c.prepareStatement(sql)) {
@@ -309,7 +327,7 @@ public class PromotionDAO {
                         PromotionPrice row = new PromotionPrice();
                         row.setProductName(rs.getString("product_name"));
                         row.setVariantName(rs.getString("variant_name"));
-                        row.setProductActive("Active".equals(rs.getString("status")));
+                        row.setProductActive("published".equals(rs.getString("status")));
                         row.setOriginalPrice(rs.getBigDecimal("price"));
                         row.setFinalPrice(PromotionRules.priceAfterDiscount(row.getOriginalPrice(),
                                 p.getDiscountType(), p.getDiscountValue()));

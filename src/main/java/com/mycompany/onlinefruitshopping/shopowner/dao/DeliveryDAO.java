@@ -1,6 +1,6 @@
 package com.mycompany.onlinefruitshopping.shopowner.dao;
 
-import com.mycompany.onlinefruitshopping.shopowner.utils.DBConnection;
+import com.mycompany.onlinefruitshopping.utils.DBConnection;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,18 +17,18 @@ public class DeliveryDAO {
                o.receiver_name, o.receiver_phone, o.shipping_address,
                o.total_amount, o.order_status, o.payment_method, o.payment_status,
                o.note AS order_note
-        FROM Deliveries d
-        JOIN Orders o ON o.order_id = d.order_id AND o.shop_id = d.shop_id
-        JOIN Shops s ON s.shop_id = d.shop_id
-        LEFT JOIN Accounts a ON a.account_id = d.shipper_id
-        LEFT JOIN ShopDeliveryStaff t ON t.shop_id = d.shop_id AND t.shipper_id = d.shipper_id
-        WHERE s.status = N'Active'
+        FROM deliveries d
+        JOIN orders o ON o.order_id = d.order_id AND o.shop_id = d.shop_id
+        JOIN shops s ON s.shop_id = d.shop_id
+        LEFT JOIN users a ON a.user_id = d.shipper_id
+        LEFT JOIN shop_delivery_staff t ON t.shop_id = d.shop_id AND t.shipper_id = d.shipper_id
+        WHERE s.status = N'active'
         """;
 
     // Chỉ nối các điều kiện SQL cố định; dữ liệu người dùng luôn truyền qua dấu ?.
     private String scope(Account user) {
-        if ("ShopOwner".equals(user.getRole())) return " AND s.owner_account_id = ?";
-        if ("Shipper".equals(user.getRole())) return " AND d.shipper_id = ? AND t.status = N'Active'";
+        if ("ShopOwner".equals(user.getRole())) return " AND s.owner_id = ?";
+        if ("DeliveryStaff".equals(user.getRole())) return " AND d.shipper_id = ? AND t.status = N'Active'";
         throw new IllegalArgumentException("Bạn không có quyền xem giao hàng.");
     }
 
@@ -61,11 +61,11 @@ public class DeliveryDAO {
         if (delivery == null) throw new IllegalArgumentException("Không tìm thấy giao hàng thuộc quyền của bạn.");
         List<OrderItem> list = new ArrayList<>();
         String sql = """
-            SELECT p.product_name, v.variant_name, od.price, od.quantity
-            FROM OrderDetails od
-            JOIN ProductVariants v ON v.variant_id = od.variant_id
-            JOIN Products p ON p.product_id = v.product_id
-            WHERE od.order_id = ? ORDER BY od.order_detail_id
+            SELECT p.product_name, v.sku AS variant_name, od.price, od.quantity
+            FROM order_items od
+            JOIN product_variants v ON v.variant_id = od.variant_id
+            JOIN products p ON p.product_id = v.product_id
+            WHERE od.order_id = ? ORDER BY od.order_item_id
             """;
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, delivery.getOrderId());
@@ -92,13 +92,13 @@ public class DeliveryDAO {
                 // Khóa đơn trước. Các thao tác phân công cũng khóa đơn theo cách này.
                 // Hai lần bấm đồng thời sẽ không cùng thay đổi một đơn hàng.
                 String orderSql = """
-                    SELECT o.order_id, o.order_status, o.account_id, o.payment_method,
-                           o.payment_status, s.owner_account_id
-                    FROM Orders o WITH (UPDLOCK, HOLDLOCK)
-                    JOIN Shops s ON s.shop_id = o.shop_id
+                    SELECT o.order_id, o.order_status, o.user_id, o.payment_method,
+                           o.payment_status, s.owner_id
+                    FROM orders o WITH (UPDLOCK, HOLDLOCK)
+                    JOIN shops s ON s.shop_id = o.shop_id
                     WHERE o.order_id = (
-                        SELECT order_id FROM Deliveries WHERE delivery_id = ? AND shipper_id = ?
-                    ) AND s.status = N'Active'
+                        SELECT order_id FROM deliveries WHERE delivery_id = ? AND shipper_id = ?
+                    ) AND s.status = N'active'
                     """;
                 int orderId;
                 int customerId;
@@ -112,8 +112,8 @@ public class DeliveryDAO {
                     try (ResultSet rs = ps.executeQuery()) {
                         if (!rs.next()) throw new IllegalArgumentException("Không tìm thấy đơn được phân công cho bạn.");
                         orderId = rs.getInt("order_id");
-                        customerId = rs.getInt("account_id");
-                        ownerId = rs.getInt("owner_account_id");
+                        customerId = rs.getInt("user_id");
+                        ownerId = rs.getInt("owner_id");
                         orderStatus = rs.getString("order_status");
                         paymentMethod = rs.getString("payment_method");
                         paymentStatus = rs.getString("payment_status");
@@ -123,13 +123,14 @@ public class DeliveryDAO {
                 String oldStatus;
                 String deliverySql = """
                     SELECT d.delivery_status, d.note
-                    FROM Deliveries d WITH (UPDLOCK, HOLDLOCK)
-                    JOIN ShopDeliveryStaff t WITH (HOLDLOCK)
+                    FROM deliveries d WITH (UPDLOCK, HOLDLOCK)
+                    JOIN shop_delivery_staff t WITH (HOLDLOCK)
                       ON t.shop_id = d.shop_id AND t.shipper_id = d.shipper_id
-                    JOIN Accounts a WITH (HOLDLOCK) ON a.account_id = d.shipper_id
-                    JOIN Roles r ON r.role_id = a.role_id
+                    JOIN users a WITH (HOLDLOCK) ON a.user_id = d.shipper_id
+                    JOIN user_roles ur ON ur.user_id = a.user_id
+                    JOIN roles r ON r.role_id = ur.role_id AND r.role_name = N'DeliveryStaff'
                     WHERE d.delivery_id = ? AND d.shipper_id = ?
-                      AND t.status = N'Active' AND a.status = N'Active' AND r.role_name = N'Shipper'
+                      AND t.status = N'Active' AND a.status = N'active'
                     """;
                 try (PreparedStatement ps = c.prepareStatement(deliverySql)) {
                     ps.setInt(1, deliveryId);
@@ -150,7 +151,7 @@ public class DeliveryDAO {
                 }
 
                 String updateDelivery = """
-                    UPDATE Deliveries SET delivery_status = ?, note = ?,
+                    UPDATE deliveries SET delivery_status = ?, note = ?,
                         pickup_time = CASE WHEN ? = N'PickedUp' THEN GETDATE() ELSE pickup_time END,
                         delivered_time = CASE WHEN ? = N'Delivered' THEN GETDATE() ELSE delivered_time END
                     WHERE delivery_id = ? AND shipper_id = ? AND delivery_status = ?
@@ -167,7 +168,7 @@ public class DeliveryDAO {
                 }
 
                 String updateOrder = """
-                    UPDATE Orders SET order_status = ?,
+                    UPDATE orders SET order_status = ?,
                         payment_status = CASE WHEN ? = N'Delivered' AND payment_method = N'COD'
                                               THEN N'Paid' ELSE payment_status END
                     WHERE order_id = ?

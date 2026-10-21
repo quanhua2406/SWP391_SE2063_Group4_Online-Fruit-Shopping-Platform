@@ -1,6 +1,6 @@
 package com.mycompany.onlinefruitshopping.shopowner.dao;
 
-import com.mycompany.onlinefruitshopping.shopowner.utils.DBConnection;
+import com.mycompany.onlinefruitshopping.utils.DBConnection;
 import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
@@ -14,16 +14,17 @@ import com.mycompany.onlinefruitshopping.shopowner.utils.PromotionRules;
 /** Khách áp dụng mã vào đơn Pending/Unpaid của chính mình. */
 public class CouponApplicationDAO {
     private static final String ORDER_FIELDS = """
-        SELECT o.*, s.shop_name, cp.code AS coupon_code FROM Orders o
+        SELECT o.*, s.shop_name, cp.code AS coupon_code FROM orders o
         """;
     private static final String ORDER_JOINS = """
-        JOIN Shops s WITH (HOLDLOCK) ON s.shop_id = o.shop_id
-        JOIN Accounts a WITH (HOLDLOCK) ON a.account_id = o.account_id
-        JOIN Roles r ON r.role_id = a.role_id
-        JOIN Accounts owner WITH (HOLDLOCK) ON owner.account_id = s.owner_account_id
-        LEFT JOIN Coupons cp ON cp.coupon_id = o.coupon_id
-        WHERE o.account_id = ? AND a.status = N'Active' AND r.role_name = N'Customer'
-          AND s.status = N'Active' AND owner.status = N'Active'
+        JOIN shops s WITH (HOLDLOCK) ON s.shop_id = o.shop_id
+        JOIN users a WITH (HOLDLOCK) ON a.user_id = o.user_id
+        JOIN user_roles ur ON ur.user_id = a.user_id
+        JOIN roles r ON r.role_id = ur.role_id AND r.role_name = N'Customer'
+        JOIN users owner WITH (HOLDLOCK) ON owner.user_id = s.owner_id
+        LEFT JOIN coupons cp ON cp.coupon_id = o.coupon_id
+        WHERE o.user_id = ? AND a.status = N'active'
+          AND s.status = N'active' AND owner.status = N'active'
         """;
 
     public List<CouponOrder> findOrders(int customerId) throws SQLException {
@@ -70,8 +71,8 @@ public class CouponApplicationDAO {
                 if (save) {
                     prepareWrite(c);
                     String update = """
-                        UPDATE Orders SET coupon_id = ?, coupon_subtotal = ?, coupon_discount = ?, total_amount = ?
-                        WHERE order_id = ? AND account_id = ? AND order_status = N'Pending'
+                        UPDATE orders SET coupon_id = ?, coupon_subtotal = ?, coupon_discount = ?, total_amount = ?
+                        WHERE order_id = ? AND user_id = ? AND order_status = N'Pending'
                           AND payment_status = N'Unpaid' AND coupon_id IS NULL AND voucher_id IS NULL
                         """;
                     try (PreparedStatement ps = c.prepareStatement(update)) {
@@ -80,7 +81,7 @@ public class CouponApplicationDAO {
                         if (ps.executeUpdate() != 1) throw new SQLException("Đơn đã thay đổi.");
                     }
                     String insert = """
-                        INSERT INTO CouponUsages(coupon_id, shop_id, order_id, customer_id, code_snapshot,
+                        INSERT INTO coupon_usages(coupon_id, shop_id, order_id, customer_id, code_snapshot,
                             subtotal, discount_amount, final_amount, used_at, usage_status)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Applied')
                         """;
@@ -110,7 +111,7 @@ public class CouponApplicationDAO {
                 if (order.getCouponSubtotal() == null) throw new SQLException("Thiếu giá trước giảm của đơn.");
                 prepareWrite(c);
                 try (PreparedStatement ps = c.prepareStatement("""
-                        UPDATE CouponUsages SET usage_status = 'Removed', removed_at = ?
+                        UPDATE coupon_usages SET usage_status = 'Removed', removed_at = ?
                         WHERE order_id = ? AND coupon_id = ? AND customer_id = ? AND usage_status = 'Applied'
                         """)) {
                     ps.setTimestamp(1, Timestamp.valueOf(PromotionRules.now())); ps.setInt(2, orderId);
@@ -118,8 +119,8 @@ public class CouponApplicationDAO {
                     if (ps.executeUpdate() != 1) throw new SQLException("Lịch sử coupon chưa khớp đơn.");
                 }
                 try (PreparedStatement ps = c.prepareStatement("""
-                        UPDATE Orders SET total_amount = ?, coupon_id = NULL, coupon_discount = 0, coupon_subtotal = NULL
-                        WHERE order_id = ? AND account_id = ? AND coupon_id = ?
+                        UPDATE orders SET total_amount = ?, coupon_id = NULL, coupon_discount = 0, coupon_subtotal = NULL
+                        WHERE order_id = ? AND user_id = ? AND coupon_id = ?
                         """)) {
                     ps.setBigDecimal(1, order.getCouponSubtotal()); ps.setInt(2, orderId);
                     ps.setInt(3, customerId); ps.setInt(4, order.getCouponId());
@@ -148,7 +149,7 @@ public class CouponApplicationDAO {
     private BigDecimal readSubtotal(Connection c, int orderId) throws SQLException {
         BigDecimal subtotal = BigDecimal.ZERO;
         try (PreparedStatement ps = c.prepareStatement(
-                "SELECT price, quantity FROM OrderDetails WITH (HOLDLOCK) WHERE order_id = ?")) {
+                "SELECT price, quantity FROM order_items WITH (HOLDLOCK) WHERE order_id = ?")) {
             ps.setInt(1, orderId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {

@@ -46,7 +46,7 @@ public class LoginController extends HttpServlet {
             request.setAttribute("error", e.getMessage());
         } catch (SQLException e) {
             log("Lỗi đăng nhập/kết nối SQL Server", e);
-            request.setAttribute("error", "Không truy cập được database. Hãy kiểm tra src/main/resources/db.properties (hoặc biến DB_PASSWORD) và log Tomcat.");
+            request.setAttribute("error", "Không truy cập được database. Hãy kiểm tra kết nối SQL Server và file utils/DBConnection.java rồi xem log Tomcat.");
         }
         request.getRequestDispatcher("/WEB-INF/shopowner/views/login.jsp").forward(request, response);
     }
