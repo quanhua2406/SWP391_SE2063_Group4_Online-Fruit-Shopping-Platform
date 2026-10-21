@@ -52,7 +52,7 @@ public class DeliveryController extends HttpServlet {
             return;
         }
         Account user = WebUtil.user(request);
-        if (!"Shipper".equals(user.getRole())) {
+        if (!"DeliveryStaff".equals(user.getRole())) {
             response.sendError(403);
             return;
         }

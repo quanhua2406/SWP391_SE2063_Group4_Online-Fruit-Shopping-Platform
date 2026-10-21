@@ -191,6 +191,16 @@
 
         <div class="dashboard-grid">
 
+            <div class="dashboard-card">
+                <div class="dashboard-icon">🚚</div>
+                <h3>Quản lý giao hàng</h3>
+                <p>Phân công nhân viên và theo dõi trạng thái giao hàng.</p>
+
+                <a href="${pageContext.request.contextPath}/shopowner/shop/deliveries">
+                    Mở quản lý giao hàng
+                </a>
+            </div>
+
             <!-- PRODUCT MANAGEMENT -->
 
             <div class="dashboard-card">

@@ -116,7 +116,7 @@ public class LoginService {
         // Blocked account
         // -----------------------------------------------------
 
-        if ("locked".equalsIgnoreCase(user.getStatus())) {
+        if (!"active".equalsIgnoreCase(user.getStatus())) {
 
             return new LoginResult(
                     Status.ACCOUNT_LOCKED,

@@ -26,18 +26,18 @@ public class DeliveryService {
     }
 
     public List<Delivery> findAll(Account user) throws SQLException {
-        ServiceChecks.requireRole(user, "ShopOwner", "Shipper");
+        ServiceChecks.requireRole(user, "ShopOwner", "DeliveryStaff");
         return deliveryDAO.findAll(user);
     }
 
     public Delivery findById(int deliveryId, Account user) throws SQLException {
-        ServiceChecks.requireRole(user, "ShopOwner", "Shipper");
+        ServiceChecks.requireRole(user, "ShopOwner", "DeliveryStaff");
         ServiceChecks.positiveId(deliveryId);
         return deliveryDAO.findById(deliveryId, user);
     }
 
     public List<OrderItem> findItems(int deliveryId, Account user) throws SQLException {
-        ServiceChecks.requireRole(user, "ShopOwner", "Shipper");
+        ServiceChecks.requireRole(user, "ShopOwner", "DeliveryStaff");
         ServiceChecks.positiveId(deliveryId);
         return deliveryDAO.findItems(deliveryId, user);
     }
@@ -62,7 +62,7 @@ public class DeliveryService {
 
     public void updateStatus(int deliveryId, Account shipper, String action,
                              String reason, boolean collected) throws SQLException {
-        ServiceChecks.requireRole(shipper, "Shipper");
+        ServiceChecks.requireRole(shipper, "DeliveryStaff");
         ServiceChecks.positiveId(deliveryId);
         if (action == null || !List.of("accept", "reject", "pickup", "start", "delivered", "failed").contains(action)) {
             throw new IllegalArgumentException("Thao tác giao hàng không hợp lệ.");

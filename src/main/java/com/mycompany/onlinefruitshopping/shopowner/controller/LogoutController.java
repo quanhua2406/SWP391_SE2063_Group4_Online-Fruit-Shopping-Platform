@@ -9,6 +9,6 @@ public class LogoutController extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         request.getSession().invalidate();
-        response.sendRedirect(request.getContextPath() + "/shopowner/login");
+        response.sendRedirect(request.getContextPath() + "/login");
     }
 }

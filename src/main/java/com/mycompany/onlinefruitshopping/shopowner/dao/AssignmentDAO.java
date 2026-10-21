@@ -115,7 +115,7 @@ public class AssignmentDAO {
                     ps.setInt(1, shopId);
                     ps.setInt(2, shipperId);
                     try (ResultSet rs = ps.executeQuery()) {
-                        if (!rs.next()) throw new IllegalArgumentException("Shipper phải đang hoạt động và thuộc đúng đội của shop.");
+                        if (!rs.next()) throw new IllegalArgumentException("DeliveryStaff phải đang hoạt động và thuộc đúng đội của shop.");
                     }
                 }
 

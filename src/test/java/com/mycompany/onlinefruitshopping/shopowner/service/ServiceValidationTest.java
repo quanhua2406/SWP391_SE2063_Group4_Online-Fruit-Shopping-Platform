@@ -68,7 +68,7 @@ class ServiceValidationTest {
     @Test void invalidActionAndMissingFailureReasonNeverReachWrite() {
         RecordingDeliveryDAO dao = new RecordingDeliveryDAO();
         DeliveryService service = new DeliveryService(dao, new RecordingAssignmentDAO());
-        Account shipper = account(10, "Shipper");
+        Account shipper = account(10, "DeliveryStaff");
         assertThrows(IllegalArgumentException.class, () -> service.updateStatus(3, shipper, null, "", false));
         assertThrows(IllegalArgumentException.class, () -> service.updateStatus(3, shipper, "delete", "", false));
         assertThrows(IllegalArgumentException.class, () -> service.updateStatus(3, shipper, "failed", " ", false));
@@ -79,7 +79,7 @@ class ServiceValidationTest {
     @Test void validDeliveryActionKeepsActorAndCodConfirmation() throws SQLException {
         RecordingDeliveryDAO dao = new RecordingDeliveryDAO();
         DeliveryService service = new DeliveryService(dao, new RecordingAssignmentDAO());
-        service.updateStatus(3, account(10, "Shipper"), "delivered", " Đã thu tiền ", true);
+        service.updateStatus(3, account(10, "DeliveryStaff"), "delivered", " Đã thu tiền ", true);
         assertEquals(1, dao.calls);
         assertEquals(10, dao.shipperId);
         assertEquals("Đã thu tiền", dao.reason);
@@ -89,7 +89,7 @@ class ServiceValidationTest {
     @Test void assignmentRequiresShopOwnerAndPositiveIds() throws SQLException {
         RecordingAssignmentDAO dao = new RecordingAssignmentDAO();
         DeliveryService service = new DeliveryService(new RecordingDeliveryDAO(), dao);
-        assertThrows(IllegalArgumentException.class, () -> service.assign(account(10, "Shipper"), 3, 20));
+        assertThrows(IllegalArgumentException.class, () -> service.assign(account(10, "DeliveryStaff"), 3, 20));
         assertThrows(IllegalArgumentException.class, () -> service.assign(account(10, "ShopOwner"), 0, 20));
         assertEquals(0, dao.calls);
         service.assign(account(10, "ShopOwner"), 3, 20);
