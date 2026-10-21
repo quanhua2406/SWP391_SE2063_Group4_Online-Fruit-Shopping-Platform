@@ -305,6 +305,26 @@
 
             </div>
 
+            <!-- SHOP OWNER MANAGEMENT -->
+
+            <div class="dashboard-card">
+
+                <div class="dashboard-icon">🏪</div>
+
+                <h3>Shop Owner Management</h3>
+
+                <p>
+                    View every registered shop and block or
+                    unblock a store owner and their products.
+                </p>
+
+                <a class="action-btn"
+                   href="${pageContext.request.contextPath}/admin/shops">
+                    Manage Shops
+                </a>
+
+            </div>
+
             <!-- PRODUCT MANAGEMENT -->
 
             <div class="dashboard-card">

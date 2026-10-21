@@ -166,7 +166,7 @@ Write-Output ("{0} error-500.jsp renders -> {1}" -f $(if ($ok) { 'PASS' } else {
 Check 'owner dashboard'  "$base/store-owner/dashboard"          "$work\cookie-owner.txt" @('Stock Management', 'Commission Report')
 Check 'owner pricing'    "$base/store-owner/pricing"            "$work\cookie-owner.txt" @('APPLE-1KG')
 Check 'owner promotions' "$base/store-owner/promotions"         "$work\cookie-owner.txt" @('Approval')
-Check 'admin dashboard'  "$base/admin/dashboard"                "$work\cookie-admin.txt" @('Commission')
+Check 'admin dashboard'  "$base/admin/dashboard"                "$work\cookie-admin.txt" @('Commission', 'Shop Owner Management', '/admin/shops')
 Check 'admin products'   "$base/admin/product-management"       "$work\cookie-admin.txt" @('Apple')
 Check 'admin edit prod'  "$base/admin/product-edit?id=1"        "$work\cookie-admin.txt" @('commissionRate')
 Check 'admin variants'   "$base/admin/product-variants?productId=1" "$work\cookie-admin.txt" @('APPLE-0.5KG')
