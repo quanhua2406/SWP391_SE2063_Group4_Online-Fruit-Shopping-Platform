@@ -1,0 +1,18 @@
+<%@ page pageEncoding="UTF-8" %>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Bảng dữ liệu, cuộn ngang để xem thêm"><table class="data-table">
+    <thead><tr><th scope="col">Mã / Shop</th><th scope="col">Khách / Đơn</th><th scope="col">Trước giảm</th><th scope="col">Tiền giảm</th><th scope="col">Sau giảm</th><th scope="col">Thời điểm</th><th scope="col">Trạng thái</th></tr></thead>
+    <tbody>
+    <c:forEach var="u" items="${usages}">
+        <tr>
+            <td><strong><c:out value="${u.code}"/></strong><br><c:out value="${u.shopName}"/></td>
+            <td><c:out value="${u.customerName}"/><br>Đơn #${u.orderId}</td>
+            <td class="nowrap"><fmt:formatNumber value="${u.subtotal}" maxFractionDigits="0"/> đ</td>
+            <td class="nowrap"><fmt:formatNumber value="${u.discountAmount}" maxFractionDigits="0"/> đ</td>
+            <td class="nowrap"><fmt:formatNumber value="${u.finalAmount}" maxFractionDigits="0"/> đ</td>
+            <td class="nowrap">${u.timeLabel}</td>
+            <td><c:out value="${u.statusLabel}"/><br><span class="muted">Đơn: <c:out value="${u.orderStatus}"/></span></td>
+        </tr>
+    </c:forEach>
+    <c:if test="${empty usages}"><tr><td colspan="7" class="empty">Chưa có lượt sử dụng. Kiểm tra mã chưa được tính là sử dụng.</td></tr></c:if>
+    </tbody>
+</table></div>
