@@ -91,6 +91,7 @@ Check '18.0 user detail notfound'   ((Code "$base/admin/user-management?action=d
 Check '18.0 fee collection report'  ((Code "$base/admin/commission-report" $admin) -eq 200)
 Check '18.0 fee payment report'     ((Code "$base/store-owner/commission-report" $owner) -eq 200)
 Check '18.0 shop list'              ((Code "$base/admin/shops" $admin) -eq 200)
+Check '18.0 shop dashboard'         ((Code "$base/admin/shops?action=dashboard" $admin) -eq 200)
 Check '18.0 shop link on dashboard' ((Code "$base/admin/dashboard" $admin) -eq 200)
 Check '18.0 shop search'            ((Code "$base/admin/shops?action=search&keyword=fruit&status=active" $admin) -eq 200)
 Check '18.0 shop bad status -> 400' ((Code "$base/admin/shops?action=search&status=HACKER" $admin) -eq 400)

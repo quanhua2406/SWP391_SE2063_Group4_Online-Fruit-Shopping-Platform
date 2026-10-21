@@ -21,6 +21,46 @@ public class AdminShopDAO {
     // =========================================================
 
     /**
+     * Counters shown on the dashboard card of the shop management
+     * screen: every shop by status and how many products are on sale.
+     */
+    public ShopStatistics getStatistics() throws SQLException {
+
+        String sql = """
+            SELECT
+                (SELECT COUNT(*) FROM shops) AS total_shops,
+                (SELECT COUNT(*) FROM shops
+                  WHERE status = 'active') AS active_shops,
+                (SELECT COUNT(*) FROM shops
+                  WHERE status = 'suspended') AS suspended_shops,
+                (SELECT COUNT(*) FROM shops
+                  WHERE status = 'pending') AS pending_shops,
+                (SELECT COUNT(*) FROM products
+                  WHERE status = 'published') AS published_products,
+                (SELECT COUNT(*) FROM products
+                  WHERE hidden_by_admin = 1) AS hidden_products
+            """;
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            ShopStatistics stats = new ShopStatistics();
+
+            if (rs.next()) {
+                stats.setTotalShops(rs.getInt("total_shops"));
+                stats.setActiveShops(rs.getInt("active_shops"));
+                stats.setSuspendedShops(rs.getInt("suspended_shops"));
+                stats.setPendingShops(rs.getInt("pending_shops"));
+                stats.setPublishedProducts(rs.getInt("published_products"));
+                stats.setHiddenProducts(rs.getInt("hidden_products"));
+            }
+
+            return stats;
+        }
+    }
+
+    /**
      * Every shop with its owner and a few counters, optionally filtered
      * by a keyword (shop name or owner email) and / or a status.
      */
@@ -351,6 +391,72 @@ public class AdminShopDAO {
 
         public void setPublishedCount(int publishedCount) {
             this.publishedCount = publishedCount;
+        }
+    }
+
+    // =========================================================
+    // SHOP STATISTICS
+    // =========================================================
+
+    /**
+     * Counters of the whole platform, used by the dashboard card of
+     * the shop management screen.
+     */
+    public static class ShopStatistics {
+
+        private int totalShops;
+        private int activeShops;
+        private int suspendedShops;
+        private int pendingShops;
+        private int publishedProducts;
+        private int hiddenProducts;
+
+        public int getTotalShops() {
+            return totalShops;
+        }
+
+        public void setTotalShops(int totalShops) {
+            this.totalShops = totalShops;
+        }
+
+        public int getActiveShops() {
+            return activeShops;
+        }
+
+        public void setActiveShops(int activeShops) {
+            this.activeShops = activeShops;
+        }
+
+        public int getSuspendedShops() {
+            return suspendedShops;
+        }
+
+        public void setSuspendedShops(int suspendedShops) {
+            this.suspendedShops = suspendedShops;
+        }
+
+        public int getPendingShops() {
+            return pendingShops;
+        }
+
+        public void setPendingShops(int pendingShops) {
+            this.pendingShops = pendingShops;
+        }
+
+        public int getPublishedProducts() {
+            return publishedProducts;
+        }
+
+        public void setPublishedProducts(int publishedProducts) {
+            this.publishedProducts = publishedProducts;
+        }
+
+        public int getHiddenProducts() {
+            return hiddenProducts;
+        }
+
+        public void setHiddenProducts(int hiddenProducts) {
+            this.hiddenProducts = hiddenProducts;
         }
     }
 }

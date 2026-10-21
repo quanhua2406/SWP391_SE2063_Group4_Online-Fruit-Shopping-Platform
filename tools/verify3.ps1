@@ -173,6 +173,7 @@ Check 'admin variants'   "$base/admin/product-variants?productId=1" "$work\cooki
 Check 'admin promos'     "$base/admin/promotion-approvals"      "$work\cookie-admin.txt" @('Approval')
 
 # ---- 18.0 admin shop-owner management ----
+Check 'admin shops dashboard' "$base/admin/shops?action=dashboard" "$work\cookie-admin.txt" @('Shop Management Dashboard', 'Total Shops', 'Active Shops', 'Suspended Shops', 'Products On Sale')
 Check 'admin shops list'  "$base/admin/shops"                     "$work\cookie-admin.txt" @('Shop Owner Management', 'Shop List', 'Fruit', 'shopowner@freshfruit.com')
 Check 'admin shop search' "$base/admin/shops?action=search&keyword=fruit&status=active" "$work\cookie-admin.txt" @('Fruit', 'action=detail')
 Check 'admin shop detail' "$base/admin/shops?action=detail&shopId=1" "$work\cookie-admin.txt" @('Shop Profile', 'Owner Information', 'Block Shop')

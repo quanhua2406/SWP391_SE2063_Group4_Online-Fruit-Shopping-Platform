@@ -484,6 +484,8 @@
 
     <nav class="nav-actions">
         <a href="<%=contextPath%>/admin/dashboard">Dashboard</a>
+        <a href="<%=contextPath%>/admin/shops?action=dashboard">Shop Dashboard</a>
+        <a href="<%=contextPath%>/admin/shops">Shops</a>
         <a href="<%=contextPath%>/admin/user-management">Users</a>
         <a href="<%=contextPath%>/logout">Logout</a>
     </nav>

@@ -33,6 +33,15 @@ public class AdminShopService {
     // =========================================================
 
     /**
+     * Platform-wide counters for the dashboard card (every shop by
+     * status, and how many products are on sale).
+     */
+    public com.mycompany.onlinefruitshopping.dao.shop.AdminShopDAO.ShopStatistics
+            getStatistics() throws SQLException {
+        return shopDAO.getStatistics();
+    }
+
+    /**
      * Filters the shop list.
      *
      * @param status {@code null} / blank / {@code all} means "no status

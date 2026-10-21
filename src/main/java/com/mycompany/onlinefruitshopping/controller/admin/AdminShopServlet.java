@@ -26,6 +26,7 @@ public class AdminShopServlet extends HttpServlet {
 
     private static final String LIST_JSP = "/jsp/admin/admin-shops.jsp";
     private static final String DETAIL_JSP = "/jsp/admin/admin-shop-detail.jsp";
+    private static final String DASHBOARD_JSP = "/jsp/admin/admin-shop-dashboard.jsp";
 
     // =====================================================
     // GET
@@ -42,7 +43,10 @@ public class AdminShopServlet extends HttpServlet {
         String action = trim(request.getParameter("action"));
 
         try {
-            if ("detail".equalsIgnoreCase(action)) {
+            if ("dashboard".equalsIgnoreCase(action)) {
+                showDashboard(request, response);
+
+            } else if ("detail".equalsIgnoreCase(action)) {
                 showDetail(request, response);
 
             } else if ("search".equalsIgnoreCase(action)
@@ -60,6 +64,24 @@ public class AdminShopServlet extends HttpServlet {
                     "Unable to retrieve shop data.", e
             );
         }
+    }
+
+    // =====================================================
+    // SHOP DASHBOARD
+    // =====================================================
+
+    private void showDashboard(
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) throws ServletException, IOException, SQLException {
+
+        request.setAttribute(
+                "stats",
+                shopService.getStatistics()
+        );
+
+        request.getRequestDispatcher(DASHBOARD_JSP)
+                .forward(request, response);
     }
 
     // =====================================================
