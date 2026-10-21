@@ -214,6 +214,7 @@
                                        value="<%= esc(row.get("order_id")) %>">
 
                                 <input type="text" name="note" class="filter-input"
+                                       maxlength="40"
                                        placeholder="Note for the history">
 
                                 <button type="submit" class="btn-sm"

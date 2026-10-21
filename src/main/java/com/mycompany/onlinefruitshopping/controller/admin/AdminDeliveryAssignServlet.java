@@ -1,6 +1,7 @@
 package com.mycompany.onlinefruitshopping.controller.admin;
 
 import com.mycompany.onlinefruitshopping.dao.order.AdminOrderDAO;
+import com.mycompany.onlinefruitshopping.service.order.AdminDeliveryService;
 import com.mycompany.onlinefruitshopping.utils.Page;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -22,10 +23,12 @@ import jakarta.servlet.http.HttpServletResponse;
 public class AdminDeliveryAssignServlet extends HttpServlet {
 
     private AdminOrderDAO orderDAO;
+    private AdminDeliveryService deliveryService;
 
     @Override
     public void init() {
         orderDAO = new AdminOrderDAO();
+        deliveryService = new AdminDeliveryService();
     }
 
     @Override
@@ -62,22 +65,10 @@ public class AdminDeliveryAssignServlet extends HttpServlet {
         int deliveryId = AdminWeb.intParam(request.getParameter("deliveryId"), 0);
         String action = AdminWeb.trim(request.getParameter("action"));
         String note = AdminWeb.trim(request.getParameter("note"));
-        String message = "invalid";
 
         try {
-            boolean staffOk = staffId > 0 && orderDAO.isDeliveryStaff(staffId);
-
-            if ("unassign".equals(action) && deliveryId > 0) {
-                message = orderDAO.unassignDelivery(deliveryId) ? "unassigned" : "failed";
-
-            } else if ("assign".equals(action) && orderId > 0 && staffOk) {
-                message = orderDAO.assignDelivery(orderId, staffId,
-                        note.isEmpty() ? "Assigned by admin" : note) ? "assigned" : "conflict";
-
-            } else if ("reassign".equals(action) && deliveryId > 0 && staffOk) {
-                message = orderDAO.reassignDelivery(deliveryId, staffId,
-                        note.isEmpty() ? "Reassigned by admin" : note) ? "reassigned" : "failed";
-            }
+            String message = deliveryService.applyAssignment(
+                    action, orderId, deliveryId, staffId, note);
 
             response.sendRedirect(request.getContextPath()
                     + "/admin/delivery-assign?msg=" + message);

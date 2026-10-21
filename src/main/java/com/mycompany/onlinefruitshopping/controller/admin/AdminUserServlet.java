@@ -1,8 +1,9 @@
-
 package com.mycompany.onlinefruitshopping.controller.admin;
 
-import com.mycompany.onlinefruitshopping.dao.user.AdminUserDAO;
 import com.mycompany.onlinefruitshopping.dao.user.AdminUserDAO.UserInfo;
+import com.mycompany.onlinefruitshopping.service.user.AdminUserService;
+import com.mycompany.onlinefruitshopping.service.user.AdminUserService.UpdateResult;
+import com.mycompany.onlinefruitshopping.service.user.AdminUserService.UserForm;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -13,32 +14,22 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Locale;
-import java.util.Set;
 
+/**
+ * User administration (feature 18.0 / 2.0): view, search, edit,
+ * block and unblock accounts. All rules live in
+ * {@link AdminUserService}.
+ */
 @WebServlet("/admin/user-management")
 public class AdminUserServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
 
-    private AdminUserDAO userDAO;
+    private final AdminUserService userService = new AdminUserService();
 
     private static final String LIST_JSP = "/jsp/admin/admin-users.jsp";
     private static final String DETAIL_JSP = "/jsp/admin/admin-user-detail.jsp";
     private static final String EDIT_JSP = "/WEB-INF/admin-user-edit.jsp";
-
-    private static final Set<String> ALLOWED_ROLES = Set.of(
-            "ADMIN",
-            "CUSTOMER",
-            "SHOPOWNER",
-            "DELIVERYSTAFF",
-            "GUEST"
-    );
-
-    @Override
-    public void init() throws ServletException {
-        userDAO = new AdminUserDAO();
-    }
 
     // =====================================================
     // GET
@@ -93,7 +84,7 @@ public class AdminUserServlet extends HttpServlet {
             return;
         }
 
-        UserInfo user = userDAO.getUserById(userId);
+        UserInfo user = userService.getUserById(userId);
 
         if (user == null) {
             response.sendError(
@@ -124,7 +115,7 @@ public class AdminUserServlet extends HttpServlet {
             return;
         }
 
-        UserInfo user = userDAO.getUserById(userId);
+        UserInfo user = userService.getUserById(userId);
 
         if (user == null) {
             response.sendError(
@@ -149,7 +140,7 @@ public class AdminUserServlet extends HttpServlet {
             HttpServletResponse response
     ) throws ServletException, IOException, SQLException {
 
-        List<UserInfo> users = userDAO.getAllUsers();
+        List<UserInfo> users = userService.getAllUsers();
 
         request.setAttribute("users", users);
         request.setAttribute("keyword", "");
@@ -169,35 +160,11 @@ public class AdminUserServlet extends HttpServlet {
     ) throws ServletException, IOException, SQLException {
 
         String keyword = trim(request.getParameter("keyword"));
+        String role = trim(request.getParameter("role"));
 
-        String role = trim(request.getParameter("role"))
-                .toUpperCase(Locale.ROOT);
+        List<UserInfo> users = userService.searchUsers(keyword, role);
 
-        if (role.isEmpty()) {
-            role = "ALL";
-        }
-
-        List<UserInfo> users;
-
-        if ("ALL".equals(role)) {
-
-            if (keyword.isEmpty()) {
-                users = userDAO.getAllUsers();
-            } else {
-                users = userDAO.searchByEmail(keyword);
-            }
-
-        } else if (ALLOWED_ROLES.contains(role)) {
-
-            if (keyword.isEmpty()) {
-                users = userDAO.filterByRole(role);
-            } else {
-                users = userDAO.searchByEmailAndRole(
-                        keyword, role
-                );
-            }
-
-        } else {
+        if (users == null) {
             response.sendError(
                     HttpServletResponse.SC_BAD_REQUEST,
                     "Invalid role."
@@ -207,7 +174,10 @@ public class AdminUserServlet extends HttpServlet {
 
         request.setAttribute("users", users);
         request.setAttribute("keyword", keyword);
-        request.setAttribute("selectedRole", role);
+        request.setAttribute(
+                "selectedRole",
+                role.isEmpty() ? "ALL" : role.toUpperCase(java.util.Locale.ROOT)
+        );
 
         request.getRequestDispatcher(LIST_JSP)
                 .forward(request, response);
@@ -267,7 +237,7 @@ public class AdminUserServlet extends HttpServlet {
             return;
         }
 
-        UserInfo user = userDAO.getUserById(userId);
+        UserInfo user = userService.getUserById(userId);
 
         if (user == null) {
             response.sendError(
@@ -277,107 +247,19 @@ public class AdminUserServlet extends HttpServlet {
             return;
         }
 
-        String fullName = trim(request.getParameter("fullName"));
-        String email = trim(request.getParameter("email"));
-        String phone = trim(request.getParameter("phone"));
-
-        // Validate full name.
-        if (fullName.isEmpty()) {
-            forwardEditWithError(
-                    request, response, user,
-                    fullName, email, phone,
-                    "Full Name is required."
-            );
-            return;
-        }
-
-        if (fullName.length() < 2 || fullName.length() > 100) {
-            forwardEditWithError(
-                    request, response, user,
-                    fullName, email, phone,
-                    "Full Name must contain 2 to 100 characters."
-            );
-            return;
-        }
-
-        if (!fullName.matches("[\\p{L}\\p{M} .'-]+")) {
-            forwardEditWithError(
-                    request, response, user,
-                    fullName, email, phone,
-                    "Full Name contains invalid characters."
-            );
-            return;
-        }
-
-        // Validate email.
-        if (email.isEmpty()) {
-            forwardEditWithError(
-                    request, response, user,
-                    fullName, email, phone,
-                    "Email is required."
-            );
-            return;
-        }
-
-        String emailRegex =
-                "^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@"
-                + "[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}"
-                + "[A-Za-z0-9])?(?:\\.[A-Za-z0-9]"
-                + "(?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$";
-
-        if (email.length() > 254 || !email.matches(emailRegex)) {
-            forwardEditWithError(
-                    request, response, user,
-                    fullName, email, phone,
-                    "Please enter a valid email address."
-            );
-            return;
-        }
-
-        // Check whether another account already uses this email.
-        if (userDAO.emailExists(email, userId)) {
-            forwardEditWithError(
-                    request, response, user,
-                    fullName, email, phone,
-                    "This email is already used by another account."
-            );
-            return;
-        }
-
-        // Validate phone number.
-        if (phone.isEmpty()) {
-            forwardEditWithError(
-                    request, response, user,
-                    fullName, email, phone,
-                    "Phone is required."
-            );
-            return;
-        }
-
-        if (!phone.matches("^0[0-9]{9,10}$")) {
-            forwardEditWithError(
-                    request, response, user,
-                    fullName, email, phone,
-                    "Phone must start with 0 and contain 10 or 11 digits."
-            );
-            return;
-        }
-
-        // Update database.
-        boolean updated = userDAO.updateUser(
-                userId, fullName, email, phone
+        UserForm form = new UserForm(
+                request.getParameter("fullName"),
+                request.getParameter("email"),
+                request.getParameter("phone")
         );
 
-        if (!updated) {
-            forwardEditWithError(
-                    request, response, user,
-                    fullName, email, phone,
-                    "Update failed. Please try again."
-            );
+        UpdateResult result = userService.updateUser(userId, form);
+
+        if (!result.isSuccess()) {
+            forwardEditWithError(request, response, user, form, result.getError());
             return;
         }
 
-        // Redirect after a successful update.
         response.sendRedirect(
                 request.getContextPath()
                 + "/admin/user-management?action=detail&userId="
@@ -394,16 +276,14 @@ public class AdminUserServlet extends HttpServlet {
             HttpServletRequest request,
             HttpServletResponse response,
             UserInfo user,
-            String fullName,
-            String email,
-            String phone,
+            UserForm form,
             String error
     ) throws ServletException, IOException {
 
         request.setAttribute("user", user);
-        request.setAttribute("formFullName", fullName);
-        request.setAttribute("formEmail", email);
-        request.setAttribute("formPhone", phone);
+        request.setAttribute("formFullName", form.getFullName());
+        request.setAttribute("formEmail", form.getEmail());
+        request.setAttribute("formPhone", form.getPhone());
         request.setAttribute("error", error);
 
         request.getRequestDispatcher(EDIT_JSP)
@@ -426,7 +306,7 @@ public class AdminUserServlet extends HttpServlet {
             return;
         }
 
-        UserInfo user = userDAO.getUserById(userId);
+        UserInfo user = userService.getUserById(userId);
 
         if (user == null) {
             response.sendError(
@@ -436,19 +316,7 @@ public class AdminUserServlet extends HttpServlet {
             return;
         }
 
-        // Protect admin accounts from being blocked.
-        if (userDAO.isAdminUser(userId)) {
-            redirectToDetail(
-                    request, response, userId, "admin-protected"
-            );
-            return;
-        }
-
-        boolean updated = userDAO.updateStatus(userId, status);
-
-        String message = updated
-                ? "status-updated"
-                : "status-failed";
+        String message = userService.changeStatus(userId, status);
 
         redirectToDetail(request, response, userId, message);
     }

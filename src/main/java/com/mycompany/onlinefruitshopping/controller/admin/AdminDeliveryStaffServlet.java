@@ -1,7 +1,7 @@
 package com.mycompany.onlinefruitshopping.controller.admin;
 
 import com.mycompany.onlinefruitshopping.dao.order.AdminOrderDAO;
-import com.mycompany.onlinefruitshopping.dao.user.AdminUserDAO;
+import com.mycompany.onlinefruitshopping.service.order.AdminDeliveryService;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
@@ -16,18 +16,19 @@ import jakarta.servlet.http.HttpServletResponse;
  * Manage Delivery Staff (task 19.0): the administrator sees every
  * delivery-staff account with its workload and can lock or unlock
  * the account. Blocking reuses the same {@code users.status}
- * column as the general user-management screen.
+ * column as the general user-management screen; the rules live in
+ * {@link AdminDeliveryService}.
  */
 @WebServlet("/admin/delivery-staff")
 public class AdminDeliveryStaffServlet extends HttpServlet {
 
     private AdminOrderDAO orderDAO;
-    private AdminUserDAO userDAO;
+    private AdminDeliveryService deliveryService;
 
     @Override
     public void init() {
         orderDAO = new AdminOrderDAO();
-        userDAO = new AdminUserDAO();
+        deliveryService = new AdminDeliveryService();
     }
 
     @Override
@@ -52,18 +53,9 @@ public class AdminDeliveryStaffServlet extends HttpServlet {
 
         int staffId = AdminWeb.intParam(request.getParameter("staffId"), 0);
         String action = AdminWeb.trim(request.getParameter("action"));
-        String message = "invalid";
 
         try {
-            if (staffId > 0 && orderDAO.isDeliveryStaff(staffId)) {
-
-                if ("block".equals(action)) {
-                    message = userDAO.updateStatus(staffId, "locked") ? "blocked" : "failed";
-
-                } else if ("unblock".equals(action)) {
-                    message = userDAO.updateStatus(staffId, "active") ? "unblocked" : "failed";
-                }
-            }
+            String message = deliveryService.changeStaffStatus(staffId, action);
 
             response.sendRedirect(request.getContextPath()
                     + "/admin/delivery-staff?msg=" + message);

@@ -140,6 +140,10 @@
             <div class="error-message">
                 The order already has a delivery, or it can no longer be assigned.
             </div>
+        <% } else if ("invalid-note".equals(msg)) { %>
+            <div class="error-message">
+                The note is too long (255 characters maximum).
+            </div>
         <% } else { %>
             <div class="error-message">The requested action could not be applied.</div>
         <% } %>
@@ -250,6 +254,7 @@
                                     </select>
 
                                     <input type="text" name="note" class="filter-input"
+                                           maxlength="255"
                                            placeholder="Note (optional)">
 
                                     <button type="submit" class="btn-sm">Assign</button>
@@ -271,6 +276,7 @@
                                     </select>
 
                                     <input type="text" name="note" class="filter-input"
+                                           maxlength="255"
                                            placeholder="Reason (optional)">
 
                                     <button type="submit" class="btn-sm-info">Reassign</button>

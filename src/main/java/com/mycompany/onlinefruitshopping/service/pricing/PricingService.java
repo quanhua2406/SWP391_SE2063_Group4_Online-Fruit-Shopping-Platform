@@ -19,6 +19,12 @@ import java.util.Map;
  */
 public class PricingService {
 
+    /**
+     * Upper bound for a selling price, to reject absurd input before
+     * it reaches the database.
+     */
+    private static final double MAX_PRICE = 1_000_000_000d;
+
     private final InventoryDAO inventoryDAO = new InventoryDAO();
 
     public boolean hasShop(int ownerId) throws SQLException {
@@ -89,7 +95,13 @@ public class PricingService {
         int variantId = parseInt(variantIdRaw, -1);
         double price = parseDouble(priceRaw, -1);
 
-        if (variantId <= 0 || price < 0) {
+        // A selling price must be a real, positive amount; NaN and
+        // infinity are rejected here too so they can never be stored.
+        if (variantId <= 0
+                || Double.isNaN(price)
+                || Double.isInfinite(price)
+                || price <= 0
+                || price > MAX_PRICE) {
             return "invalid";
         }
 

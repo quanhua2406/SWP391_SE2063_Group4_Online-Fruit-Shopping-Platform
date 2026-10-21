@@ -33,6 +33,9 @@ public class InventoryService {
      */
     private static final double MAX_STOCK_QUANTITY = 1_000_000d;
 
+    /** {@code inventory_adjustments.reason} is NVARCHAR(255). */
+    private static final int MAX_REASON_LENGTH = 255;
+
     private static final Logger LOG =
             Logger.getLogger(InventoryService.class.getName());
 
@@ -285,7 +288,7 @@ public class InventoryService {
             return "invalid";
         }
 
-        if (batchCode.length() > 50) {
+        if (batchCode.length() > 50 || reason.length() > MAX_REASON_LENGTH) {
             return "invalid";
         }
 
@@ -335,6 +338,10 @@ public class InventoryService {
         }
 
         if (quantity > MAX_STOCK_QUANTITY) {
+            return "invalid";
+        }
+
+        if (reason.length() > MAX_REASON_LENGTH) {
             return "invalid";
         }
 
@@ -408,7 +415,14 @@ public class InventoryService {
 
     private double parseDouble(String value, double fallback) {
         try {
-            return Double.parseDouble(trim(value));
+            double parsed = Double.parseDouble(trim(value));
+
+            // Reject NaN / infinity so no absurd figure can be stored.
+            if (Double.isNaN(parsed) || Double.isInfinite(parsed)) {
+                return fallback;
+            }
+
+            return parsed;
         } catch (NumberFormatException e) {
             return fallback;
         }

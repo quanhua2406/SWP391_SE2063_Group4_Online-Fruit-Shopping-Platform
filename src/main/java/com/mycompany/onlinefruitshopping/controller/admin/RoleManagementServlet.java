@@ -1,8 +1,9 @@
 package com.mycompany.onlinefruitshopping.controller.admin;
 
-import com.mycompany.onlinefruitshopping.dao.user.RoleDAO;
 import com.mycompany.onlinefruitshopping.dao.user.RoleDAO.Role;
 import com.mycompany.onlinefruitshopping.dao.user.RoleDAO.UserRoleInfo;
+import com.mycompany.onlinefruitshopping.service.user.RoleManagementService;
+import com.mycompany.onlinefruitshopping.service.user.RoleManagementService.UpdateResult;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -14,10 +15,16 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
+/**
+ * Role management (feature 16.0): view accounts, search them and
+ * change the role of an account. All rules live in
+ * {@link RoleManagementService}.
+ */
 @WebServlet("/admin/roles")
 public class RoleManagementServlet extends HttpServlet {
 
-    private final RoleDAO roleDAO = new RoleDAO();
+    private final RoleManagementService roleService =
+            new RoleManagementService();
 
     // =========================================================
     // GET
@@ -30,16 +37,8 @@ public class RoleManagementServlet extends HttpServlet {
 
         try {
 
-            // Load all users by default
-            List<UserRoleInfo> users =
-                    roleDAO.getAllUsersWithRoles();
-
-            // Load all available roles
-            List<Role> roles =
-                    roleDAO.getAllRoles();
-
-            request.setAttribute("users", users);
-            request.setAttribute("roles", roles);
+            request.setAttribute("users", roleService.listUsers());
+            request.setAttribute("roles", roleService.listRoles());
 
             request.getRequestDispatcher(
                     "/jsp/admin/role-management.jsp"
@@ -81,34 +80,16 @@ public class RoleManagementServlet extends HttpServlet {
             // =================================================
             if ("search".equals(action)) {
 
-                String keyword =
-                        request.getParameter("email");
+                String keyword = request.getParameter("email");
 
-                if (keyword == null) {
-                    keyword = "";
-                }
-
-                keyword = keyword.trim();
-
-                List<UserRoleInfo> users;
-
-                if (keyword.isEmpty()) {
-
-                    // Empty search -> show all users
-                    users = roleDAO.getAllUsersWithRoles();
-
-                } else {
-
-                    // Search by keyword inside email
-                    users = roleDAO.searchUsersByEmail(keyword);
-                }
-
-                List<Role> roles =
-                        roleDAO.getAllRoles();
+                List<UserRoleInfo> users = roleService.searchUsers(keyword);
 
                 request.setAttribute("users", users);
-                request.setAttribute("roles", roles);
-                request.setAttribute("searchEmail", keyword);
+                request.setAttribute("roles", roleService.listRoles());
+                request.setAttribute(
+                        "searchEmail",
+                        keyword == null ? "" : keyword.trim()
+                );
 
                 request.getRequestDispatcher(
                         "/jsp/admin/role-management.jsp"
@@ -122,104 +103,19 @@ public class RoleManagementServlet extends HttpServlet {
             // =================================================
             if ("update".equals(action)) {
 
-                String userIdParam =
-                        request.getParameter("userId");
+                UpdateResult result = roleService.updateUserRole(
+                        request.getParameter("userId"),
+                        request.getParameter("roleId")
+                );
 
-                String roleIdParam =
-                        request.getParameter("roleId");
-
-                if (userIdParam == null
-                        || roleIdParam == null) {
-
-                    request.setAttribute(
-                            "error",
-                            "Invalid user or role."
-                    );
-
-                    loadPage(request, response);
-                    return;
-                }
-
-                int userId;
-                int roleId;
-
-                try {
-
-                    userId =
-                            Integer.parseInt(userIdParam);
-
-                    roleId =
-                            Integer.parseInt(roleIdParam);
-
-                } catch (NumberFormatException e) {
-
-                    request.setAttribute(
-                            "error",
-                            "Invalid user or role."
-                    );
-
-                    loadPage(request, response);
-                    return;
-                }
-
-                // Check selected role exists
-                if (!roleDAO.roleExists(roleId)) {
-
-                    request.setAttribute(
-                            "error",
-                            "Selected role does not exist."
-                    );
-
-                    loadPage(request, response);
-                    return;
-                }
-if (roleDAO.isAdminUser(userId)) {
-
-    request.setAttribute(
-            "error",
-            "Admin role cannot be changed."
-    );
-
-    loadPage(request, response);
-    return;
-}
-                boolean updated =
-                        roleDAO.updateUserRole(
-                                userId,
-                                roleId
-                        );
-
-                if (updated) {
-
-                    request.setAttribute(
-                            "success",
-                            "User role updated successfully."
-                    );
-
+                if (result.isSuccess()) {
+                    request.setAttribute("success", result.getMessage());
                 } else {
-
-                    request.setAttribute(
-                            "error",
-                            "Unable to update user role."
-                    );
+                    request.setAttribute("error", result.getMessage());
                 }
 
-                // Reload users after update
-                List<UserRoleInfo> users =
-                        roleDAO.getAllUsersWithRoles();
-
-                List<Role> roles =
-                        roleDAO.getAllRoles();
-
-                request.setAttribute(
-                        "users",
-                        users
-                );
-
-                request.setAttribute(
-                        "roles",
-                        roles
-                );
+                request.setAttribute("users", roleService.listUsers());
+                request.setAttribute("roles", roleService.listRoles());
 
                 request.getRequestDispatcher(
                         "/jsp/admin/role-management.jsp"
@@ -230,8 +126,7 @@ if (roleDAO.isAdminUser(userId)) {
 
             // Unknown action
             response.sendRedirect(
-                    request.getContextPath()
-                    + "/admin/roles"
+                    request.getContextPath() + "/admin/roles"
             );
 
         } catch (SQLException e) {
@@ -241,27 +136,5 @@ if (roleDAO.isAdminUser(userId)) {
                     e
             );
         }
-    }
-
-    // =========================================================
-    // LOAD PAGE
-    // =========================================================
-    private void loadPage(
-            HttpServletRequest request,
-            HttpServletResponse response)
-            throws SQLException, ServletException, IOException {
-
-        List<UserRoleInfo> users =
-                roleDAO.getAllUsersWithRoles();
-
-        List<Role> roles =
-                roleDAO.getAllRoles();
-
-        request.setAttribute("users", users);
-        request.setAttribute("roles", roles);
-
-        request.getRequestDispatcher(
-                "/jsp/admin/role-management.jsp"
-        ).forward(request, response);
     }
 }
