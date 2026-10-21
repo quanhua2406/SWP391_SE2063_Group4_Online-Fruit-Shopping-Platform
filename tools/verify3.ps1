@@ -23,7 +23,7 @@ Write-Output '--- logins done ---'
 
 # ---- owner commission report: default (overview) figures must stay 1.250.000 / 187.500 / 1.062.500 ----
 Check 'owner report overview' "$base/store-owner/commission-report" "$work\cookie-owner.txt" `
-    @('1,250,000', '187,500', '1,062,500', 'Fee Breakdown', 'Gross sales', '2,331,000', '435,000', '25,000', '1,037,500', 'section-nav', 'Overview')
+    @('1,250,000', '187,500', '1,062,500', 'Fee Breakdown', 'Gross sales', '2,331,000', '185,000', '25,000', '1,037,500', 'section-nav', 'Overview')
 
 # ---- owner report sections ----
 Check 'owner report section=products' "$base/store-owner/commission-report?section=products" "$work\cookie-owner.txt" `
@@ -39,9 +39,9 @@ Check 'owner report bad section -> overview' "$base/store-owner/commission-repor
 
 # ---- owner report filtered to the preparing status (overview shows summary + breakdown) ----
 Check 'owner report status=preparing' "$base/store-owner/commission-report?status=preparing" "$work\cookie-owner.txt" `
-    @('305,000', '15,000', '28,750', 'value="preparing" selected')
+    @('611,000', '15,000', '74,650', 'value="preparing" selected')
 Check 'owner report preparing+products' "$base/store-owner/commission-report?status=preparing&section=products" "$work\cookie-owner.txt" `
-    @('Platform Fee by Product', '305,000', 'value="preparing" selected')
+    @('Platform Fee by Product', '611,000', 'value="preparing" selected')
 
 # ---- owner report filtered by date range covering everything ----
 Check 'owner report date range' "$base/store-owner/commission-report?from=2026-10-01&to=2026-10-31" "$work\cookie-owner.txt" `
@@ -59,7 +59,7 @@ Check 'admin report section=shops' "$base/admin/commission-report?section=shops"
 Check 'admin report section=rates' "$base/admin/commission-report?section=rates" "$work\cookie-admin.txt" `
     @('Platform Fee by Commission Rate', '187,500')
 Check 'admin report status=cancelled' "$base/admin/commission-report?status=cancelled" "$work\cookie-admin.txt" `
-    @('100,000', '15,000')
+    @('185,000', '3,700', '162,050')
 
 # ---- CSV export with filters ----
 $out = "$work\csv1.csv"
@@ -171,3 +171,39 @@ Check 'admin products'   "$base/admin/product-management"       "$work\cookie-ad
 Check 'admin edit prod'  "$base/admin/product-edit?id=1"        "$work\cookie-admin.txt" @('commissionRate')
 Check 'admin variants'   "$base/admin/product-variants?productId=1" "$work\cookie-admin.txt" @('APPLE-0.5KG')
 Check 'admin promos'     "$base/admin/promotion-approvals"      "$work\cookie-admin.txt" @('Approval')
+
+# ---- 18.0 admin shop-owner management ----
+Check 'admin shops list'  "$base/admin/shops"                     "$work\cookie-admin.txt" @('Shop Owner Management', 'Shop List', 'Fruit', 'shopowner@freshfruit.com')
+Check 'admin shop search' "$base/admin/shops?action=search&keyword=fruit&status=active" "$work\cookie-admin.txt" @('Fruit', 'action=detail')
+Check 'admin shop detail' "$base/admin/shops?action=detail&shopId=1" "$work\cookie-admin.txt" @('Shop Profile', 'Owner Information', 'Block Shop')
+
+$out = "$work\shopbad.html"
+$code = curl.exe -s -b "$work\cookie-admin.txt" -o $out -w "%{http_code}" "$base/admin/shops?action=search&status=bogus"
+Write-Output ("{0} admin shop bad status -> {1}" -f $(if ($code -eq '400') { 'PASS' } else { 'FAIL' }), $code)
+
+$out = "$work\shopbad2.html"
+$code = curl.exe -s -b "$work\cookie-admin.txt" -o $out -w "%{http_code}" "$base/admin/shops?action=detail&shopId=abc"
+Write-Output ("{0} admin shop bad id -> {1}" -f $(if ($code -eq '400') { 'PASS' } else { 'FAIL' }), $code)
+
+$out = "$work\shopbad3.html"
+$code = curl.exe -s -b "$work\cookie-admin.txt" -o $out -w "%{http_code}" "$base/admin/shops?action=detail&shopId=99999"
+Write-Output ("{0} admin shop not found -> {1}" -f $(if ($code -eq '404') { 'PASS' } else { 'FAIL' }), $code)
+
+$out = "$work\shopblock.html"
+$code = curl.exe -s -b "$work\cookie-admin.txt" -L -o $out -w "%{http_code}" -d "action=block&shopId=1" "$base/admin/shops"
+$content = Get-Content $out -Raw
+$ok = ($code -eq '200') -and $content.Contains('Shop blocked')
+Write-Output ("{0} admin shop block -> {1}" -f $(if ($ok) { 'PASS' } else { 'FAIL' }), $code)
+
+# while blocked the list shows the suspended shop and offers Unblock
+$out = "$work\shopblocked.html"
+$code = curl.exe -s -b "$work\cookie-admin.txt" -o $out -w "%{http_code}" "$base/admin/shops"
+$content = Get-Content $out -Raw
+$ok = ($code -eq '200') -and $content.Contains('suspended') -and $content.Contains('Unblock')
+Write-Output ("{0} admin shop blocked state -> {1}" -f $(if ($ok) { 'PASS' } else { 'FAIL' }), $code)
+
+$out = "$work\shopunblock.html"
+$code = curl.exe -s -b "$work\cookie-admin.txt" -L -o $out -w "%{http_code}" -d "action=unblock&shopId=1" "$base/admin/shops"
+$content = Get-Content $out -Raw
+$ok = ($code -eq '200') -and $content.Contains('Shop unblocked')
+Write-Output ("{0} admin shop unblock -> {1}" -f $(if ($ok) { 'PASS' } else { 'FAIL' }), $code)

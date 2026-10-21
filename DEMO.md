@@ -58,17 +58,23 @@ After loading, the database holds:
 4. **18.0 Users** - `/admin/user-management`: search, filter by role, open a
    user detail. Try to **block the Admin account** (refused). Show
    `/admin/commission-report`.
-5. **19.0 Orders** ⭐ - `/admin/orders` -> open an order detail.
+5. **18.0 Shops** ⭐ - `/admin/shops`: the shop list with owner, product count
+   and status. Search by keyword / filter by status. Open a shop profile
+   (`?action=detail&shopId=1`) and press **Block Shop**: the owner is locked,
+   the shop becomes `suspended` and its products disappear from the catalog.
+   Press **Unblock Shop** and they come back - a product the shop had hidden
+   by itself stays hidden.
+6. **19.0 Orders** ⭐ - `/admin/orders` -> open an order detail.
    `/admin/delivery-assign`: assign order #4 to a shipper, then reassign /
    unassign. Show that assigning to a non-shipper is refused and that a note
    longer than 255 characters is refused.
-6. **19.0 Issues** - `/admin/order-issues`: reopen a `failed` order or cancel it.
-7. **19.0 Staff** - `/admin/delivery-staff`: show the workload and block /
+7. **19.0 Issues** - `/admin/order-issues`: reopen a `failed` order or cancel it.
+8. **19.0 Staff** - `/admin/delivery-staff`: show the workload and block /
    unblock a shipper.
-8. **24.0 Inventory** - log in as the Shop Owner: `/store-owner/inventory`
+9. **24.0 Inventory** - log in as the Shop Owner: `/store-owner/inventory`
    (stock), `/low-stock` (the low ORANGE batch), `/restock`, `/history`,
    `/pricing`. Show that a price of `0` or a negative price is refused.
-9. **1.0 / 2.0 Profile** - log in as the Customer: `/profile`, `/addresses`.
+10. **1.0 / 2.0 Profile** - log in as the Customer: `/profile`, `/addresses`.
 
 ## 4. Re-verify everything
 
@@ -77,6 +83,6 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools\verify3.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File tools\verify_tienpq.ps1
 ```
 
-* `tools\verify3.ps1` - 40 checks (shared UI + reports + inventory).
-* `tools\verify_tienpq.ps1` - 59 checks covering every TienPQ feature, including
+* `tools\verify3.ps1` - 49 checks (shared UI + reports + inventory + shops).
+* `tools\verify_tienpq.ps1` - 78 checks covering every TienPQ feature, including
   the validation rules (bad input is rejected **and** never reaches the database).

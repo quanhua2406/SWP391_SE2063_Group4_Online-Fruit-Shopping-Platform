@@ -90,6 +90,13 @@ Check '18.0 user detail bad id'     ((Code "$base/admin/user-management?action=d
 Check '18.0 user detail notfound'   ((Code "$base/admin/user-management?action=detail&userId=99999" $admin) -eq 404)
 Check '18.0 fee collection report'  ((Code "$base/admin/commission-report" $admin) -eq 200)
 Check '18.0 fee payment report'     ((Code "$base/store-owner/commission-report" $owner) -eq 200)
+Check '18.0 shop list'              ((Code "$base/admin/shops" $admin) -eq 200)
+Check '18.0 shop search'            ((Code "$base/admin/shops?action=search&keyword=fruit&status=active" $admin) -eq 200)
+Check '18.0 shop bad status -> 400' ((Code "$base/admin/shops?action=search&status=HACKER" $admin) -eq 400)
+Check '18.0 shop detail'            ((Code "$base/admin/shops?action=detail&shopId=1" $admin) -eq 200)
+Check '18.0 shop detail missing'    ((Code "$base/admin/shops?action=detail" $admin) -eq 400)
+Check '18.0 shop detail bad id'     ((Code "$base/admin/shops?action=detail&shopId=zzz" $admin) -eq 400)
+Check '18.0 shop detail notfound'   ((Code "$base/admin/shops?action=detail&shopId=99999" $admin) -eq 404)
 
 # ---------- 19.0 Order & Delivery Administration ----------
 Check '19.0 orders list'            ((Code "$base/admin/orders" $admin) -eq 200)
@@ -185,6 +192,30 @@ Check 'VAL 18.0 invalid email rejected (unchanged)' ((Sql "SELECT email FROM use
 # 18.0 an admin account can never be blocked
 $r = PostCode "$base/admin/user-management" $admin @{ action='block'; userId='1' }
 Check 'VAL 18.0 admin account not blockable' ((Sql "SELECT status FROM users WHERE user_id=1") -eq 'active')
+
+# 18.0 blocking a shop locks the owner, suspends the shop and hides its published products
+$r = PostCode "$base/admin/shops" $admin @{ action='block'; shopId='1' }
+Check 'VAL 18.0 shop block -> 302' ($r -eq 302)
+Check 'VAL 18.0 shop block suspends shop' ((Sql "SELECT status FROM shops WHERE shop_id=1") -eq 'suspended')
+Check 'VAL 18.0 shop block locks owner' ((Sql "SELECT status FROM users WHERE user_id=3") -eq 'locked')
+Check 'VAL 18.0 shop block hides published products' ([int](Sql "SELECT COUNT(*) FROM products WHERE shop_id=1 AND status='published'") -eq 0)
+Check 'VAL 18.0 shop block marks products' ([int](Sql "SELECT COUNT(*) FROM products WHERE shop_id=1 AND hidden_by_admin=1") -gt 0)
+
+# 18.0 an unknown shop id is refused and changes nothing
+$r = PostCode "$base/admin/shops" $admin @{ action='block'; shopId='99999' }
+Check 'VAL 18.0 shop block bad id -> 302, nothing changed' (($r -eq 302) -and ((Sql "SELECT status FROM shops WHERE shop_id=1") -eq 'suspended'))
+
+# 18.0 an unknown action is refused with 400
+Check 'VAL 18.0 shop bad action -> 400' ((PostCode "$base/admin/shops" $admin @{ action='zzz'; shopId='1' }) -eq 400)
+
+# 18.0 unblocking restores only what the block hid: the products the shop
+#     had hidden by itself (hidden_by_admin = 0) stay hidden
+$r = PostCode "$base/admin/shops" $admin @{ action='unblock'; shopId='1' }
+Check 'VAL 18.0 shop unblock -> 302' ($r -eq 302)
+Check 'VAL 18.0 shop unblock reactivates shop' ((Sql "SELECT status FROM shops WHERE shop_id=1") -eq 'active')
+Check 'VAL 18.0 shop unblock reactivates owner' ((Sql "SELECT status FROM users WHERE user_id=3") -eq 'active')
+Check 'VAL 18.0 shop unblock keeps own-hidden products hidden' ([int](Sql "SELECT COUNT(*) FROM products WHERE shop_id=1 AND status='hidden' AND hidden_by_admin=0") -eq 1)
+Check 'VAL 18.0 shop unblock clears the block flag' ([int](Sql "SELECT COUNT(*) FROM products WHERE shop_id=1 AND hidden_by_admin=1") -eq 0)
 
 # 16.0 role change rejects an unknown role id
 $origRole = Sql "SELECT TOP 1 role_id FROM user_roles WHERE user_id=2 ORDER BY role_id"
