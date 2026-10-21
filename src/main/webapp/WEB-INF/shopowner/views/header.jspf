@@ -9,11 +9,11 @@
 <c:set var="roleLabel" value="Khách hàng"/>
 <c:choose>
     <c:when test="${sessionScope.shopUser.role == 'ShopOwner'}">
-        <c:set var="homePath" value="/shopowner/shop/deliveries"/>
+        <c:set var="homePath" value="/store-owner/dashboard"/>
         <c:set var="roleLabel" value="Chủ cửa hàng"/>
     </c:when>
     <c:when test="${sessionScope.shopUser.role == 'DeliveryStaff'}">
-        <c:set var="homePath" value="/shopowner/delivery/list"/>
+        <c:set var="homePath" value="/delivery/dashboard"/>
         <c:set var="roleLabel" value="Nhân viên giao hàng"/>
     </c:when>
 </c:choose>
@@ -41,6 +41,18 @@
     </div>
 </header>
 <nav class="category-bar management-nav" aria-label="Điều hướng chính">
+    <c:if test="${sessionScope.shopUser.role == 'ShopOwner'}">
+        <a class="button secondary"
+           href="${pageContext.request.contextPath}/store-owner/dashboard">
+            ← Về giao diện chính
+        </a>
+    </c:if>
+    <c:if test="${sessionScope.shopUser.role == 'DeliveryStaff'}">
+        <a class="button secondary"
+           href="${pageContext.request.contextPath}/delivery/dashboard">
+            ← Về giao diện chính
+        </a>
+    </c:if>
     <c:if test="${sessionScope.shopUser.role == 'ShopOwner'}">
         <a href="${ctx}/shopowner/shop/deliveries" class="${fn:startsWith(currentPath, '/shopowner//shop/deliveries') or fn:startsWith(currentPath, '/shopowner//delivery/') ? 'is-active' : ''}" ${fn:startsWith(currentPath, '/shopowner//shop/deliveries') or fn:startsWith(currentPath, '/shopowner//delivery/') ? 'aria-current="page"' : ''}><svg class="icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="${ctx}/assets/icons.svg#truck"/></svg> Giao hàng</a>
         <a href="${ctx}/shopowner/shop/promotions" class="${fn:startsWith(currentPath, '/shopowner//shop/promotions') ? 'is-active' : ''}" ${fn:startsWith(currentPath, '/shopowner//shop/promotions') ? 'aria-current="page"' : ''}><svg class="icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="${ctx}/assets/icons.svg#gift"/></svg> Khuyến mãi</a>

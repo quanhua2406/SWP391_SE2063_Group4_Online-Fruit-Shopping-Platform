@@ -48,28 +48,28 @@
             <div class="dashboard-icon">📦</div>
             <h3>Assigned Orders</h3>
             <p>View orders assigned to you for delivery.</p>
-            <a href="#">View Orders</a>
+            <a href="${pageContext.request.contextPath}/shopowner/delivery/list?status=Assigned">View Orders</a>
         </div>
 
         <div class="dashboard-card">
             <div class="dashboard-icon">🚚</div>
             <h3>Delivery Tasks</h3>
             <p>Manage your current delivery tasks.</p>
-            <a href="#">My Deliveries</a>
+            <a href="${pageContext.request.contextPath}/shopowner/delivery/list">My Deliveries</a>
         </div>
 
         <div class="dashboard-card">
             <div class="dashboard-icon">📍</div>
             <h3>Delivery Status</h3>
             <p>Update the status of your deliveries.</p>
-            <a href="#">Update Status</a>
+            <a href="${pageContext.request.contextPath}/shopowner/delivery/list">Update Status</a>
         </div>
 
         <div class="dashboard-card">
             <div class="dashboard-icon">✅</div>
             <h3>Completed Deliveries</h3>
             <p>View your completed delivery history.</p>
-            <a href="#">View History</a>
+            <a href="${pageContext.request.contextPath}/shopowner/delivery/list?status=Delivered">View History</a>
         </div>
 
     </div>

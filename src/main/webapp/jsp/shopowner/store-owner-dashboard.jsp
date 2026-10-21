@@ -285,13 +285,9 @@
 
                 <h3>Promotion Management</h3>
 
-                <p>
-                    Request limited-time promotional prices for your
-                    product variants; an admin approves them before
-                    they apply.
-                </p>
+                <p>Quản lý chương trình khuyến mãi cho sản phẩm của cửa hàng.</p>
 
-                <a href="<%= contextPath %>/store-owner/promotions">
+                <a href="${pageContext.request.contextPath}/shopowner/shop/promotions">
                     Manage Promotions
                 </a>
 
@@ -309,7 +305,7 @@
                     Create discount coupons and track their usage.
                 </p>
 
-                <a href="#">
+                <a href="${pageContext.request.contextPath}/shopowner/shop/coupons">
                     Manage Coupons
                 </a>
 
