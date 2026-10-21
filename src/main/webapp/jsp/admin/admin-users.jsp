@@ -501,6 +501,7 @@
 
     <nav class="nav-actions">
         <a href="<%=contextPath%>/admin/dashboard">Dashboard</a>
+        <a href="<%=contextPath%>/admin/shops">Shops</a>
         <a href="<%=contextPath%>/logout">Logout</a>
     </nav>
 </header>
