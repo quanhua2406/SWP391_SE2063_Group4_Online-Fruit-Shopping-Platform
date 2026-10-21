@@ -23,6 +23,16 @@
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
 
+-- 18.0: blocking a shop hides its products, and unblocking must
+-- restore only those. The flag below tells the two cases apart.
+IF COL_LENGTH('dbo.products', 'hidden_by_admin') IS NULL
+BEGIN
+    ALTER TABLE dbo.products
+        ADD hidden_by_admin BIT NOT NULL
+            CONSTRAINT DF_products_hidden_by_admin DEFAULT 0;
+END
+GO
+
 IF EXISTS (SELECT 1 FROM users WHERE email = 'shipper2@freshfruit.com')
 BEGIN
     PRINT 'Demo data already present - nothing was inserted.';
@@ -80,11 +90,22 @@ DECLARE @catTropical INT = (SELECT category_id FROM categories WHERE category_na
 DECLARE @catBerries  INT = (SELECT category_id FROM categories WHERE category_name = N'Berries');
 DECLARE @catCitrus   INT = (SELECT category_id FROM categories WHERE category_name = N'Citrus');
 
+-- Child categories, to demonstrate the parent / child tree (the
+-- "Parent" column on the category screen).
+INSERT INTO categories (category_name, parent_id)
+VALUES (N'Mango',     @catTropical),
+       (N'Papaya',    @catTropical),
+       (N'Blueberry', @catBerries),
+       (N'Lime',      @catCitrus);
+
+DECLARE @catMango     INT = (SELECT category_id FROM categories WHERE category_name = N'Mango');
+DECLARE @catBlueberry INT = (SELECT category_id FROM categories WHERE category_name = N'Blueberry');
+
 -- -------------------------------------------------------------
 -- 3. Extra products + variants (17.0)
 --    One published, one draft (to approve), one hidden.
 -- -------------------------------------------------------------
-DECLARE @pBanana INT, @pStrawberry INT, @pOrange INT;
+DECLARE @pBanana INT, @pStrawberry INT, @pOrange INT, @pMango INT, @pBlueberry INT;
 
 INSERT INTO products (shop_id, category_id, product_name, description, origin, status, created_at, commission_rate)
 VALUES (@shopId, @catTropical, N'Banana', N'Sweet ripe bananas', N'Vietnam', N'published', SYSDATETIME(), 5.00);
@@ -98,17 +119,31 @@ INSERT INTO products (shop_id, category_id, product_name, description, origin, s
 VALUES (@shopId, @catCitrus, N'Orange', N'Juicy imported oranges', N'Australia', N'hidden', SYSDATETIME(), 6.00);
 SET @pOrange = SCOPE_IDENTITY();
 
+-- Products filed under a CHILD category, so that clicking the parent
+-- category in the customer catalog really returns them.
+INSERT INTO products (shop_id, category_id, product_name, description, origin, status, created_at, commission_rate)
+VALUES (@shopId, @catMango, N'Mango', N'Sweet ripe mangoes', N'Vietnam', N'published', SYSDATETIME(), 7.00);
+SET @pMango = SCOPE_IDENTITY();
+
+INSERT INTO products (shop_id, category_id, product_name, description, origin, status, created_at, commission_rate)
+VALUES (@shopId, @catBlueberry, N'Blueberry', N'Fresh blueberries', N'USA', N'hidden', SYSDATETIME(), 9.00);
+SET @pBlueberry = SCOPE_IDENTITY();
+
 INSERT INTO product_variants (product_id, sku, unit, weight_value, packaging_type, price, created_at)
 VALUES
     (@pBanana,     N'BANANA-1KG', N'kg', 1.00, N'Bag 1kg',   30000, SYSDATETIME()),
     (@pBanana,     N'BANANA-3KG', N'kg', 3.00, N'Bag 3kg',   85000, SYSDATETIME()),
     (@pStrawberry, N'STRAW-500G', N'kg', 0.50, N'Box 500g',  60000, SYSDATETIME()),
-    (@pOrange,     N'ORANGE-2KG', N'kg', 2.00, N'Bag 2kg',   70000, SYSDATETIME());
+    (@pOrange,     N'ORANGE-2KG', N'kg', 2.00, N'Bag 2kg',   70000, SYSDATETIME()),
+    (@pMango,      N'MANGO-1KG',  N'kg', 1.00, N'Box 1kg',   55000, SYSDATETIME()),
+    (@pBlueberry,  N'BLUEB-250G', N'kg', 0.25, N'Box 250g',  95000, SYSDATETIME());
 
 DECLARE @vBanana1 INT = (SELECT variant_id FROM product_variants WHERE sku = 'BANANA-1KG');
 DECLARE @vBanana3 INT = (SELECT variant_id FROM product_variants WHERE sku = 'BANANA-3KG');
 DECLARE @vStraw   INT = (SELECT variant_id FROM product_variants WHERE sku = 'STRAW-500G');
 DECLARE @vOrange  INT = (SELECT variant_id FROM product_variants WHERE sku = 'ORANGE-2KG');
+DECLARE @vMango   INT = (SELECT variant_id FROM product_variants WHERE sku = 'MANGO-1KG');
+DECLARE @vBlueb   INT = (SELECT variant_id FROM product_variants WHERE sku = 'BLUEB-250G');
 
 -- -------------------------------------------------------------
 -- 4. Inventory batches (24.0)
@@ -120,7 +155,9 @@ VALUES
     (@vBanana1, N'BATCH-BAN-01', 120, DATEADD(MONTH, 2, CAST(SYSDATETIME() AS DATE)), CAST(SYSDATETIME() AS DATE), N'active'),
     (@vBanana3, N'BATCH-BAN-02', 40,  DATEADD(MONTH, 2, CAST(SYSDATETIME() AS DATE)), CAST(SYSDATETIME() AS DATE), N'active'),
     (@vStraw,   N'BATCH-STR-01', 15,  DATEADD(DAY, 5, CAST(SYSDATETIME() AS DATE)), CAST(SYSDATETIME() AS DATE), N'active'),
-    (@vOrange,  N'BATCH-ORA-01', 3,   DATEADD(MONTH, 1, CAST(SYSDATETIME() AS DATE)), CAST(SYSDATETIME() AS DATE), N'active');
+    (@vOrange,  N'BATCH-ORA-01', 3,   DATEADD(MONTH, 1, CAST(SYSDATETIME() AS DATE)), CAST(SYSDATETIME() AS DATE), N'active'),
+    (@vMango,   N'BATCH-MAN-01', 60,  DATEADD(DAY, 10, CAST(SYSDATETIME() AS DATE)), CAST(SYSDATETIME() AS DATE), N'active'),
+    (@vBlueb,   N'BATCH-BLU-01', 35,  DATEADD(DAY, 7, CAST(SYSDATETIME() AS DATE)), CAST(SYSDATETIME() AS DATE), N'active');
 
 DECLARE @bBanana1 INT = (SELECT batch_id FROM inventory_batches WHERE batch_code = 'BATCH-BAN-01');
 DECLARE @bOrange  INT = (SELECT batch_id FROM inventory_batches WHERE batch_code = 'BATCH-ORA-01');
@@ -239,9 +276,10 @@ UNION ALL SELECT 'batches', COUNT(*) FROM inventory_batches;
 --  DELETE FROM deliveries          WHERE staff_id IN (@s2,@s3);
 --  DELETE FROM order_items         WHERE order_id IN (SELECT order_id FROM orders WHERE total_amount IN (90000,170000,100000,85000) AND user_id=@c);
 --  DELETE FROM orders              WHERE total_amount IN (90000,170000,100000,85000) AND user_id=@c;
---  DELETE FROM inventory_batches   WHERE batch_code IN ('BATCH-BAN-01','BATCH-BAN-02','BATCH-STR-01','BATCH-ORA-01');
---  DELETE FROM product_variants    WHERE sku IN ('BANANA-1KG','BANANA-3KG','STRAW-500G','ORANGE-2KG');
---  DELETE FROM products            WHERE product_name IN ('Banana','Strawberry','Orange');
+--  DELETE FROM inventory_batches   WHERE batch_code IN ('BATCH-BAN-01','BATCH-BAN-02','BATCH-STR-01','BATCH-ORA-01','BATCH-MAN-01','BATCH-BLU-01');
+--  DELETE FROM product_variants    WHERE sku IN ('BANANA-1KG','BANANA-3KG','STRAW-500G','ORANGE-2KG','MANGO-1KG','BLUEB-250G');
+--  DELETE FROM products            WHERE product_name IN ('Banana','Strawberry','Orange','Mango','Blueberry');
+--  DELETE FROM categories          WHERE category_name IN ('Mango','Papaya','Blueberry','Lime');
 --  DELETE FROM categories          WHERE category_name IN ('Tropical Fruits','Berries','Citrus');
 --  DELETE FROM user_addresses      WHERE recipient_name = 'Customer (Office)';
 --  DELETE FROM user_roles          WHERE user_id IN (@s2,@s3);

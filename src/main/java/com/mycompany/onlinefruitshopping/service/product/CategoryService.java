@@ -126,6 +126,17 @@ public class CategoryService {
             return "invalid";
         }
 
+        // The chosen parent must really exist ...
+        if (parentId != null && categoryDAO.getCategoryById(parentId) == null) {
+            return "invalid";
+        }
+
+        // ... and it must not be one of this category's own
+        // descendants, which would create a cycle in the tree.
+        if (parentId != null && categoryDAO.isDescendantOf(parentId, id)) {
+            return "invalid";
+        }
+
         if (categoryDAO.categoryNameExists(name, id)) {
             return "duplicate";
         }
