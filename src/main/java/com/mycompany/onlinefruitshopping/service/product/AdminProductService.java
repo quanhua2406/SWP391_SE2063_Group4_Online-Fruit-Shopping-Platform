@@ -22,6 +22,19 @@ import java.util.TreeSet;
  */
 public class AdminProductService {
 
+    /**
+     * Upper bound for a selling price, to reject absurd input before
+     * it reaches the database.
+     */
+    private static final BigDecimal MAX_PRICE =
+            new BigDecimal("1000000000");
+
+    /** {@code products.origin} is NVARCHAR(100). */
+    private static final int MAX_ORIGIN = 100;
+
+    /** {@code product_variants.packaging_type} is NVARCHAR(50). */
+    private static final int MAX_PACKAGING_TYPE = 50;
+
     private final AdminProductDAO productDAO = new AdminProductDAO();
 
     // =========================================================
@@ -259,13 +272,26 @@ public class AdminProductService {
                 || productName.length() > 150
                 || sku.length() > 50
                 || price.compareTo(BigDecimal.ZERO) <= 0
+                || price.compareTo(MAX_PRICE) > 0
                 || commissionRate.compareTo(BigDecimal.ZERO) < 0
                 || commissionRate.compareTo(new BigDecimal("100")) > 0
-                || weightValue.compareTo(BigDecimal.ZERO) <= 0) {
+                || weightValue.compareTo(BigDecimal.ZERO) <= 0
+                || weightValue.compareTo(MAX_PRICE) > 0
+                || origin.length() > MAX_ORIGIN
+                || packagingType.length() > MAX_PACKAGING_TYPE) {
 
             return SaveResult.error(
                     "Shop, category, product name, SKU, price, "
                     + "weight or commission (0-100) is invalid.");
+        }
+
+        // The chosen shop and category must really exist before the
+        // product (and its first variant) is written.
+        if (!productDAO.shopExists(shopId)
+                || !productDAO.categoryExists(categoryId)) {
+
+            return SaveResult.error(
+                    "The selected shop or category does not exist.");
         }
 
         boolean created = productDAO.createProduct(
@@ -327,6 +353,7 @@ public class AdminProductService {
                 || categoryId <= 0
                 || productName.isEmpty()
                 || productName.length() > 150
+                || origin.length() > MAX_ORIGIN
                 || commissionRate.compareTo(BigDecimal.ZERO) < 0
                 || commissionRate.compareTo(new BigDecimal("100")) > 0
                 || !validStatus) {
@@ -334,6 +361,12 @@ public class AdminProductService {
             return SaveResult.error(
                     "Category, product name, status and commission "
                     + "(0-100) are invalid.");
+        }
+
+        // The category must really exist before the product is saved.
+        if (!productDAO.categoryExists(categoryId)) {
+            return SaveResult.error(
+                    "The selected category does not exist.");
         }
 
         boolean updated = productDAO.updateProduct(
@@ -443,8 +476,11 @@ public class AdminProductService {
         if (sku.isEmpty() || sku.length() > 50
                 || price == null
                 || price.compareTo(BigDecimal.ZERO) <= 0
+                || price.compareTo(MAX_PRICE) > 0
                 || weight == null
-                || weight.compareTo(BigDecimal.ZERO) <= 0) {
+                || weight.compareTo(BigDecimal.ZERO) <= 0
+                || weight.compareTo(MAX_PRICE) > 0
+                || trim(packagingTypeRaw).length() > MAX_PACKAGING_TYPE) {
 
             return "invalid";
         }
@@ -480,8 +516,11 @@ public class AdminProductService {
                 || sku.isEmpty() || sku.length() > 50
                 || price == null
                 || price.compareTo(BigDecimal.ZERO) <= 0
+                || price.compareTo(MAX_PRICE) > 0
                 || weight == null
-                || weight.compareTo(BigDecimal.ZERO) <= 0) {
+                || weight.compareTo(BigDecimal.ZERO) <= 0
+                || weight.compareTo(MAX_PRICE) > 0
+                || trim(packagingTypeRaw).length() > MAX_PACKAGING_TYPE) {
 
             return "invalid";
         }

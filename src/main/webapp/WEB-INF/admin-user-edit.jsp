@@ -247,7 +247,7 @@
                        name="email"
                        type="email"
                        value="<%= escapeHtml(email) %>"
-                       maxlength="254"
+                       maxlength="150"
                        autocomplete="email"
                        required>
             </div>
@@ -337,7 +337,7 @@
             return false;
         }
 
-        if (value.length > 254 ||
+        if (value.length > 150 ||
             !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
             showError(email, "Please enter a valid email address.");
             return false;

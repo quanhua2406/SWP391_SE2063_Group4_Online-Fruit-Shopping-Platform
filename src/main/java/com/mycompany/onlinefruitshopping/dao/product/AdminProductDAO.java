@@ -148,6 +148,42 @@ public class AdminProductDAO {
         return shops;
     }
 
+    /**
+     * Whether a shop row with this id exists.
+     */
+    public boolean shopExists(int shopId) throws SQLException {
+
+        String sql = "SELECT COUNT(*) FROM shops WHERE shop_id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, shopId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
+        }
+    }
+
+    /**
+     * Whether a category row with this id exists.
+     */
+    public boolean categoryExists(int categoryId) throws SQLException {
+
+        String sql = "SELECT COUNT(*) FROM categories WHERE category_id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, categoryId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
+        }
+    }
+
     public boolean createProduct(
             int shopId,
             int categoryId,
