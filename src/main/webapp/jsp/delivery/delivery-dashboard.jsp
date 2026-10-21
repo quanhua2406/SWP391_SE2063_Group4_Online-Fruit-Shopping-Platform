@@ -23,6 +23,9 @@
             🏠 Home
         </a>
 
+        <a href="${pageContext.request.contextPath}/shopowner/delivery/list" style="color: #16a34a; font-weight: 700;">Danh s&#225;ch giao h&#224;ng</a>
+
+
         <a href="${pageContext.request.contextPath}/logout"
            class="logout">
             Logout

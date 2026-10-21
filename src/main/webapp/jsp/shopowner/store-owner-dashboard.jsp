@@ -1,4 +1,4 @@
-﻿<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@page import="java.math.BigDecimal"%>
 
 <%!
@@ -74,6 +74,9 @@
         <a href="<%= contextPath %>/home">
             🏠 Home
         </a>
+
+        <a href="<%= contextPath %>/shopowner/shop/deliveries" style="color: #16a34a; font-weight: 700;">Giao h&#224;ng &amp; M&#7843; gi&#7843;m gi&#225;</a>
+
 
         <a href="<%= contextPath %>/logout"
            class="logout">
