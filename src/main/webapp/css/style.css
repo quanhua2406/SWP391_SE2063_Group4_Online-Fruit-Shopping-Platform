@@ -1021,6 +1021,21 @@ input {
     border-color: #d5ead0;
 }
 
+/* Summary cards can link to a filtered list (admin order and
+   delivery monitoring), so keep the text styling of a card. */
+
+a.summary-card {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+a.summary-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
 .summary-card.summary-warn {
     background: #fff5e6;
     border-color: #f3ddb7;
@@ -1101,6 +1116,28 @@ input {
     flex: 1;
     min-width: 180px;
     max-width: 320px;
+}
+
+/* Inside a table cell the inline assignment / issue form is a
+   compact row, not the full-width panel used elsewhere. */
+
+.data-table .inline-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 0;
+}
+
+.data-table .inline-form .filter-input {
+    flex: 0 1 auto;
+    min-width: 120px;
+    max-width: 190px;
+    height: 34px;
 }
 
 .filter-input:focus,

@@ -374,11 +374,53 @@
                 <h3>Order Management</h3>
 
                 <p>
-                    Monitor and manage customer orders.
+                    Monitor every order across all shops
+                    and open any order in full detail.
                 </p>
 
-                <a class="action-btn" href="#">
+                <a class="action-btn"
+                   href="${pageContext.request.contextPath}/admin/orders">
                     View Orders
+                </a>
+
+            </div>
+
+            <!-- DELIVERY ADMINISTRATION -->
+
+            <div class="dashboard-card">
+
+                <div class="dashboard-icon">🚚</div>
+
+                <h3>Delivery Administration</h3>
+
+                <p>
+                    Track delivery progress, manage delivery
+                    staff and reassign shippers when needed.
+                </p>
+
+                <a class="action-btn"
+                   href="${pageContext.request.contextPath}/admin/deliveries">
+                    Monitor Deliveries
+                </a>
+
+            </div>
+
+            <!-- ORDER ISSUES -->
+
+            <div class="dashboard-card">
+
+                <div class="dashboard-icon">🛠️</div>
+
+                <h3>Order Issues</h3>
+
+                <p>
+                    Handle failed, cancelled and delayed
+                    orders and close customer disputes.
+                </p>
+
+                <a class="action-btn"
+                   href="${pageContext.request.contextPath}/admin/order-issues">
+                    Handle Issues
                 </a>
 
             </div>
