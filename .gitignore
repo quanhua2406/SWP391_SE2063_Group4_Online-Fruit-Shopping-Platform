@@ -44,3 +44,6 @@ Thumbs.db
 # Log files
 *.log
 .env
+
+# Personal DB config (see src/main/resources/db.properties.example)
+db.properties

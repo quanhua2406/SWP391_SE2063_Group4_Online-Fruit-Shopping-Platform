@@ -549,6 +549,9 @@
             My Account
         </a>
 
+        <a href="${pageContext.request.contextPath}/shopowner/customer/coupons" style="color: #16a34a; font-weight: 700;">M&#7843; Gi&#7843;m Gi&#225;</a>
+
+
 
         <% if (dashboardUrl != null) { %>
 
