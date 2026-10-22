@@ -91,4 +91,43 @@ public class VNPayConfig {
 
         return VNP_PAY_URL + "?" + queryUrl;
     }
+
+    /**
+     * Xác thực chữ ký số VNPay khi nhận callback / return URL từ cổng thanh toán.
+     */
+    public static boolean verifyCallback(Map<String, String[]> parameterMap) {
+        if (parameterMap == null || parameterMap.isEmpty()) return false;
+
+        Map<String, String> fields = new HashMap<>();
+        for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
+            String[] values = entry.getValue();
+            if (values != null && values.length > 0) {
+                fields.put(entry.getKey(), values[0]);
+            }
+        }
+
+        String vnpSecureHash = fields.remove("vnp_SecureHash");
+        fields.remove("vnp_SecureHashType");
+        if (vnpSecureHash == null || vnpSecureHash.isBlank()) return false;
+
+        List<String> fieldNames = new ArrayList<>(fields.keySet());
+        Collections.sort(fieldNames);
+
+        StringBuilder hashData = new StringBuilder();
+        for (Iterator<String> itr = fieldNames.iterator(); itr.hasNext(); ) {
+            String fieldName = itr.next();
+            String fieldValue = fields.get(fieldName);
+            if (fieldValue != null && fieldValue.length() > 0) {
+                hashData.append(fieldName);
+                hashData.append('=');
+                hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
+                if (itr.hasNext()) {
+                    hashData.append('&');
+                }
+            }
+        }
+
+        String signValue = hmacSHA512(VNP_HASH_SECRET, hashData.toString());
+        return signValue.equalsIgnoreCase(vnpSecureHash);
+    }
 }

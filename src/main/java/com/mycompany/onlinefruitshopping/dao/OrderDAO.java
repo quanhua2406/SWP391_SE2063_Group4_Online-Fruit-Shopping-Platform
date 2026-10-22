@@ -480,7 +480,7 @@ public class OrderDAO {
                 + "a.recipient_name, a.phone AS recipient_phone, "
                 + "a.address_line, a.ward, a.district, a.province, "
                 + "s.shop_name, "
-                + "p.method AS payment_method, "
+                + "p.method AS payment_method, p.status AS payment_status, "
                 + "d.staff_id AS delivery_staff_id, du.full_name AS delivery_staff_name, du.phone AS delivery_staff_phone, d.status AS delivery_status "
                 + "FROM orders o "
                 + "INNER JOIN users u ON o.user_id = u.user_id "
@@ -529,6 +529,8 @@ public class OrderDAO {
                     Order order = mapOrderRow(rs);
                     order.setShopName(rs.getString("shop_name"));
                     order.setPaymentMethod(rs.getString("payment_method"));
+                    String payStatus = rs.getString("payment_status");
+                    if (payStatus != null) order.setPaymentStatus(payStatus);
                     int dStaffId = rs.getInt("delivery_staff_id");
                     if (!rs.wasNull()) {
                         order.setDeliveryStaffId(dStaffId);
@@ -555,7 +557,7 @@ public class OrderDAO {
                 + "a.address_line, a.ward, a.district, a.province, "
                 + "s.shop_name, "
                 + "v.code AS voucher_code, "
-                + "p.method AS payment_method, "
+                + "p.method AS payment_method, p.status AS payment_status, "
                 + "d.staff_id AS delivery_staff_id, du.full_name AS delivery_staff_name, du.phone AS delivery_staff_phone, d.status AS delivery_status "
                 + "FROM orders o "
                 + "INNER JOIN users u ON o.user_id = u.user_id "
@@ -580,6 +582,8 @@ public class OrderDAO {
                     order.setShopName(rs.getString("shop_name"));
                     order.setVoucherCode(rs.getString("voucher_code"));
                     order.setPaymentMethod(rs.getString("payment_method"));
+                    String payStatus = rs.getString("payment_status");
+                    if (payStatus != null) order.setPaymentStatus(payStatus);
                     int dStaffId = rs.getInt("delivery_staff_id");
                     if (!rs.wasNull()) {
                         order.setDeliveryStaffId(dStaffId);

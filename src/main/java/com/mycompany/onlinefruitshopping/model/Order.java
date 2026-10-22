@@ -30,6 +30,7 @@ public class Order {
     private double shippingFee;
     private String deliveryMethod = "Standard";
     private String paymentMethod = "COD";
+    private String paymentStatus = "pending";
     private String note;
 
     // Delivery staff assignment
@@ -278,6 +279,14 @@ public class Order {
 
     public void setPaymentMethod(String paymentMethod) {
         this.paymentMethod = paymentMethod;
+    }
+
+    public String getPaymentStatus() {
+        return paymentStatus;
+    }
+
+    public void setPaymentStatus(String paymentStatus) {
+        this.paymentStatus = paymentStatus;
     }
 
     public String getNote() {

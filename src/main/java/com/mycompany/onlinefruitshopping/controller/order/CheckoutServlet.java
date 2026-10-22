@@ -176,7 +176,11 @@ public class CheckoutServlet extends HttpServlet {
 
         try {
             int orderId = orderService.placeOrder(userId, addressId, deliveryMethod, paymentMethod, voucherCode, note);
-            response.sendRedirect(request.getContextPath() + "/orders/detail?id=" + orderId + "&success=placed");
+            if ("vnpay".equalsIgnoreCase(paymentMethod) || "online".equalsIgnoreCase(paymentMethod) || "banking".equalsIgnoreCase(paymentMethod)) {
+                response.sendRedirect(request.getContextPath() + "/payment/process?orderId=" + orderId);
+            } else {
+                response.sendRedirect(request.getContextPath() + "/orders/detail?id=" + orderId + "&success=placed");
+            }
         } catch (IllegalStateException | IllegalArgumentException ex) {
             request.setAttribute("errorMessage", ex.getMessage());
             doGet(request, response);
