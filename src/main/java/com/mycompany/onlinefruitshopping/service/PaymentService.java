@@ -76,8 +76,12 @@ public class PaymentService {
 
         boolean updated = paymentDAO.updatePaymentStatus(orderId, status, txnRef != null ? txnRef : "VNP_" + orderId);
         if (isSuccess) {
-            // Cập nhật trạng thái đơn sang preparing (Đã thanh toán, sẵn sàng chuẩn bị hàng)
-            orderDAO.updateOrderStatus(orderId, 0, "preparing", 1, "Thanh toán thành công qua VNPay (Mã GD: " + txnRef + ")");
+            // Cập nhật trạng thái đơn sang preparing (Đã thanh toán, sẵn sàng chuẩn bị hàng) nếu đơn hợp lệ
+            try {
+                orderDAO.updateOrderStatus(orderId, 0, "preparing", 1, "Thanh toán thành công qua VNPay (Mã GD: " + txnRef + ")");
+            } catch (IllegalStateException ignored) {
+                // Đơn đã ở trạng thái kết thúc, giữ nguyên trạng thái đơn
+            }
         }
         return isSuccess;
     }
