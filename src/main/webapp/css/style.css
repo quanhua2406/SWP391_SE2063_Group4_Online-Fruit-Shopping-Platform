@@ -1832,4 +1832,5 @@ tfoot td {
 .btn-secondary:hover {
     background: var(--btn-neutral-hover);
     border-color: #b3c1b0;
-    color: var(--brand);
+    color: var(--brand);}
+
