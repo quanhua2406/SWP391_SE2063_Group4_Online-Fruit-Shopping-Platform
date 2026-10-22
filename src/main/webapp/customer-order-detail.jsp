@@ -474,6 +474,20 @@
                         </button>
                     </form>
 
+                    <!-- Thanh toán trực tuyến nếu chưa thanh toán -->
+                    <c:if test="${order.paymentStatus == 'pending' && (order.paymentMethod == 'vnpay' || order.paymentMethod == 'online')}">
+                        <a href="${pageContext.request.contextPath}/payment/process?orderId=${order.orderId}" class="btn-action btn-reorder" style="background-color: var(--primary); color: #fff; text-decoration: none; text-align: center;">
+                            Thanh Toán Ngay (VNPay / VietQR)
+                        </a>
+                    </c:if>
+
+                    <!-- Yêu cầu hoàn tiền nếu đã thanh toán -->
+                    <c:if test="${order.paymentStatus == 'paid'}">
+                        <a href="${pageContext.request.contextPath}/refunds/request?orderId=${order.orderId}" class="btn-action" style="background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; text-decoration: none; text-align: center; font-weight: 600;">
+                            Yêu Cầu Hoàn Tiền (Refund)
+                        </a>
+                    </c:if>
+
                     <!-- Hủy đơn (Cancel Order) -->
                     <c:if test="${order.cancelable}">
                         <button type="button" class="btn-action btn-cancel" onclick="document.getElementById('cancelModal').style.display='flex'">
