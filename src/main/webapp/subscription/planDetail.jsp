@@ -14,15 +14,15 @@
 <!-- Global Navigation Bar -->
 <header class="cust-navbar">
     <a href="${pageContext.request.contextPath}/home" class="brand">
-        🍊 <span>FreshFruit</span>
+        <span>FreshFruit</span>
     </a>
     <nav class="nav-links">
         <a href="${pageContext.request.contextPath}/subscriptions" class="nav-link">← Danh sách gói</a>
         <c:choose>
             <c:when test="${not empty sessionScope.user}">
-                <a href="${pageContext.request.contextPath}/my-subscriptions" class="nav-link">📋 Gói của tôi</a>
+                <a href="${pageContext.request.contextPath}/my-subscriptions" class="nav-link">Gói của tôi</a>
                 <span style="font-size:0.9rem; font-weight:700; color:var(--primary-900);">
-                    👤 ${sessionScope.user.fullName}
+                    ${sessionScope.user.fullName}
                 </span>
             </c:when>
             <c:otherwise>
@@ -46,21 +46,21 @@
         
         <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px; margin-bottom:16px;">
             <div>
-                <span class="badge-shop" style="font-size:0.85rem; padding:6px 14px;">🏬 Cửa hàng / Nhà vườn: ${plan.shopName}</span>
+                <span class="badge-shop" style="font-size:0.85rem; padding:6px 14px;">Cửa hàng / Nhà vườn: ${plan.shopName}</span>
                 <h1 style="font-size:2.2rem; font-weight:800; color:var(--text-title); margin:12px 0 8px;">
                     ${plan.name}
                 </h1>
                 <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                    <span class="benefit-chip">📅 Giao định kỳ: <strong>${plan.billingCycleLabel}</strong></span>
-                    <span class="benefit-chip">⏳ Hiệu lực mỗi kỳ: <strong>${plan.durationDays} ngày</strong></span>
-                    <span class="benefit-chip">🚚 Miễn phí giao hàng</span>
+                    <span class="benefit-chip">Giao định kỳ: <strong>${plan.billingCycleLabel}</strong></span>
+                    <span class="benefit-chip">Hiệu lực mỗi kỳ: <strong>${plan.durationDays} ngày</strong></span>
+                    <span class="benefit-chip">Miễn phí giao hàng</span>
                 </div>
             </div>
             
             <div style="text-align:right;">
                 <c:if test="${savings != null and savings.savingsPercent > 0}">
                     <span class="badge-save" style="font-size:0.9rem; padding:6px 14px; margin-bottom:6px; display:inline-block;">
-                        🔥 Tiết kiệm ${savings.savingsPercent}%
+                        Tiết kiệm ${savings.savingsPercent}%
                     </span>
                 </c:if>
                 <div style="font-size:2.2rem; font-weight:800; color:#15803d; line-height:1;">
@@ -79,7 +79,7 @@
         <!-- Fruits in combo list -->
         <div style="margin-bottom:32px;">
             <h3 style="font-size:1.25rem; font-weight:800; color:var(--text-title); margin:0 0 16px; display:flex; align-items:center; gap:8px;">
-                <span>🧺</span> Thành phần trái cây tuyển chọn trong combo
+                Thành phần trái cây tuyển chọn trong combo
             </h3>
 
             <div style="border:1px solid var(--border-light); border-radius:12px; overflow:hidden;">
@@ -98,7 +98,7 @@
                                 <c:forEach var="it" items="${plan.items}">
                                     <tr style="border-bottom:1px solid var(--border-light);">
                                         <td style="padding:14px 16px; font-weight:700; color:var(--text-title);">
-                                            🍎 ${it.productName}
+                                            ${it.productName}
                                         </td>
                                         <td style="padding:14px 16px; color:var(--text-muted);">
                                             ${it.variantName}
@@ -160,7 +160,7 @@
             <a href="${pageContext.request.contextPath}/subscription/subscribe?planId=${plan.planId}"
                class="btn-subscribe-cta"
                style="font-size:1.1rem; padding:14px 28px;">
-                Đăng Ký Gói Ngay 🚀
+                Đăng Ký Gói Ngay
             </a>
         </div>
 

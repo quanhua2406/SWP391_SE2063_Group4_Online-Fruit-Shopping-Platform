@@ -14,15 +14,16 @@
 <!-- Global Navigation Bar -->
 <header class="cust-navbar">
     <a href="${pageContext.request.contextPath}/home" class="brand">
-        🍊 <span>FreshFruit</span>
+        <span>FreshFruit</span>
     </a>
     <nav class="nav-links">
-        <a href="${pageContext.request.contextPath}/home" class="nav-link">🏠 Trang chủ</a>
-        <a href="${pageContext.request.contextPath}/subscriptions" class="nav-link active">📦 Gói Trái Cây Định Kỳ</a>
+        <a href="${pageContext.request.contextPath}/home" class="nav-link">Trang chủ</a>
+        <a href="${pageContext.request.contextPath}/products" class="nav-link">Khám phá trái cây</a>
+        <a href="${pageContext.request.contextPath}/subscriptions" class="nav-link active">Gói Trái Cây Định Kỳ</a>
         <c:choose>
             <c:when test="${not empty sessionScope.user}">
-                <a href="${pageContext.request.contextPath}/my-subscriptions" class="nav-link">📋 Gói của tôi</a>
-                <a href="${pageContext.request.contextPath}/profile" class="nav-link">👤 ${sessionScope.user.fullName}</a>
+                <a href="${pageContext.request.contextPath}/my-subscriptions" class="nav-link">Gói của tôi</a>
+                <a href="${pageContext.request.contextPath}/profile" class="nav-link">${sessionScope.user.fullName}</a>
                 <a href="${pageContext.request.contextPath}/logout" class="nav-link" style="color:#ef4444;">Đăng xuất</a>
             </c:when>
             <c:otherwise>
@@ -35,19 +36,19 @@
 <!-- Toast Notifications -->
 <c:if test="${not empty sessionScope.toastSuccess}">
     <div class="toast success" id="toast" style="display:block; animation: slideUpToast 0.3s ease;">
-        ✅ ${sessionScope.toastSuccess}
+        ${sessionScope.toastSuccess}
     </div>
     <c:remove var="toastSuccess" scope="session"/>
 </c:if>
 <c:if test="${not empty sessionScope.toastError}">
     <div class="toast error" id="toast" style="display:block; animation: slideUpToast 0.3s ease;">
-        ⚠️ ${sessionScope.toastError}
+        ${sessionScope.toastError}
     </div>
     <c:remove var="toastError" scope="session"/>
 </c:if>
 <c:if test="${not empty sessionScope.toastInfo}">
     <div class="toast" id="toast" style="display:block; background:#0284c7; color:#fff; animation: slideUpToast 0.3s ease;">
-        ℹ️ ${sessionScope.toastInfo}
+        ${sessionScope.toastInfo}
     </div>
     <c:remove var="toastInfo" scope="session"/>
 </c:if>
@@ -56,7 +57,7 @@
 
     <!-- Hero Section -->
     <section class="plans-hero">
-        <div class="plans-hero-badge">✨ GIẢI PHÁP DINH DƯỠNG THÔNG MINH</div>
+        <div class="plans-hero-badge">GIẢI PHÁP DINH DƯỠNG THÔNG MINH</div>
         <h1>Gói Combo Trái Cây Định Kỳ</h1>
         <p>
             Trái cây tươi ngon chuẩn sạch từ các nhà vườn uy tín, được giao tận cửa mỗi tuần hoặc mỗi tháng.
@@ -64,16 +65,20 @@
         </p>
         <div class="plans-hero-perks">
             <div class="hero-perk-item">
-                <span>🍇</span> 100% Trái cây tuyển chọn loại 1
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span>100% Trái cây tuyển chọn loại 1</span>
             </div>
             <div class="hero-perk-item">
-                <span>🚚</span> Miễn phí giao hàng định kỳ
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span>Miễn phí giao hàng định kỳ</span>
             </div>
             <div class="hero-perk-item">
-                <span>💰</span> Tiết kiệm đến 25% so với mua lẻ
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span>Tiết kiệm đến 25% so với mua lẻ</span>
             </div>
             <div class="hero-perk-item">
-                <span>🔄</span> Tự do tạm dừng hoặc hủy bất kỳ lúc nào
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span>Tự do tạm dừng hoặc hủy bất kỳ lúc nào</span>
             </div>
         </div>
     </section>
@@ -81,14 +86,17 @@
     <!-- Search & Filter Bar -->
     <form action="${pageContext.request.contextPath}/subscriptions" method="GET" class="plans-filter-bar">
         <div class="filter-search-box">
-            <span style="margin-right:8px; opacity:0.6;">🔍</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px; color:#94a3b8; flex-shrink:0;">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
             <input type="text" name="q" value="<c:out value='${keyword}'/>" placeholder="Tìm tên combo, loại trái cây mong muốn..."/>
         </div>
 
         <div class="filter-selects">
             <!-- Filter Shop -->
             <select name="shopId">
-                <option value="">🏬 Tất cả Cửa hàng / Nhà vườn</option>
+                <option value="">Tất cả Cửa hàng / Nhà vườn</option>
                 <c:forEach var="s" items="${shopList}">
                     <option value="${s.shopId}" ${selectedShopId == s.shopId ? 'selected' : ''}>
                         ${s.shopName}
@@ -98,7 +106,7 @@
 
             <!-- Filter Billing Cycle -->
             <select name="cycle">
-                <option value="">⏱️ Mọi chu kỳ giao</option>
+                <option value="">Mọi chu kỳ giao</option>
                 <option value="weekly" ${selectedCycle == 'weekly' ? 'selected' : ''}>Hàng tuần (Weekly)</option>
                 <option value="monthly" ${selectedCycle == 'monthly' ? 'selected' : ''}>Hàng tháng (Monthly)</option>
                 <option value="quarterly" ${selectedCycle == 'quarterly' ? 'selected' : ''}>Hàng quý (Quarterly)</option>
@@ -108,7 +116,7 @@
             <c:if test="${not empty selectedShopId or not empty selectedCycle or not empty keyword}">
                 <a href="${pageContext.request.contextPath}/subscriptions"
                    style="color:#64748b; font-size:0.85rem; text-decoration:none; display:flex; align-items:center;">
-                    ✖ Xóa lọc
+                    Xóa bộ lọc
                 </a>
             </c:if>
         </div>
@@ -121,7 +129,7 @@
         </h2>
         <c:if test="${not empty sessionScope.user}">
             <a href="${pageContext.request.contextPath}/my-subscriptions" style="color:var(--primary-800); font-weight:700; font-size:0.9rem; text-decoration:none;">
-                Xem các gói bạn đã đăng ký →
+                Xem các gói bạn đã đăng ký &rarr;
             </a>
         </c:if>
     </div>
@@ -130,7 +138,10 @@
     <c:choose>
         <c:when test="${empty plans}">
             <div class="cust-empty-state">
-                <div class="icon">🍍</div>
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px;">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                </svg>
                 <h3>Không tìm thấy gói combo phù hợp</h3>
                 <p>Hiện chưa có gói combo nào khớp với bộ lọc của bạn. Hãy thử từ khóa khác hoặc xóa bộ lọc.</p>
                 <a href="${pageContext.request.contextPath}/subscriptions" class="filter-btn-apply" style="text-decoration:none; display:inline-block;">
@@ -146,9 +157,9 @@
                         <div>
                             <!-- Header Badges -->
                             <div class="cust-plan-badge-top">
-                                <span class="badge-shop">🏬 ${p.shopName != null ? p.shopName : 'Shop'}</span>
+                                <span class="badge-shop">${p.shopName != null ? p.shopName : 'Cửa hàng'}</span>
                                 <c:if test="${sav != null and sav.savingsPercent > 0}">
-                                    <span class="badge-save">🔥 Tiết kiệm ${sav.savingsPercent}%</span>
+                                    <span class="badge-save">Tiết kiệm ${sav.savingsPercent}%</span>
                                 </c:if>
                             </div>
 
@@ -159,7 +170,7 @@
                             <!-- Fruit Items inside combo -->
                             <div class="combo-items-box">
                                 <div class="combo-items-label">
-                                    <span>🧺</span> Trái cây có trong combo (${p.items != null ? p.items.size() : 0} món):
+                                    Trái cây có trong combo (${p.items != null ? p.items.size() : 0} loại):
                                 </div>
                                 <div class="combo-items-list">
                                     <c:choose>
@@ -182,9 +193,9 @@
 
                             <!-- Benefits chips -->
                             <div class="plan-benefits-chips">
-                                <span class="benefit-chip">📅 Chu kỳ: ${p.billingCycleLabel}</span>
-                                <span class="benefit-chip">⏳ Hiệu lực: ${p.durationDays} ngày</span>
-                                <span class="benefit-chip">🚚 Freeship</span>
+                                <span class="benefit-chip">Chu kỳ: ${p.billingCycleLabel}</span>
+                                <span class="benefit-chip">Thời hạn: ${p.durationDays} ngày</span>
+                                <span class="benefit-chip">Miễn phí giao hàng</span>
                             </div>
                         </div>
 
@@ -204,12 +215,12 @@
                             <div style="display:flex; gap:8px;">
                                 <a href="${pageContext.request.contextPath}/subscription/detail?id=${p.planId}"
                                    class="btn-sub-action"
-                                   style="background:#f1f5f9; color:#475569; text-decoration:none; padding:10px 12px;">
+                                   style="background:#f1f5f9; color:#475569; text-decoration:none; padding:10px 12px; border-radius:8px; font-weight:600;">
                                     Chi tiết
                                 </a>
                                 <a href="${pageContext.request.contextPath}/subscription/subscribe?planId=${p.planId}"
                                    class="btn-subscribe-cta">
-                                    Đăng ký ⚡
+                                    Đăng ký ngay
                                 </a>
                             </div>
                         </div>
@@ -243,29 +254,29 @@
         </p>
         <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:28px;">
             <div style="text-align:center; padding:16px;">
-                <div style="width:64px; height:64px; border-radius:50%; background:#E8F5E9; color:#15803d; font-size:1.8rem; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
+                <div style="width:52px; height:52px; border-radius:50%; background:#E8F5E9; color:#15803d; font-size:1.3rem; font-weight:800; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
                     1
                 </div>
-                <h4 style="font-size:1.1rem; font-weight:800; margin:0 0 8px;">Chọn Gói Combo Yêu Thích</h4>
-                <p style="font-size:0.9rem; color:var(--text-muted); line-height:1.5;">
+                <h4 style="font-size:1.05rem; font-weight:700; margin:0 0 8px;">Chọn Gói Combo Yêu Thích</h4>
+                <p style="font-size:0.88rem; color:var(--text-muted); line-height:1.5;">
                     Lựa chọn combo trái cây phù hợp khẩu vị và số lượng người dùng từ nhà vườn bạn tin cậy.
                 </p>
             </div>
             <div style="text-align:center; padding:16px;">
-                <div style="width:64px; height:64px; border-radius:50%; background:#FEF3C7; color:#B45309; font-size:1.8rem; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
+                <div style="width:52px; height:52px; border-radius:50%; background:#FEF3C7; color:#B45309; font-size:1.3rem; font-weight:800; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
                     2
                 </div>
-                <h4 style="font-size:1.1rem; font-weight:800; margin:0 0 8px;">Chọn Lịch Giao & Địa Chỉ</h4>
-                <p style="font-size:0.9rem; color:var(--text-muted); line-height:1.5;">
+                <h4 style="font-size:1.05rem; font-weight:700; margin:0 0 8px;">Chọn Lịch Giao & Địa Chỉ</h4>
+                <p style="font-size:0.88rem; color:var(--text-muted); line-height:1.5;">
                     Chọn ngày bắt đầu nhận hàng đầu tiên. Hệ thống sẽ tự động lên lịch giao đều đặn theo chu kỳ tuần/tháng.
                 </p>
             </div>
             <div style="text-align:center; padding:16px;">
-                <div style="width:64px; height:64px; border-radius:50%; background:#E0F2FE; color:#0369A1; font-size:1.8rem; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
+                <div style="width:52px; height:52px; border-radius:50%; background:#E0F2FE; color:#0369A1; font-size:1.3rem; font-weight:800; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
                     3
                 </div>
-                <h4 style="font-size:1.1rem; font-weight:800; margin:0 0 8px;">Thư Thái Thưởng Thức</h4>
-                <p style="font-size:0.9rem; color:var(--text-muted); line-height:1.5;">
+                <h4 style="font-size:1.05rem; font-weight:700; margin:0 0 8px;">Thư Thái Thưởng Thức</h4>
+                <p style="font-size:0.88rem; color:var(--text-muted); line-height:1.5;">
                     Trái cây luôn tươi mới thu hoạch giao tận nhà. Bạn có thể tạm dừng hoặc đổi lịch bất cứ khi nào đi công tác!
                 </p>
             </div>

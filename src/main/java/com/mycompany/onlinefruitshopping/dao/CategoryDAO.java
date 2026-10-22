@@ -37,13 +37,26 @@ public class CategoryDAO {
 
     public List<Category> getAllCategoriesWithProductCount() throws SQLException {
         List<Category> list = new ArrayList<>();
+        // The product count of a category also includes the products filed
+        // under its sub-categories, so the number shown next to a parent
+        // category matches what the customer gets when they click it.
         String sql = """
-                SELECT c.category_id, c.parent_id, c.category_name, p_parent.category_name AS parent_name,
-                       COUNT(p.product_id) AS product_count
+                WITH tree AS (
+                    SELECT category_id AS root_id, category_id AS node_id
+                    FROM categories
+                    UNION ALL
+                    SELECT t.root_id, c.category_id
+                    FROM tree t
+                    JOIN categories c ON c.parent_id = t.node_id
+                )
+                SELECT c.category_id, c.parent_id, c.category_name,
+                       p_parent.category_name AS parent_name,
+                       (SELECT COUNT(*)
+                          FROM tree t
+                          JOIN products p ON p.category_id = t.node_id
+                         WHERE t.root_id = c.category_id) AS product_count
                 FROM categories c
                 LEFT JOIN categories p_parent ON c.parent_id = p_parent.category_id
-                LEFT JOIN products p ON c.category_id = p.category_id
-                GROUP BY c.category_id, c.parent_id, c.category_name, p_parent.category_name
                 ORDER BY c.category_id ASC
                 """;
 

@@ -1,6 +1,7 @@
 package com.mycompany.onlinefruitshopping.filter;
 
 import com.mycompany.onlinefruitshopping.model.User;
+import com.mycompany.onlinefruitshopping.service.auth.LoginService;
 
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
@@ -42,7 +43,7 @@ public class AuthorizationFilter implements Filter {
                 );
 
         // =========================================
-        // 1. Allow public resources
+        // 1. PUBLIC RESOURCE
         // =========================================
 
         if (isPublicResource(path)) {
@@ -56,7 +57,25 @@ public class AuthorizationFilter implements Filter {
         }
 
         // =========================================
-        // 2. Get session
+        // 2. REQUIRED ROLE (null = open resource)
+        // =========================================
+
+        String requiredRole = requiredRole(path);
+
+        if (requiredRole == null) {
+
+            // Not public and not role protected (e.g. static
+            // or callback endpoints) -> let it through.
+            chain.doFilter(
+                    request,
+                    response
+            );
+
+            return;
+        }
+
+        // =========================================
+        // 3. GET CURRENT USER
         // =========================================
 
         HttpSession session =
@@ -75,58 +94,42 @@ public class AuthorizationFilter implements Filter {
             }
         }
 
-        // =========================================
-        // 3. Protected URL
-        // =========================================
+        // Guest cannot access protected resources
+        if (user == null) {
 
-        if (isProtectedResource(path)) {
+            // Remember where the user wanted to go
+            // (used after a successful login)
+            session = httpRequest.getSession(true);
+            session.setAttribute(
+                    "redirectAfterLogin",
+                    requestURI
+            );
 
-            // Not logged in
-            if (user == null) {
+            httpResponse.sendRedirect(
+                    contextPath + "/login"
+            );
 
-                httpResponse.sendRedirect(
-                        contextPath + "/login"
-                );
-
-                return;
-            }
-
-            // =========================================
-            // 4. Get role
-            // =========================================
-
-            String role =
-                    user.getRoleName();
-
-            if (role == null || role.isBlank()) {
-
-                httpResponse.sendError(
-                        HttpServletResponse.SC_FORBIDDEN,
-                        "Access Denied"
-                );
-
-                return;
-            }
-
-            role = role.toUpperCase();
-
-            // =========================================
-            // 5. Check authorization
-            // =========================================
-
-            if (!isAuthorized(path, role)) {
-
-                httpResponse.sendError(
-                        HttpServletResponse.SC_FORBIDDEN,
-                        "Access Denied"
-                );
-
-                return;
-            }
+            return;
         }
 
         // =========================================
-        // 6. Continue
+        // 4. CHECK AUTHORIZATION
+        // =========================================
+
+        if (!LoginService.roleMatches(
+                user.getRoleName(),
+                requiredRole)) {
+
+            httpResponse.sendError(
+                    HttpServletResponse.SC_FORBIDDEN,
+                    "Access Denied"
+            );
+
+            return;
+        }
+
+        // =========================================
+        // 5. CONTINUE
         // =========================================
 
         chain.doFilter(
@@ -146,17 +149,47 @@ public class AuthorizationFilter implements Filter {
         }
 
         return path.equals("/")
+                || path.equals("/index.html")
                 || path.equals("/index.jsp")
-                || path.equals("/login")
+
+                // Home (storefront)
+                || path.equals("/home")
+                || path.equals("/home.jsp")
+                || path.startsWith("/jsp/home/")
+
+                // Direct JSP pages kept by the storefront
                 || path.equals("/login.jsp")
-                || path.equals("/register")
                 || path.equals("/register.jsp")
-                || path.equals("/forgot-password")
                 || path.equals("/forgot-password.jsp")
-                || path.equals("/verify-otp")
                 || path.equals("/verify-otp.jsp")
-                || path.equals("/reset-password")
                 || path.equals("/reset-password.jsp")
+                || path.equals("/product-details.jsp")
+                || path.equals("/product-catalog.jsp")
+
+                // Guest cart (browsing only; actions
+                // check the session themselves)
+                || path.equals("/cart")
+                || path.equals("/cart.jsp")
+                || path.startsWith("/cart/")
+
+                // Authentication
+                || path.equals("/login")
+                || path.equals("/register")
+                || path.equals("/logout")
+
+                // Registration Email Verification
+                || path.equals("/verify-register-otp")
+
+                // Forgot Password
+                || path.equals("/forgot-password")
+                || path.equals("/verify-otp")
+                || path.equals("/reset-password")
+
+                // Auth view pages (views only render, data
+                // comes from the matching servlet)
+                || path.startsWith("/jsp/auth/")
+
+                // Static resources
                 || path.startsWith("/css/")
                 || path.startsWith("/js/")
                 || path.startsWith("/images/")
@@ -165,48 +198,39 @@ public class AuthorizationFilter implements Filter {
     }
 
     // =================================================
-    // PROTECTED RESOURCE
+    // REQUIRED ROLE FOR A PATH
     // =================================================
 
-    private boolean isProtectedResource(String path) {
+    /**
+     * @return the role required to access the path, or
+     *         {@code null} when the path is not role protected.
+     */
+    private String requiredRole(String path) {
 
-        return path.startsWith("/customer/")
-                || path.startsWith("/store-owner/")
-                || path.startsWith("/delivery/")
-                || path.startsWith("/admin/");
-    }
+        if (path.startsWith("/admin/")
+                || path.startsWith("/jsp/admin/")) {
 
-    // =================================================
-    // AUTHORIZATION
-    // =================================================
-
-    private boolean isAuthorized(String path,
-                                 String role) {
-
-        // CUSTOMER
-        if (path.startsWith("/customer/")) {
-
-            return role.equals("CUSTOMER");
+            return "ADMIN";
         }
 
-        // SHOP OWNER
-        if (path.startsWith("/store-owner/")) {
+        if (path.startsWith("/customer/")
+                || path.startsWith("/jsp/customer/")) {
 
-            return role.equals("SHOP_OWNER") || role.equals("SHOPOWNER") || role.equals("SHOP OWNER") || role.contains("SHOP");
+            return "CUSTOMER";
         }
 
-        // DELIVERY STAFF
-        if (path.startsWith("/delivery/")) {
+        if (path.startsWith("/store-owner/")
+                || path.startsWith("/jsp/shopowner/")) {
 
-            return role.equals("DELIVERY_STAFF") || role.equals("DELIVERYSTAFF");
+            return "SHOPOWNER";
         }
 
-        // ADMIN
-        if (path.startsWith("/admin/")) {
+        if (path.startsWith("/delivery/")
+                || path.startsWith("/jsp/delivery/")) {
 
-            return role.equals("ADMIN");
+            return "DELIVERYSTAFF";
         }
 
-        return false;
+        return null;
     }
 }

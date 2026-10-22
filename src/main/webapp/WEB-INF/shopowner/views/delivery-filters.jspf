@@ -1,0 +1,48 @@
+<%@ page pageEncoding="UTF-8" %>
+<c:set var="deliveryListPath" value="${sessionScope.shopUser.role == 'ShopOwner' ? '/shopowner//shop/deliveries' : '/shopowner//delivery/list'}"/>
+<form method="get" action="${ctx}${deliveryListPath}#delivery-list" class="delivery-filters" aria-label="Bộ lọc giao hàng">
+    <div class="filter-fields ${sessionScope.shopUser.role == 'DeliveryStaff' ? 'filter-fields-shipper' : ''}">
+        <div class="filter-field">
+            <label for="deliveryKeyword">Tìm kiếm</label>
+            <input id="deliveryKeyword" type="search" name="keyword" maxlength="100"
+                   value="<c:out value='${deliveryFilter.keyword}'/>"
+                   placeholder="Mã đơn, người nhận, số điện thoại...">
+        </div>
+        <div class="filter-field">
+            <label for="deliveryStatus">Trạng thái</label>
+            <select id="deliveryStatus" name="status">
+                <option value="">Tất cả trạng thái</option>
+                <c:forEach var="option" items="${deliveryStatuses}">
+                    <option value="<c:out value='${option.key}'/>" ${option.key == deliveryFilter.status ? 'selected' : ''}><c:out value="${option.value}"/></option>
+                </c:forEach>
+            </select>
+        </div>
+        <div class="filter-field">
+            <label for="deliveryShop">Cửa hàng</label>
+            <select id="deliveryShop" name="shopId">
+                <option value="">Tất cả cửa hàng</option>
+                <c:forEach var="option" items="${deliveryShops}">
+                    <option value="${option.key}" ${option.key == deliveryFilter.shopId ? 'selected' : ''}><c:out value="${option.value}"/></option>
+                </c:forEach>
+            </select>
+        </div>
+        <c:if test="${sessionScope.shopUser.role == 'ShopOwner'}">
+            <div class="filter-field">
+                <label for="deliveryShipper">Nhân viên giao hàng</label>
+                <select id="deliveryShipper" name="shipperId">
+                    <option value="">Tất cả nhân viên</option>
+                    <c:forEach var="option" items="${deliveryShippers}">
+                        <option value="${option.key}" ${option.key == deliveryFilter.shipperId ? 'selected' : ''}><c:out value="${option.value}"/> (#${option.key})</option>
+                    </c:forEach>
+                </select>
+            </div>
+        </c:if>
+    </div>
+    <div class="filter-footer">
+        <p class="muted filter-results" role="status">Hiển thị <strong>${fn:length(deliveries)}</strong> / ${deliveryTotal} lần giao</p>
+        <div class="actions">
+            <button type="submit">Lọc</button>
+            <a class="button secondary filter-reset" href="${ctx}${deliveryListPath}#delivery-list">Xóa bộ lọc</a>
+        </div>
+    </div>
+</form>

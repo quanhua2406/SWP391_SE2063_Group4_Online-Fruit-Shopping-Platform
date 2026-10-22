@@ -14,11 +14,11 @@
 <!-- Top Bar -->
 <div class="topbar">
   <div>
-    <h1>📦 Quản lý Gói Đăng Ký</h1>
+    <h1>Quản lý Gói Đăng Ký</h1>
   </div>
   <div style="display: flex; gap: 10px; align-items: center;">
     <a href="${pageContext.request.contextPath}/store-owner/subscription/plans?action=create" class="btn-create" style="margin: 0;">
-      ➕ Tạo Gói Mới
+      + Tạo Gói Mới
     </a>
     <a href="${pageContext.request.contextPath}/store-owner/dashboard" class="back-link">← Dashboard</a>
   </div>
@@ -40,22 +40,25 @@
   <div class="toolbar">
     <div class="filter-bar">
       <a href="?" class="tab all  ${empty param.status ? 'selected' : ''}">Tất cả (${total})</a>
-      <a href="?status=active"   class="tab active   ${param.status == 'active'   ? 'selected' : ''}">✅ Active</a>
-      <a href="?status=draft"    class="tab draft    ${param.status == 'draft'    ? 'selected' : ''}">📝 Draft</a>
-      <a href="?status=inactive" class="tab inactive ${param.status == 'inactive' ? 'selected' : ''}">⏸️ Inactive</a>
+      <a href="?status=active"   class="tab active   ${param.status == 'active'   ? 'selected' : ''}">Active</a>
+      <a href="?status=draft"    class="tab draft    ${param.status == 'draft'    ? 'selected' : ''}">Draft</a>
+      <a href="?status=inactive" class="tab inactive ${param.status == 'inactive' ? 'selected' : ''}">Inactive</a>
     </div>
-    <a href="${pageContext.request.contextPath}/store-owner/subscription/plans?action=create" class="btn-create">➕ Tạo gói mới</a>
+    <a href="${pageContext.request.contextPath}/store-owner/subscription/plans?action=create" class="btn-create">+ Tạo gói mới</a>
   </div>
 
   <!-- Plan Cards -->
   <c:choose>
     <c:when test="${empty plans}">
       <div class="empty">
-        <div class="icon">📭</div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px;">
+          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+        </svg>
         <p>Chưa có gói đăng ký nào.<br>Bắt đầu tạo gói combo trái cây định kỳ đầu tiên cho shop của bạn!</p>
         <div style="margin-top: 16px;">
           <a href="${pageContext.request.contextPath}/store-owner/subscription/plans?action=create" class="btn-create">
-            ➕ Tạo gói mới ngay
+            + Tạo gói mới ngay
           </a>
         </div>
       </div>
@@ -71,8 +74,8 @@
             <div class="plan-desc">${not empty p.description ? p.description : 'Chưa có mô tả'}</div>
 
             <div class="plan-meta">
-              <span class="meta-chip">🔄 ${p.billingCycleLabel}</span>
-              <span class="meta-chip">📅 ${p.durationDays} ngày</span>
+              <span class="meta-chip">Chu kỳ: ${p.billingCycleLabel}</span>
+              <span class="meta-chip">Thời hạn: ${p.durationDays} ngày</span>
             </div>
 
             <div class="plan-price">
@@ -81,25 +84,25 @@
             <div class="plan-cycle">/ ${p.billingCycleLabel}</div>
 
             <div class="subscriber-info" style="margin-top:12px;">
-              👥 <strong>${p.subscriberCount}</strong> khách đang đăng ký
+              <strong>${p.subscriberCount}</strong> khách đang đăng ký
             </div>
 
             <div class="plan-actions">
               <!-- Sửa -->
-              <a href="?action=edit&id=${p.planId}" class="btn-sm btn-edit">✏️ Sửa</a>
+              <a href="?action=edit&id=${p.planId}" class="btn-sm btn-edit">Sửa</a>
 
               <!-- Toggle Active/Inactive -->
               <c:choose>
                 <c:when test="${p.status == 'active'}">
                   <button class="btn-sm btn-toggle-off"
                           onclick="confirmToggle(${p.planId}, 'deactivate', '${p.name}')">
-                    ⏸️ Tạm dừng
+                    Tạm dừng
                   </button>
                 </c:when>
                 <c:otherwise>
                   <button class="btn-sm btn-toggle-on"
                           onclick="confirmToggle(${p.planId}, 'activate', '${p.name}')">
-                    ▶️ Kích hoạt
+                    Kích hoạt
                   </button>
                 </c:otherwise>
               </c:choose>
@@ -107,7 +110,7 @@
               <!-- Xóa -->
               <button class="btn-sm btn-del"
                       onclick="confirmDelete(${p.planId}, '${p.name}', ${p.subscriberCount})">
-                🗑️ Xóa
+                Xóa
               </button>
             </div>
           </div>

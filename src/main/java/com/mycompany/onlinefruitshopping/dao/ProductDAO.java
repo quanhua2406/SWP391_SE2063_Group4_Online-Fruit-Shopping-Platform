@@ -547,6 +547,458 @@ public class ProductDAO {
         }
     }
 
+    // =========================================================
+    // CUSTOMER: MULTI-FIELD SEARCH & ADVANCED FILTER
+    // =========================================================
+    public List<Product> searchAndFilterProducts(String keyword, Integer categoryId, List<String> origins,
+                                                Double minPrice, Double maxPrice, Boolean inStockOnly,
+                                                String sortBy, int page, int pageSize) throws SQLException {
+        List<Product> list = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("""
+                SELECT 
+                    p.product_id,
+                    p.shop_id,
+                    ISNULL(s.shop_name, N'FreshFruit Shop') AS shop_name,
+                    p.category_id,
+                    ISNULL(c.category_name, N'Khác') AS category_name,
+                    p.product_name,
+                    p.description,
+                    p.origin,
+                    p.status,
+                    p.created_at,
+                    ISNULL(v.price, 0) AS price,
+                    ISNULL(v.unit, 'kg') AS unit,
+                    ISNULL(v.packaging_type, N'Mặc định') AS packaging_type,
+                    ISNULL(v.sku, '') AS sku,
+                    ISNULL(img.image_url, '') AS image_url,
+                    ISNULL(b.stock, 0) AS stock
+                FROM products p
+                LEFT JOIN shops s ON p.shop_id = s.shop_id
+                LEFT JOIN categories c ON p.category_id = c.category_id
+                OUTER APPLY (
+                    SELECT TOP 1 variant_id, sku, unit, packaging_type, price
+                    FROM product_variants
+                    WHERE product_id = p.product_id
+                    ORDER BY price ASC, variant_id ASC
+                ) v
+                OUTER APPLY (
+                    SELECT TOP 1 image_url
+                    FROM product_images
+                    WHERE product_id = p.product_id
+                    ORDER BY sort_order ASC, image_id ASC
+                ) img
+                OUTER APPLY (
+                    SELECT ISNULL(SUM(quantity), 0) AS stock
+                    FROM inventory_batches
+                    WHERE variant_id = v.variant_id AND status = 'active'
+                ) b
+                WHERE p.status = 'published'
+                """);
+
+        List<Object> params = new ArrayList<>();
+        buildFilterClauses(sql, params, keyword, categoryId, origins, minPrice, maxPrice, inStockOnly);
+
+        // Sorting
+        if ("price_asc".equalsIgnoreCase(sortBy)) {
+            sql.append(" ORDER BY v.price ASC, p.product_id DESC");
+        } else if ("price_desc".equalsIgnoreCase(sortBy)) {
+            sql.append(" ORDER BY v.price DESC, p.product_id DESC");
+        } else if ("name_asc".equalsIgnoreCase(sortBy)) {
+            sql.append(" ORDER BY p.product_name ASC");
+        } else if ("stock_desc".equalsIgnoreCase(sortBy)) {
+            sql.append(" ORDER BY b.stock DESC, p.product_id DESC");
+        } else {
+            sql.append(" ORDER BY p.product_id DESC");
+        }
+
+        // Pagination
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 12;
+        int offset = (page - 1) * pageSize;
+        sql.append(" OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        params.add(offset);
+        params.add(pageSize);
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapResultSetToProduct(rs));
+                }
+            }
+        }
+        return list;
+    }
+
+    public int countFilteredProducts(String keyword, Integer categoryId, List<String> origins,
+                                    Double minPrice, Double maxPrice, Boolean inStockOnly) throws SQLException {
+        StringBuilder sql = new StringBuilder("""
+                SELECT COUNT(*)
+                FROM products p
+                LEFT JOIN shops s ON p.shop_id = s.shop_id
+                LEFT JOIN categories c ON p.category_id = c.category_id
+                OUTER APPLY (
+                    SELECT TOP 1 variant_id, sku, unit, packaging_type, price
+                    FROM product_variants
+                    WHERE product_id = p.product_id
+                    ORDER BY price ASC, variant_id ASC
+                ) v
+                OUTER APPLY (
+                    SELECT ISNULL(SUM(quantity), 0) AS stock
+                    FROM inventory_batches
+                    WHERE variant_id = v.variant_id AND status = 'active'
+                ) b
+                WHERE p.status = 'published'
+                """);
+
+        List<Object> params = new ArrayList<>();
+        buildFilterClauses(sql, params, keyword, categoryId, origins, minPrice, maxPrice, inStockOnly);
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        return 0;
+    }
+
+    private void buildFilterClauses(StringBuilder sql, List<Object> params,
+                                    String keyword, Integer categoryId, List<String> origins,
+                                    Double minPrice, Double maxPrice, Boolean inStockOnly)
+            throws SQLException {
+        // Multi-field search
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append("""
+                     AND (
+                        p.product_name LIKE ? 
+                        OR p.origin LIKE ? 
+                        OR c.category_name LIKE ? 
+                        OR p.description LIKE ? 
+                        OR s.shop_name LIKE ?
+                        OR EXISTS (
+                            SELECT 1 FROM product_variants pv 
+                            WHERE pv.product_id = p.product_id 
+                            AND (pv.packaging_type LIKE ? OR pv.sku LIKE ?)
+                        )
+                    )
+                    """);
+            String kw = "%" + keyword.trim() + "%";
+            for (int i = 0; i < 7; i++) {
+                params.add(kw);
+            }
+        }
+
+        // Category. Picking a parent category also shows the products of
+        // every category underneath it, so the parent / child tree really
+        // means something to the customer.
+        if (categoryId != null && categoryId > 0) {
+            List<Integer> categoryIds = collectCategoryIdsWithDescendants(categoryId);
+            sql.append(" AND p.category_id IN (");
+            for (int i = 0; i < categoryIds.size(); i++) {
+                sql.append(i == 0 ? "?" : ", ?");
+                params.add(categoryIds.get(i));
+            }
+            sql.append(")");
+        }
+
+        // Origins filter
+        if (origins != null && !origins.isEmpty()) {
+            sql.append(" AND p.origin IN (");
+            for (int i = 0; i < origins.size(); i++) {
+                sql.append(i == 0 ? "?" : ", ?");
+                params.add(origins.get(i).trim());
+            }
+            sql.append(")");
+        }
+
+        // Price range
+        if (minPrice != null && minPrice >= 0) {
+            sql.append(" AND v.price >= ?");
+            params.add(minPrice);
+        }
+        if (maxPrice != null && maxPrice > 0) {
+            sql.append(" AND v.price <= ?");
+            params.add(maxPrice);
+        }
+
+        // In stock only
+        if (Boolean.TRUE.equals(inStockOnly)) {
+            sql.append(" AND ISNULL(b.stock, 0) > 0");
+        }
+    }
+
+    /**
+     * Returns the given category plus every category below it (children,
+     * grand-children, ...). Used so that filtering the customer catalog by
+     * a parent category also returns the products filed under its
+     * sub-categories.
+     *
+     * <p>The category tree is tiny, so the walk is done in Java with a
+     * visited guard against a (pre-existing) cycle in the data.</p>
+     */
+    private List<Integer> collectCategoryIdsWithDescendants(int rootCategoryId) throws SQLException {
+        List<Integer> ids = new ArrayList<>();
+        ids.add(rootCategoryId);
+
+        String sql = "SELECT category_id FROM categories WHERE parent_id = ?";
+        java.util.Set<Integer> visited = new java.util.HashSet<>();
+        visited.add(rootCategoryId);
+
+        java.util.ArrayDeque<Integer> queue = new java.util.ArrayDeque<>();
+        queue.add(rootCategoryId);
+
+        try (Connection conn = DBConnection.getConnection()) {
+            while (!queue.isEmpty()) {
+                int current = queue.poll();
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    ps.setInt(1, current);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            int childId = rs.getInt("category_id");
+                            if (visited.add(childId)) {
+                                ids.add(childId);
+                                queue.add(childId);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return ids;
+    }
+
+    // =========================================================
+    // DISTINCT ORIGINS
+    // =========================================================
+    public List<String> getDistinctOrigins() throws SQLException {
+        List<String> list = new ArrayList<>();
+        String sql = "SELECT DISTINCT origin FROM products WHERE status = 'published' AND origin IS NOT NULL AND RTRIM(LTRIM(origin)) <> '' ORDER BY origin ASC";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(rs.getString("origin"));
+            }
+        }
+        return list;
+    }
+
+    // =========================================================
+    // FEATURED PRODUCTS (HOMEPAGE)
+    // =========================================================
+    public List<Product> getFeaturedProducts(int limit) throws SQLException {
+        List<Product> list = new ArrayList<>();
+        String sql = """
+                SELECT TOP (?)
+                    p.product_id,
+                    p.shop_id,
+                    ISNULL(s.shop_name, N'FreshFruit Shop') AS shop_name,
+                    p.category_id,
+                    ISNULL(c.category_name, N'Khác') AS category_name,
+                    p.product_name,
+                    p.description,
+                    p.origin,
+                    p.status,
+                    p.created_at,
+                    ISNULL(v.price, 0) AS price,
+                    ISNULL(v.unit, 'kg') AS unit,
+                    ISNULL(v.packaging_type, N'Mặc định') AS packaging_type,
+                    ISNULL(v.sku, '') AS sku,
+                    ISNULL(img.image_url, '') AS image_url,
+                    ISNULL(b.stock, 0) AS stock
+                FROM products p
+                LEFT JOIN shops s ON p.shop_id = s.shop_id
+                LEFT JOIN categories c ON p.category_id = c.category_id
+                OUTER APPLY (
+                    SELECT TOP 1 variant_id, sku, unit, packaging_type, price
+                    FROM product_variants
+                    WHERE product_id = p.product_id
+                    ORDER BY price ASC, variant_id ASC
+                ) v
+                OUTER APPLY (
+                    SELECT TOP 1 image_url
+                    FROM product_images
+                    WHERE product_id = p.product_id
+                    ORDER BY sort_order ASC, image_id ASC
+                ) img
+                OUTER APPLY (
+                    SELECT ISNULL(SUM(quantity), 0) AS stock
+                    FROM inventory_batches
+                    WHERE variant_id = v.variant_id AND status = 'active'
+                ) b
+                WHERE p.status = 'published'
+                ORDER BY p.product_id DESC
+                """;
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, limit <= 0 ? 8 : limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapResultSetToProduct(rs));
+                }
+            }
+        }
+        return list;
+    }
+
+    // =========================================================
+    // RELATED PRODUCTS (SAME CATEGORY)
+    // =========================================================
+    public List<Product> getRelatedProducts(int categoryId, int excludeProductId, int limit) throws SQLException {
+        List<Product> list = new ArrayList<>();
+        String sql = """
+                SELECT TOP (?)
+                    p.product_id,
+                    p.shop_id,
+                    ISNULL(s.shop_name, N'FreshFruit Shop') AS shop_name,
+                    p.category_id,
+                    ISNULL(c.category_name, N'Khác') AS category_name,
+                    p.product_name,
+                    p.description,
+                    p.origin,
+                    p.status,
+                    p.created_at,
+                    ISNULL(v.price, 0) AS price,
+                    ISNULL(v.unit, 'kg') AS unit,
+                    ISNULL(v.packaging_type, N'Mặc định') AS packaging_type,
+                    ISNULL(v.sku, '') AS sku,
+                    ISNULL(img.image_url, '') AS image_url,
+                    ISNULL(b.stock, 0) AS stock
+                FROM products p
+                LEFT JOIN shops s ON p.shop_id = s.shop_id
+                LEFT JOIN categories c ON p.category_id = c.category_id
+                OUTER APPLY (
+                    SELECT TOP 1 variant_id, sku, unit, packaging_type, price
+                    FROM product_variants
+                    WHERE product_id = p.product_id
+                    ORDER BY price ASC, variant_id ASC
+                ) v
+                OUTER APPLY (
+                    SELECT TOP 1 image_url
+                    FROM product_images
+                    WHERE product_id = p.product_id
+                    ORDER BY sort_order ASC, image_id ASC
+                ) img
+                OUTER APPLY (
+                    SELECT ISNULL(SUM(quantity), 0) AS stock
+                    FROM inventory_batches
+                    WHERE variant_id = v.variant_id AND status = 'active'
+                ) b
+                WHERE p.status = 'published'
+                  AND p.product_id <> ?
+                  AND (p.category_id = ? OR ? = 0)
+                ORDER BY p.product_id DESC
+                """;
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, limit <= 0 ? 4 : limit);
+            ps.setInt(2, excludeProductId);
+            ps.setInt(3, categoryId);
+            ps.setInt(4, categoryId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapResultSetToProduct(rs));
+                }
+            }
+        }
+        return list;
+    }
+
+    // =========================================================
+    // SEARCH SUGGESTIONS (AUTOCOMPLETE)
+    // =========================================================
+    public List<Product> getSearchSuggestions(String query, int limit) throws SQLException {
+        List<Product> list = new ArrayList<>();
+        if (query == null || query.trim().isEmpty()) {
+            return list;
+        }
+
+        String sql = """
+                SELECT TOP (?)
+                    p.product_id,
+                    p.shop_id,
+                    ISNULL(s.shop_name, N'FreshFruit Shop') AS shop_name,
+                    p.category_id,
+                    ISNULL(c.category_name, N'Khác') AS category_name,
+                    p.product_name,
+                    p.description,
+                    p.origin,
+                    p.status,
+                    p.created_at,
+                    ISNULL(v.price, 0) AS price,
+                    ISNULL(v.unit, 'kg') AS unit,
+                    ISNULL(v.packaging_type, N'Mặc định') AS packaging_type,
+                    ISNULL(v.sku, '') AS sku,
+                    ISNULL(img.image_url, '') AS image_url,
+                    ISNULL(b.stock, 0) AS stock
+                FROM products p
+                LEFT JOIN shops s ON p.shop_id = s.shop_id
+                LEFT JOIN categories c ON p.category_id = c.category_id
+                OUTER APPLY (
+                    SELECT TOP 1 variant_id, sku, unit, packaging_type, price
+                    FROM product_variants
+                    WHERE product_id = p.product_id
+                    ORDER BY price ASC, variant_id ASC
+                ) v
+                OUTER APPLY (
+                    SELECT TOP 1 image_url
+                    FROM product_images
+                    WHERE product_id = p.product_id
+                    ORDER BY sort_order ASC, image_id ASC
+                ) img
+                OUTER APPLY (
+                    SELECT ISNULL(SUM(quantity), 0) AS stock
+                    FROM inventory_batches
+                    WHERE variant_id = v.variant_id AND status = 'active'
+                ) b
+                WHERE p.status = 'published'
+                  AND (
+                    p.product_name LIKE ?
+                    OR p.origin LIKE ?
+                    OR c.category_name LIKE ?
+                    OR EXISTS (
+                        SELECT 1 FROM product_variants pv 
+                        WHERE pv.product_id = p.product_id 
+                        AND (pv.packaging_type LIKE ? OR pv.sku LIKE ?)
+                    )
+                  )
+                ORDER BY p.product_name ASC
+                """;
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, limit <= 0 ? 5 : limit);
+            String kw = "%" + query.trim() + "%";
+            ps.setString(2, kw);
+            ps.setString(3, kw);
+            ps.setString(4, kw);
+            ps.setString(5, kw);
+            ps.setString(6, kw);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapResultSetToProduct(rs));
+                }
+            }
+        }
+        return list;
+    }
+
     // Helper mapper
     private Product mapResultSetToProduct(ResultSet rs) throws SQLException {
         Product p = new Product();

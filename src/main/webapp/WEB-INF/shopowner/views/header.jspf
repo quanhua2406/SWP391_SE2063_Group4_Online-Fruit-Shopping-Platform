@@ -1,0 +1,77 @@
+<%@ page pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
+<fmt:setLocale value="vi_VN"/>
+<c:set var="ctx" value="${pageContext.request.contextPath}"/>
+<c:set var="currentPath" value="${requestScope['jakarta.servlet.forward.servlet_path']}"/>
+<c:set var="homePath" value="/shopowner/notifications"/>
+<c:set var="roleLabel" value="Khách hàng"/>
+<c:choose>
+    <c:when test="${sessionScope.shopUser.role == 'ShopOwner'}">
+        <c:set var="homePath" value="/store-owner/dashboard"/>
+        <c:set var="roleLabel" value="Chủ cửa hàng"/>
+    </c:when>
+    <c:when test="${sessionScope.shopUser.role == 'DeliveryStaff'}">
+        <c:set var="homePath" value="/delivery/dashboard"/>
+        <c:set var="roleLabel" value="Nhân viên giao hàng"/>
+    </c:when>
+</c:choose>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#3d8b40">
+    <title>FreshFruit · <c:out value="${roleLabel}"/></title>
+    <link rel="stylesheet" href="${ctx}/assets/freshfruit-base.css?v=20261014-3">
+    <link rel="stylesheet" href="${ctx}/assets/freshfruit-management.css?v=20261014-3">
+</head>
+<body class="management-page">
+<a class="skip-link" href="#main-content">Đến nội dung chính</a>
+<header class="navbar">
+    <a class="logo" href="${ctx}${homePath}" aria-label="FreshFruit - Trang chính"><svg class="icon" width="30" height="30" aria-hidden="true" focusable="false"><use href="${ctx}/assets/icons.svg#fruit"/></svg> FreshFruit</a>
+    <div class="nav-actions">
+        <span class="role-label"><c:out value="${roleLabel}"/></span>
+        <span class="account-name"><c:out value="${sessionScope.shopUser.fullName}"/></span>
+        <form method="post" action="${ctx}/shopowner/logout">
+            <input type="hidden" name="shopcsrf" value="${sessionScope.shopcsrf}">
+            <button class="logout" type="submit">Đăng xuất</button>
+        </form>
+    </div>
+</header>
+<nav class="category-bar management-nav" aria-label="Điều hướng chính">
+    <c:if test="${sessionScope.shopUser.role == 'ShopOwner'}">
+        <a class="button secondary"
+           href="${pageContext.request.contextPath}/store-owner/dashboard">
+            ← Về giao diện chính
+        </a>
+    </c:if>
+    <c:if test="${sessionScope.shopUser.role == 'DeliveryStaff'}">
+        <a class="button secondary"
+           href="${pageContext.request.contextPath}/delivery/dashboard">
+            ← Về giao diện chính
+        </a>
+    </c:if>
+    <c:if test="${sessionScope.shopUser.role == 'ShopOwner'}">
+        <a href="${ctx}/shopowner/shop/deliveries" class="${fn:startsWith(currentPath, '/shopowner//shop/deliveries') or fn:startsWith(currentPath, '/shopowner//delivery/') ? 'is-active' : ''}" ${fn:startsWith(currentPath, '/shopowner//shop/deliveries') or fn:startsWith(currentPath, '/shopowner//delivery/') ? 'aria-current="page"' : ''}><svg class="icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="${ctx}/assets/icons.svg#truck"/></svg> Giao hàng</a>
+        <a href="${ctx}/shopowner/shop/promotions" class="${fn:startsWith(currentPath, '/shopowner//shop/promotions') ? 'is-active' : ''}" ${fn:startsWith(currentPath, '/shopowner//shop/promotions') ? 'aria-current="page"' : ''}><svg class="icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="${ctx}/assets/icons.svg#gift"/></svg> Khuyến mãi</a>
+        <a href="${ctx}/shopowner/shop/coupons" class="${fn:startsWith(currentPath, '/shopowner//shop/coupons') ? 'is-active' : ''}" ${fn:startsWith(currentPath, '/shopowner//shop/coupons') ? 'aria-current="page"' : ''}><svg class="icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="${ctx}/assets/icons.svg#ticket"/></svg> Mã giảm giá</a>
+    </c:if>
+    <c:if test="${sessionScope.shopUser.role == 'DeliveryStaff'}">
+        <a href="${ctx}/shopowner/delivery/list" class="${fn:startsWith(currentPath, '/shopowner//delivery/') ? 'is-active' : ''}" ${fn:startsWith(currentPath, '/shopowner//delivery/') ? 'aria-current="page"' : ''}><svg class="icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="${ctx}/assets/icons.svg#truck"/></svg> Giao hàng của tôi</a>
+    </c:if>
+    <c:if test="${sessionScope.shopUser.role == 'Customer'}">
+        <a href="${ctx}/shopowner/customer/coupons" class="${fn:startsWith(currentPath, '/shopowner//customer/') ? 'is-active' : ''}" ${fn:startsWith(currentPath, '/shopowner//customer/') ? 'aria-current="page"' : ''}><svg class="icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="${ctx}/assets/icons.svg#cart"/></svg> Đơn hàng &amp; mã giảm giá</a>
+    </c:if>
+    <a href="${ctx}/shopowner/notifications" class="${currentPath == '/shopowner//notifications' ? 'is-active' : ''}" ${currentPath == '/shopowner//notifications' ? 'aria-current="page"' : ''}><svg class="icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="${ctx}/assets/icons.svg#bell"/></svg> Thông báo</a>
+</nav>
+<main class="product-management-container container" id="main-content">
+    <c:if test="${not empty sessionScope.success}">
+        <p class="alert success" role="status"><c:out value="${sessionScope.success}"/></p>
+        <c:remove var="success" scope="session"/>
+    </c:if>
+    <c:if test="${not empty sessionScope.error}">
+        <p class="alert error" role="alert"><c:out value="${sessionScope.error}"/></p>
+        <c:remove var="error" scope="session"/>
+    </c:if>

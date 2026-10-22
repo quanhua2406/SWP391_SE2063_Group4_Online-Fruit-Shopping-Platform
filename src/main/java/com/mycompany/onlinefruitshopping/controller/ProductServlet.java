@@ -17,7 +17,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
-@WebServlet(urlPatterns = {"/store-owner/products", "/admin/products", "/products"})
+@WebServlet(urlPatterns = {"/store-owner/products", "/admin/products"})
 public class ProductServlet extends HttpServlet {
 
     private final ProductDAO productDAO = new ProductDAO();

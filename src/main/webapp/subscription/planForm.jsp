@@ -165,7 +165,7 @@
 <body class="plan-management-page">
 
 <div class="topbar">
-  <h1>${mode == 'edit' ? '✏️ Chỉnh sửa Gói Đăng Ký' : '➕ Tạo Gói Đăng Ký Mới'}</h1>
+  <h1>${mode == 'edit' ? 'Chỉnh sửa Gói Đăng Ký' : 'Tạo Gói Đăng Ký Mới'}</h1>
   <a href="${pageContext.request.contextPath}/store-owner/subscription/plans">← Quay lại danh sách</a>
 </div>
 
@@ -193,7 +193,7 @@
 
       <!-- ── Thông tin cơ bản ── -->
       <div class="form-section">
-        <div class="section-title">📋 Thông tin cơ bản</div>
+        <div class="section-title">Thông tin cơ bản</div>
 
         <div class="form-group">
           <label for="name">Tên gói <span class="req">*</span></label>
@@ -216,7 +216,7 @@
 
       <!-- ── Giá & Chu kỳ ── -->
       <div class="form-section">
-        <div class="section-title">💰 Giá & Chu kỳ</div>
+        <div class="section-title">Giá & Chu kỳ</div>
         <div class="form-row">
           <div class="form-group">
             <label for="price">Giá (VNĐ) <span class="req">*</span></label>
@@ -247,17 +247,17 @@
               <label class="status-opt">
                 <input type="radio" name="status" value="draft"
                        ${empty plan.status || plan.status == 'draft' ? 'checked' : ''}/>
-                <span>📝 Draft</span>
+                <span>Draft</span>
               </label>
               <label class="status-opt">
                 <input type="radio" name="status" value="active"
                        ${plan.status == 'active' ? 'checked' : ''}/>
-                <span>✅ Active</span>
+                <span>Active</span>
               </label>
               <label class="status-opt">
                 <input type="radio" name="status" value="inactive"
                        ${plan.status == 'inactive' ? 'checked' : ''}/>
-                <span>⏸️ Inactive</span>
+                <span>Inactive</span>
               </label>
             </div>
           </div>
@@ -267,13 +267,13 @@
       <!-- ── Sản phẩm trong combo ── -->
       <div class="form-section">
         <div class="items-header">
-          <div class="section-title" style="margin-bottom:0">🛒 Sản phẩm trong combo</div>
+          <div class="section-title" style="margin-bottom:0">Sản phẩm trong combo</div>
           <button type="button" class="btn-add-item" onclick="addItem()">+ Thêm dòng sản phẩm</button>
         </div>
 
         <c:if test="${empty availableVariants}">
           <div class="hint" style="color:#d97706; margin-bottom: 10px;">
-            ⚠️ Shop của bạn chưa có sản phẩm hoạt động nào. Hãy thêm sản phẩm trước khi tạo gói combo.
+            Shop của bạn chưa có sản phẩm hoạt động nào. Hãy thêm sản phẩm trước khi tạo gói combo.
           </div>
         </c:if>
 
@@ -296,7 +296,9 @@
         <!-- Thanh tìm kiếm nhanh & thêm sản phẩm vào combo -->
         <div class="variant-search-container" id="variantSearchContainer">
           <div class="search-input-box">
-            <span class="search-icon">🔍</span>
+            <span class="search-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#94a3b8;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </span>
             <input type="text" id="variantSearchInput"
                    placeholder="Nhập tên trái cây hoặc SKU để tìm nhanh (VD: Nho, Táo, Cam)..."
                    autocomplete="off"
@@ -340,7 +342,7 @@
       <div class="form-actions">
         <a href="${pageContext.request.contextPath}/store-owner/subscription/plans" class="btn-cancel">Hủy</a>
         <button type="submit" class="btn-save">
-          ${mode == 'edit' ? '💾 Lưu thay đổi' : '🚀 Tạo gói'}
+          ${mode == 'edit' ? 'Lưu thay đổi' : 'Tạo gói'}
         </button>
       </div>
     </div>
@@ -491,9 +493,9 @@
     const currentVariantIds = getCurrentSelectedVariantIds();
     let html = '';
     if (!isFiltered) {
-      html += '<div class="search-res-header">⚡ Gợi ý sản phẩm nổi bật (hoặc gõ tên để tìm nhanh)</div>';
+      html += '<div class="search-res-header">Gợi ý sản phẩm nổi bật (hoặc gõ tên để tìm nhanh)</div>';
     } else {
-      html += '<div class="search-res-header">🔍 Kết quả tìm kiếm (' + list.length + ' sản phẩm)</div>';
+      html += '<div class="search-res-header">Kết quả tìm kiếm (' + list.length + ' sản phẩm)</div>';
     }
 
     for (let i = 0; i < list.length; i++) {
