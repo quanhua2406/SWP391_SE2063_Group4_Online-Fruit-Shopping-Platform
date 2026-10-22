@@ -216,17 +216,17 @@ public class LoginServlet extends HttpServlet {
                     user.getRoleName()
             );
 
-            // Merge guest session cart into database cart if present
+            // Merge guest session cart into database cart if present via CartService
             try {
-                com.mycompany.onlinefruitshopping.dao.CartDAO cartDAO = new com.mycompany.onlinefruitshopping.dao.CartDAO();
+                com.mycompany.onlinefruitshopping.service.CartService cartService = new com.mycompany.onlinefruitshopping.service.CartService();
                 @SuppressWarnings("unchecked")
                 java.util.List<com.mycompany.onlinefruitshopping.model.CartItem> guestCart =
                         (java.util.List<com.mycompany.onlinefruitshopping.model.CartItem>) session.getAttribute("sessionCart");
                 if (guestCart != null && !guestCart.isEmpty()) {
-                    cartDAO.mergeSessionCart(user.getUserID(), guestCart);
+                    cartService.mergeSessionCart(user.getUserID(), guestCart);
                     session.removeAttribute("sessionCart");
                 }
-                session.setAttribute("cartCount", cartDAO.getCartCount(user.getUserID()));
+                session.setAttribute("cartCount", cartService.getCartCount(user, null));
             } catch (Exception ignored) {
             }
 

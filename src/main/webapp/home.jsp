@@ -271,6 +271,15 @@
 
         <% } %>
 
+        <!-- Đơn hàng của tôi -->
+        <% if (currentUser != null) { %>
+
+            <a href="${pageContext.request.contextPath}/orders">
+                Đơn hàng của tôi
+            </a>
+
+        <% } %>
+
 
         <!-- Logout -->
         <% if (currentUser != null) { %>

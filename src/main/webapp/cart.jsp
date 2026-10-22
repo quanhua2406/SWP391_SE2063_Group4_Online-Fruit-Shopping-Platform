@@ -815,14 +815,14 @@
 
                             <c:choose>
                                 <c:when test="${empty sessionScope.user}">
-                                    <a href="${pageContext.request.contextPath}/login" class="btn-checkout">
+                                    <a href="${pageContext.request.contextPath}/login?redirect=/checkout" class="btn-checkout" style="display:block; text-align:center; text-decoration:none;">
                                         Đăng Nhập Để Thanh Toán
                                     </a>
                                 </c:when>
                                 <c:otherwise>
-                                    <button type="button" class="btn-checkout" onclick="alert('Đơn hàng đã được xác nhận thông tin! Chức năng thanh toán và giao hàng sẽ kết nối ở bước tiếp theo.');">
+                                    <a href="${pageContext.request.contextPath}/checkout" class="btn-checkout" style="display:block; text-align:center; text-decoration:none;">
                                         Tiến Hành Đặt Hàng
-                                    </button>
+                                    </a>
                                 </c:otherwise>
                             </c:choose>
 

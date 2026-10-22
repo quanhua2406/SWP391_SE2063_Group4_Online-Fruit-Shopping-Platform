@@ -1,9 +1,9 @@
-package com.mycompany.onlinefruitshopping.controller;
+package com.mycompany.onlinefruitshopping.controller.product;
 
-import com.mycompany.onlinefruitshopping.dao.CategoryDAO;
-import com.mycompany.onlinefruitshopping.dao.ProductDAO;
 import com.mycompany.onlinefruitshopping.model.Category;
 import com.mycompany.onlinefruitshopping.model.Product;
+import com.mycompany.onlinefruitshopping.service.CategoryService;
+import com.mycompany.onlinefruitshopping.service.ProductService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -25,8 +25,18 @@ import java.util.logging.Logger;
 public class CustomerProductServlet extends HttpServlet {
 
     private static final Logger LOG = Logger.getLogger(CustomerProductServlet.class.getName());
-    private final ProductDAO productDAO = new ProductDAO();
-    private final CategoryDAO categoryDAO = new CategoryDAO();
+    private final ProductService productService;
+    private final CategoryService categoryService;
+
+    public CustomerProductServlet() {
+        this.productService = new ProductService();
+        this.categoryService = new CategoryService();
+    }
+
+    public CustomerProductServlet(ProductService productService, CategoryService categoryService) {
+        this.productService = productService;
+        this.categoryService = categoryService;
+    }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -63,13 +73,12 @@ public class CustomerProductServlet extends HttpServlet {
             }
         }
 
-        // Price range presets or custom min/max
+        // Price range presets
         String priceRange = request.getParameter("priceRange");
         Double minPrice = null;
         Double maxPrice = null;
-
         if (priceRange != null && !priceRange.isBlank()) {
-            switch (priceRange.trim()) {
+            switch (priceRange) {
                 case "under100":
                     maxPrice = 100000.0;
                     break;
@@ -132,20 +141,20 @@ public class CustomerProductServlet extends HttpServlet {
         }
 
         try {
-            List<Product> products = productDAO.searchAndFilterProducts(
+            List<Product> products = productService.searchAndFilterProducts(
                     keyword, categoryId, origins, minPrice, maxPrice, inStockOnly, sortBy, page, pageSize);
 
-            int totalProducts = productDAO.countFilteredProducts(
+            int totalProducts = productService.countFilteredProducts(
                     keyword, categoryId, origins, minPrice, maxPrice, inStockOnly);
 
             int totalPages = (int) Math.ceil((double) totalProducts / pageSize);
             if (totalPages < 1) totalPages = 1;
 
             // Categories with product count
-            List<Category> categories = categoryDAO.getAllCategoriesWithProductCount();
+            List<Category> categories = categoryService.getAllCategoriesWithProductCount();
 
             // Distinct origins for faceted filter
-            List<String> distinctOrigins = productDAO.getDistinctOrigins();
+            List<String> distinctOrigins = productService.getDistinctOrigins();
 
             // Build query string without page for pagination links
             StringBuilder qs = new StringBuilder();
@@ -178,27 +187,26 @@ public class CustomerProductServlet extends HttpServlet {
             // Request attributes
             request.setAttribute("products", products);
             request.setAttribute("totalProducts", totalProducts);
-            request.setAttribute("currentPage", page);
-            request.setAttribute("pageSize", pageSize);
-            request.setAttribute("totalPages", totalPages);
             request.setAttribute("categories", categories);
             request.setAttribute("distinctOrigins", distinctOrigins);
-
-            request.setAttribute("selectedKeyword", keyword);
-            request.setAttribute("selectedCategoryId", categoryId);
+            request.setAttribute("currentPage", page);
+            request.setAttribute("totalPages", totalPages);
+            request.setAttribute("pageSize", pageSize);
+            request.setAttribute("keyword", keyword);
+            request.setAttribute("selectedCategory", categoryId);
             request.setAttribute("selectedOrigins", origins);
-            request.setAttribute("selectedPriceRange", priceRange);
-            request.setAttribute("selectedMinPrice", minPriceStr);
-            request.setAttribute("selectedMaxPrice", maxPriceStr);
-            request.setAttribute("selectedInStock", inStockOnly);
-            request.setAttribute("selectedSortBy", sortBy);
+            request.setAttribute("priceRange", priceRange);
+            request.setAttribute("minPrice", minPrice);
+            request.setAttribute("maxPrice", maxPrice);
+            request.setAttribute("inStockOnly", inStockOnly != null && inStockOnly);
+            request.setAttribute("sortBy", sortBy);
             request.setAttribute("baseQueryString", baseQueryString);
 
             request.getRequestDispatcher("/product-catalog.jsp").forward(request, response);
 
         } catch (SQLException e) {
-            LOG.log(Level.SEVERE, "Lỗi truy vấn sản phẩm trong CustomerProductServlet", e);
-            throw new ServletException("Database error in CustomerProductServlet", e);
+            LOG.log(Level.SEVERE, "Database error in CustomerProductServlet", e);
+            throw new ServletException("Lỗi CSDL khi truy vấn danh sách sản phẩm", e);
         }
     }
 }

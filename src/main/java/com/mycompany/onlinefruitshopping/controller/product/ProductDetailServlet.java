@@ -1,11 +1,9 @@
-package com.mycompany.onlinefruitshopping.controller;
+package com.mycompany.onlinefruitshopping.controller.product;
 
-import com.mycompany.onlinefruitshopping.dao.ProductDAO;
-import com.mycompany.onlinefruitshopping.dao.ProductImageDAO;
-import com.mycompany.onlinefruitshopping.dao.ProductVariantDAO;
 import com.mycompany.onlinefruitshopping.model.Product;
 import com.mycompany.onlinefruitshopping.model.ProductImage;
 import com.mycompany.onlinefruitshopping.model.ProductVariant;
+import com.mycompany.onlinefruitshopping.service.ProductService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -19,14 +17,23 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Controller hiển thị chi tiết sản phẩm.
+ * Sử dụng ProductService để lấy thông tin sản phẩm, biến thể quy cách, thư viện ảnh và sản phẩm liên quan.
+ */
 @WebServlet(urlPatterns = {"/product", "/product-detail"})
 public class ProductDetailServlet extends HttpServlet {
 
     private static final Logger LOG = Logger.getLogger(ProductDetailServlet.class.getName());
+    private final ProductService productService;
 
-    private final ProductDAO productDAO = new ProductDAO();
-    private final ProductVariantDAO variantDAO = new ProductVariantDAO();
-    private final ProductImageDAO imageDAO = new ProductImageDAO();
+    public ProductDetailServlet() {
+        this.productService = new ProductService();
+    }
+
+    public ProductDetailServlet(ProductService productService) {
+        this.productService = productService;
+    }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -47,20 +54,20 @@ public class ProductDetailServlet extends HttpServlet {
         }
 
         try {
-            Product product = productDAO.getProductById(productId);
+            Product product = productService.getProductDetail(productId);
             if (product == null || !"published".equalsIgnoreCase(product.getStatus())) {
                 response.sendRedirect(request.getContextPath() + "/products");
                 return;
             }
 
-            // Get all packaging variants with live stock
-            List<ProductVariant> variants = variantDAO.getVariantsByProductId(productId);
+            // Lấy danh sách quy cách đóng gói và tồn kho qua Service
+            List<ProductVariant> variants = productService.getProductVariants(productId);
 
-            // Get product image gallery
-            List<ProductImage> images = imageDAO.getImagesByProductId(productId);
+            // Lấy thư viện hình ảnh qua Service
+            List<ProductImage> images = productService.getProductImages(productId);
 
-            // Get related products (same category)
-            List<Product> relatedProducts = productDAO.getRelatedProducts(product.getCategoryId(), productId, 4);
+            // Lấy danh sách sản phẩm cùng loại gợi ý qua Service
+            List<Product> relatedProducts = productService.getRelatedProducts(product.getCategoryId(), productId, 4);
 
             request.setAttribute("product", product);
             request.setAttribute("variants", variants);
@@ -70,8 +77,8 @@ public class ProductDetailServlet extends HttpServlet {
             request.getRequestDispatcher("/product-details.jsp").forward(request, response);
 
         } catch (SQLException e) {
-            LOG.log(Level.SEVERE, "Lỗi nạp chi tiết sản phẩm id: " + productId, e);
-            throw new ServletException("Database error in ProductDetailServlet", e);
+            LOG.log(Level.SEVERE, "Lỗi CSDL khi xem chi tiết sản phẩm ID: " + productId, e);
+            throw new ServletException("Lỗi CSDL khi xem chi tiết sản phẩm", e);
         }
     }
 }

@@ -22,6 +22,21 @@ public class Order {
     private String recipientName;
     private String recipientPhone;
     private String recipientAddress;
+    private String shopName;
+
+    // Checkout & Payment details
+    private String voucherCode;
+    private double discountAmount;
+    private double shippingFee;
+    private String deliveryMethod = "Standard";
+    private String paymentMethod = "COD";
+    private String note;
+
+    // Delivery staff assignment
+    private Integer deliveryStaffId;
+    private String deliveryStaffName;
+    private String deliveryStaffPhone;
+    private String deliveryStatus;
 
     // Associated items and history
     private List<OrderItem> items = new ArrayList<>();
@@ -207,6 +222,102 @@ public class Order {
 
     public void setItems(List<OrderItem> items) {
         this.items = items;
+    }
+
+    public boolean isCancelable() {
+        return "pending_confirmation".equalsIgnoreCase(status) || "preparing".equalsIgnoreCase(status);
+    }
+
+    public String getFormattedTotalAmount() {
+        return String.format("%,.0f ₫", totalAmount);
+    }
+
+    public String getShopName() {
+        return shopName;
+    }
+
+    public void setShopName(String shopName) {
+        this.shopName = shopName;
+    }
+
+    public String getVoucherCode() {
+        return voucherCode;
+    }
+
+    public void setVoucherCode(String voucherCode) {
+        this.voucherCode = voucherCode;
+    }
+
+    public double getDiscountAmount() {
+        return discountAmount;
+    }
+
+    public void setDiscountAmount(double discountAmount) {
+        this.discountAmount = discountAmount;
+    }
+
+    public double getShippingFee() {
+        return shippingFee;
+    }
+
+    public void setShippingFee(double shippingFee) {
+        this.shippingFee = shippingFee;
+    }
+
+    public String getDeliveryMethod() {
+        return deliveryMethod;
+    }
+
+    public void setDeliveryMethod(String deliveryMethod) {
+        this.deliveryMethod = deliveryMethod;
+    }
+
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(String paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
+    }
+
+    public Integer getDeliveryStaffId() {
+        return deliveryStaffId;
+    }
+
+    public void setDeliveryStaffId(Integer deliveryStaffId) {
+        this.deliveryStaffId = deliveryStaffId;
+    }
+
+    public String getDeliveryStaffName() {
+        return deliveryStaffName;
+    }
+
+    public void setDeliveryStaffName(String deliveryStaffName) {
+        this.deliveryStaffName = deliveryStaffName;
+    }
+
+    public String getDeliveryStaffPhone() {
+        return deliveryStaffPhone;
+    }
+
+    public void setDeliveryStaffPhone(String deliveryStaffPhone) {
+        this.deliveryStaffPhone = deliveryStaffPhone;
+    }
+
+    public String getDeliveryStatus() {
+        return deliveryStatus;
+    }
+
+    public void setDeliveryStatus(String deliveryStatus) {
+        this.deliveryStatus = deliveryStatus;
     }
 
     public List<OrderStatusHistory> getHistoryList() {

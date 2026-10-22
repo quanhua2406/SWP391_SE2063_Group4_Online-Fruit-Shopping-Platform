@@ -1,7 +1,7 @@
-package com.mycompany.onlinefruitshopping.controller;
+package com.mycompany.onlinefruitshopping.controller.product;
 
-import com.mycompany.onlinefruitshopping.dao.ProductDAO;
 import com.mycompany.onlinefruitshopping.model.Product;
+import com.mycompany.onlinefruitshopping.service.ProductService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -16,11 +16,23 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * REST API gợi ý tìm kiếm tức thì cho khách hàng.
+ * Sử dụng ProductService để lấy danh sách gợi ý.
+ */
 @WebServlet("/api/products/search-suggestions")
 public class SearchSuggestionServlet extends HttpServlet {
 
     private static final Logger LOG = Logger.getLogger(SearchSuggestionServlet.class.getName());
-    private final ProductDAO productDAO = new ProductDAO();
+    private final ProductService productService;
+
+    public SearchSuggestionServlet() {
+        this.productService = new ProductService();
+    }
+
+    public SearchSuggestionServlet(ProductService productService) {
+        this.productService = productService;
+    }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -42,7 +54,7 @@ public class SearchSuggestionServlet extends HttpServlet {
         }
 
         try {
-            List<Product> suggestions = productDAO.getSearchSuggestions(query.trim(), 6);
+            List<Product> suggestions = productService.getSearchSuggestions(query.trim(), 6);
             StringBuilder sb = new StringBuilder();
             sb.append("[");
             for (int i = 0; i < suggestions.size(); i++) {
@@ -63,8 +75,7 @@ public class SearchSuggestionServlet extends HttpServlet {
             out.print(sb.toString());
 
         } catch (SQLException e) {
-            LOG.log(Level.SEVERE, "Lỗi tìm kiếm gợi ý", e);
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            LOG.log(Level.SEVERE, "Lỗi khi lấy gợi ý tìm kiếm từ khóa: " + query, e);
             out.print("[]");
         }
     }
@@ -74,27 +85,13 @@ public class SearchSuggestionServlet extends HttpServlet {
         StringBuilder sb = new StringBuilder("\"");
         for (char c : s.toCharArray()) {
             switch (c) {
-                case '"':
-                    sb.append("\\\"");
-                    break;
-                case '\\':
-                    sb.append("\\\\");
-                    break;
-                case '\b':
-                    sb.append("\\b");
-                    break;
-                case '\f':
-                    sb.append("\\f");
-                    break;
-                case '\n':
-                    sb.append("\\n");
-                    break;
-                case '\r':
-                    sb.append("\\r");
-                    break;
-                case '\t':
-                    sb.append("\\t");
-                    break;
+                case '"': sb.append("\\\""); break;
+                case '\\': sb.append("\\\\"); break;
+                case '\b': sb.append("\\b"); break;
+                case '\f': sb.append("\\f"); break;
+                case '\n': sb.append("\\n"); break;
+                case '\r': sb.append("\\r"); break;
+                case '\t': sb.append("\\t"); break;
                 default:
                     if (c < ' ') {
                         String t = "000" + Integer.toHexString(c);
