@@ -27,16 +27,32 @@ public class DeliveryDAO {
 
     // Chỉ nối các điều kiện SQL cố định; dữ liệu người dùng luôn truyền qua dấu ?.
     private String scope(Account user) {
-        if ("ShopOwner".equals(user.getRole())) return " AND s.owner_id = ?";
-        if ("DeliveryStaff".equals(user.getRole())) return " AND d.shipper_id = ? AND t.status = N'Active'";
-        throw new IllegalArgumentException("Bạn không có quyền xem giao hàng.");
+        if ("ShopOwner".equals(user.getRole())) {
+            return " AND s.owner_id = ?";
+        }
+
+        if ("DeliveryStaff".equals(user.getRole())) {
+            return " AND d.shipper_id = ? AND t.status = N'Active'";
+        }
+
+        if ("Customer".equals(user.getRole())) {
+            return " AND o.user_id = ?";
+        }
+
+        throw new IllegalArgumentException(
+                "Bạn không có quyền xem giao hàng."
+        );
     }
 
     public List<Delivery> findAll(Account user) throws SQLException {
         List<Delivery> list = new ArrayList<>();
         String sql = SELECT_DELIVERY + scope(user) + " ORDER BY d.delivery_id DESC";
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setInt(1, user.getId());
+            if ("Customer".equals(user.getRole())) {
+                ps.setInt(1, user.getId());
+            } else {
+                ps.setInt(1, user.getId());
+            }
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) list.add(map(rs));
             }

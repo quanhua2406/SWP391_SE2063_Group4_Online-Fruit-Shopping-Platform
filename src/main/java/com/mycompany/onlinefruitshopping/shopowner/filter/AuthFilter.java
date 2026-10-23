@@ -101,7 +101,8 @@ public class AuthFilter implements Filter {
                     && !role.equals("ShopOwner"))
                 || (path.startsWith("/shopowner/delivery/")
                     && !role.equals("ShopOwner")
-                    && !role.equals("DeliveryStaff"))
+                    && !role.equals("DeliveryStaff")
+                    && !role.equals("Customer"))
                 || (path.startsWith("/shopowner/customer/")
                     && !role.equals("Customer"));
 
