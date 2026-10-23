@@ -26,18 +26,26 @@ public class DeliveryService {
     }
 
     public List<Delivery> findAll(Account user) throws SQLException {
-        ServiceChecks.requireRole(user, "ShopOwner", "DeliveryStaff");
+        ServiceChecks.requireRole(
+                user, "ShopOwner", "DeliveryStaff", "Customer"
+        );
         return deliveryDAO.findAll(user);
     }
 
-    public Delivery findById(int deliveryId, Account user) throws SQLException {
-        ServiceChecks.requireRole(user, "ShopOwner", "DeliveryStaff");
+    public Delivery findById(int deliveryId, Account user)
+            throws SQLException {
+        ServiceChecks.requireRole(
+                user, "ShopOwner", "DeliveryStaff", "Customer"
+        );
         ServiceChecks.positiveId(deliveryId);
         return deliveryDAO.findById(deliveryId, user);
     }
 
-    public List<OrderItem> findItems(int deliveryId, Account user) throws SQLException {
-        ServiceChecks.requireRole(user, "ShopOwner", "DeliveryStaff");
+    public List<OrderItem> findItems(int deliveryId, Account user)
+            throws SQLException {
+        ServiceChecks.requireRole(
+                user, "ShopOwner", "DeliveryStaff", "Customer"
+        );
         ServiceChecks.positiveId(deliveryId);
         return deliveryDAO.findItems(deliveryId, user);
     }
