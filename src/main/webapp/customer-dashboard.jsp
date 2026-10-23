@@ -12,28 +12,8 @@
 
 <body>
 
-<header class="navbar">
-
-    <div class="logo">
-        🍊 FreshFruit
-    </div>
-
-    <div class="nav-actions">
-        <a href="${pageContext.request.contextPath}/home">
-            🏠 Home
-        </a>
-
-        <a href="#" class="cart-link">
-            🛒 Cart
-        </a>
-
-        <a href="${pageContext.request.contextPath}/logout"
-           class="logout">
-            Logout
-        </a>
-    </div>
-
-</header>
+<!-- Header Navigation (Reusable Component) -->
+<jsp:include page="/includes/header.jsp" />
 
 <section class="dashboard">
 
@@ -58,14 +38,14 @@
             <div class="dashboard-icon">🛒</div>
             <h3>My Cart</h3>
             <p>View and manage the fruits in your shopping cart.</p>
-            <a href="#">View Cart</a>
+            <a href="${pageContext.request.contextPath}/cart">View Cart</a>
         </div>
 
         <div class="dashboard-card">
             <div class="dashboard-icon">📦</div>
             <h3>My Orders</h3>
             <p>View your order history and current orders.</p>
-            <a href="#">My Orders</a>
+            <a href="${pageContext.request.contextPath}/orders">My Orders</a>
         </div>
 
         <div class="dashboard-card">
@@ -92,6 +72,9 @@
     </div>
 
 </section>
+
+<!-- Footer (Reusable Component) -->
+<jsp:include page="/includes/footer.jsp" />
 
 </body>
 </html>

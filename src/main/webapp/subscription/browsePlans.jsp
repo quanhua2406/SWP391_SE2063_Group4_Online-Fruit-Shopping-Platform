@@ -7,31 +7,13 @@
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Gói Trái Cây Định Kỳ | FreshFruit Marketplace</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css"/>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/quanht/style.css"/>
 </head>
 <body class="customer-plans-page">
 
-<!-- Global Navigation Bar -->
-<header class="cust-navbar">
-    <a href="${pageContext.request.contextPath}/home" class="brand">
-        <span>FreshFruit</span>
-    </a>
-    <nav class="nav-links">
-        <a href="${pageContext.request.contextPath}/home" class="nav-link">Trang chủ</a>
-        <a href="${pageContext.request.contextPath}/products" class="nav-link">Khám phá trái cây</a>
-        <a href="${pageContext.request.contextPath}/subscriptions" class="nav-link active">Gói Trái Cây Định Kỳ</a>
-        <c:choose>
-            <c:when test="${not empty sessionScope.user}">
-                <a href="${pageContext.request.contextPath}/my-subscriptions" class="nav-link">Gói của tôi</a>
-                <a href="${pageContext.request.contextPath}/profile" class="nav-link">${sessionScope.user.fullName}</a>
-                <a href="${pageContext.request.contextPath}/logout" class="nav-link" style="color:#ef4444;">Đăng xuất</a>
-            </c:when>
-            <c:otherwise>
-                <a href="${pageContext.request.contextPath}/login" class="btn-nav-primary">Đăng nhập</a>
-            </c:otherwise>
-        </c:choose>
-    </nav>
-</header>
+<!-- Global Navigation Bar (Reusable Component) -->
+<jsp:include page="/includes/header.jsp" />
 
 <!-- Toast Notifications -->
 <c:if test="${not empty sessionScope.toastSuccess}">
@@ -292,6 +274,9 @@
         if (toast) toast.style.display = 'none';
     }, 4000);
 </script>
+
+<!-- Footer (Reusable Component) -->
+<jsp:include page="/includes/footer.jsp" />
 
 </body>
 </html>

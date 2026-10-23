@@ -424,23 +424,8 @@
 </head>
 <body>
 
-    <!-- Header Navigation -->
-    <header style="background: #ffffff; border-bottom: 1px solid var(--border); padding: 14px 0;">
-        <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; align-items: center; justify-content: space-between;">
-            <a href="${pageContext.request.contextPath}/home" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--primary-dark); font-weight: 700; font-size: 20px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
-                    <path d="M2 12h20"></path>
-                </svg>
-                FreshFruit Store
-            </a>
-            <div style="display: flex; align-items: center; gap: 16px;">
-                <a href="${pageContext.request.contextPath}/cart" style="text-decoration: none; color: var(--text-muted); font-size: 14px;">Quay lại Giỏ hàng</a>
-                <span style="color: var(--text-dark); font-size: 14px; font-weight: 500;">Chào, ${sessionScope.user.fullName}</span>
-            </div>
-        </div>
-    </header>
+    <!-- Header Navigation (Reusable Component) -->
+    <jsp:include page="/includes/header.jsp" />
 
     <div class="checkout-container">
         <!-- Breadcrumb -->
@@ -833,5 +818,8 @@
             });
         }
     </script>
+    <!-- Footer (Reusable Component) -->
+    <jsp:include page="/includes/footer.jsp" />
+
 </body>
 </html>
