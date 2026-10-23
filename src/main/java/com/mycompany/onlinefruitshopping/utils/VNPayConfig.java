@@ -10,8 +10,8 @@ import java.util.*;
 public class VNPayConfig {
 
     public static final String VNP_PAY_URL = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-    public static final String VNP_TMN_CODE = "FRESHFRU";
-    public static final String VNP_HASH_SECRET = "VNPAYSECRETKEY2026ONLINEFRUITSHOPPING";
+    public static final String VNP_TMN_CODE = "83VFP11T";
+    public static final String VNP_HASH_SECRET = "ZCZKQNHJQKTOHTQWHODEXHEWROVKAXWP";
     public static final String VNP_VERSION = "2.1.0";
     public static final String VNP_COMMAND = "pay";
 
@@ -64,24 +64,21 @@ public class VNPayConfig {
         StringBuilder hashData = new StringBuilder();
         StringBuilder query = new StringBuilder();
 
-        for (Iterator<String> itr = fieldNames.iterator(); itr.hasNext(); ) {
-            String fieldName = itr.next();
+        for (String fieldName : fieldNames) {
             String fieldValue = vnpParams.get(fieldName);
-            if (fieldValue != null && fieldValue.length() > 0) {
-                // Build hash data
-                hashData.append(fieldName);
-                hashData.append('=');
-                hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
+            if (fieldValue != null && !fieldValue.isEmpty()) {
+                String encodedKey = URLEncoder.encode(fieldName, StandardCharsets.UTF_8);
+                String encodedValue = URLEncoder.encode(fieldValue, StandardCharsets.UTF_8);
 
-                // Build query
-                query.append(URLEncoder.encode(fieldName, StandardCharsets.US_ASCII));
-                query.append('=');
-                query.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
-
-                if (itr.hasNext()) {
-                    query.append('&');
+                if (hashData.length() > 0) {
                     hashData.append('&');
                 }
+                hashData.append(fieldName).append('=').append(encodedValue);
+
+                if (query.length() > 0) {
+                    query.append('&');
+                }
+                query.append(encodedKey).append('=').append(encodedValue);
             }
         }
 
@@ -114,16 +111,13 @@ public class VNPayConfig {
         Collections.sort(fieldNames);
 
         StringBuilder hashData = new StringBuilder();
-        for (Iterator<String> itr = fieldNames.iterator(); itr.hasNext(); ) {
-            String fieldName = itr.next();
+        for (String fieldName : fieldNames) {
             String fieldValue = fields.get(fieldName);
-            if (fieldValue != null && fieldValue.length() > 0) {
-                hashData.append(fieldName);
-                hashData.append('=');
-                hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
-                if (itr.hasNext()) {
+            if (fieldValue != null && !fieldValue.isEmpty()) {
+                if (hashData.length() > 0) {
                     hashData.append('&');
                 }
+                hashData.append(fieldName).append('=').append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8));
             }
         }
 

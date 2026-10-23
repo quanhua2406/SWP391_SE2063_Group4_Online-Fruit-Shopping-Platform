@@ -293,6 +293,29 @@
                             <li>Sử dụng thông tin thẻ thử nghiệm để xác thực giao dịch.</li>
                             <li>Hệ thống tự động kích hoạt trạng thái đơn hàng khi thành công.</li>
                         </ul>
+
+                        <!-- Thông tin thẻ test VNPay Sandbox -->
+                        <div style="background: #f0fdf4; border: 1px dashed #86efac; border-radius: 8px; padding: 12px; margin: 12px 0 16px; font-size: 13px;">
+                            <div style="font-weight: 700; color: #166534; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                                    <line x1="1" y1="10" x2="23" y2="10"></line>
+                                </svg>
+                                Thông tin thẻ kiểm thử VNPay Sandbox:
+                            </div>
+                            <div style="display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; color: #1e293b;">
+                                <span style="color: #64748b;">Ngân hàng:</span>
+                                <strong>NCB</strong>
+                                <span style="color: #64748b;">Số thẻ:</span>
+                                <code style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-weight: 700; color: #0f172a; width: fit-content;">9704198526191432198</code>
+                                <span style="color: #64748b;">Tên chủ thẻ:</span>
+                                <strong>NGUYEN VAN A</strong>
+                                <span style="color: #64748b;">Ngày phát hành:</span>
+                                <strong>07/15</strong>
+                                <span style="color: #64748b;">Mã OTP:</span>
+                                <strong>123456</strong>
+                            </div>
+                        </div>
                     </div>
 
                     <div>
