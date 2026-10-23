@@ -1,5 +1,8 @@
 <%@ page pageEncoding="UTF-8" %>
-<c:set var="deliveryListPath" value="${sessionScope.shopUser.role == 'ShopOwner' ? '/shopowner//shop/deliveries' : '/shopowner//delivery/list'}"/>
+<c:set var="deliveryListPath"
+       value="${sessionScope.shopUser.role == 'ShopOwner'
+                ? '/shopowner/shop/deliveries'
+                : '/shopowner/delivery/list'}"/>
 <form method="get" action="${ctx}${deliveryListPath}#delivery-list" class="delivery-filters" aria-label="Bộ lọc giao hàng">
     <div class="filter-fields ${sessionScope.shopUser.role == 'DeliveryStaff' ? 'filter-fields-shipper' : ''}">
         <div class="filter-field">
