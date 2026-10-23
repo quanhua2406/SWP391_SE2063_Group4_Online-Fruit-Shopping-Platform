@@ -96,15 +96,23 @@ public class AuthFilter implements Filter {
         account.setRole(role);
         session.setAttribute("shopUser", account);
 
+        boolean customerCanViewDelivery =
+                "Customer".equals(role)
+                && "GET".equals(req.getMethod())
+                && (
+                    "/shopowner/delivery/list".equals(path)
+                    || "/shopowner/delivery/detail".equals(path)
+                );
+
         boolean denied =
                 (path.startsWith("/shopowner/shop/")
-                    && !role.equals("ShopOwner"))
+                    && !"ShopOwner".equals(role))
                 || (path.startsWith("/shopowner/delivery/")
-                    && !role.equals("ShopOwner")
-                    && !role.equals("DeliveryStaff")
-                    && !role.equals("Customer"))
+                    && !"ShopOwner".equals(role)
+                    && !"DeliveryStaff".equals(role)
+                    && !customerCanViewDelivery)
                 || (path.startsWith("/shopowner/customer/")
-                    && !role.equals("Customer"));
+                    && !"Customer".equals(role));
 
         if (denied) {
             res.sendError(403);
