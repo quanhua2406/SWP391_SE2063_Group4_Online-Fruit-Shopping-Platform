@@ -169,7 +169,7 @@
 
     <div class="nav-actions">
 
-        <a href="${pageContext.request.contextPath}/products" style="color: #16a34a; font-weight: 700;">
+        <a href="${pageContext.request.contextPath}/products" class="nav-link" style="color: #16a34a; font-weight: 700;">
             Khám Phá Trái Cây
         </a>
 
@@ -225,71 +225,158 @@
                 }
             }
             request.setAttribute("isShopOwner", isShopOwner);
+            request.setAttribute("dashboardUrl", dashboardUrl);
+            request.setAttribute("dashboardName", dashboardName);
         %>
 
-        <!-- Gói Định Kỳ: cho phép cả khách vãng lai và thành viên xem -->
-        <a href="${pageContext.request.contextPath}/subscriptions" class="nav-sub-link">
-            Gói Định Kỳ
+        <!-- Dropdown Gói Định Kỳ -->
+        <div class="nav-dropdown">
+            <a href="${pageContext.request.contextPath}/subscriptions" class="nav-dropdown-toggle">
+                <span>Gói Định Kỳ</span>
+                <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+            </a>
+            <div class="nav-dropdown-menu">
+                <a href="${pageContext.request.contextPath}/subscriptions" class="nav-dropdown-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                        <polyline points="2 17 12 22 22 17"></polyline>
+                        <polyline points="2 12 12 17 22 12"></polyline>
+                    </svg>
+                    Tất cả các gói định kỳ
+                </a>
+                <c:if test="${not isShopOwner and not empty sessionScope.user}">
+                    <a href="${pageContext.request.contextPath}/my-subscriptions" class="nav-dropdown-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        Gói đăng ký của tôi
+                    </a>
+                </c:if>
+            </div>
+        </div>
+
+        <!-- Giỏ hàng -->
+        <a href="${pageContext.request.contextPath}/cart" title="Giỏ hàng" class="nav-link" style="display: inline-flex; align-items: center; gap: 6px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+            <span>Giỏ hàng</span>
+            <span id="navCartBadge" style="background: #ef4444; color: #fff; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 9999px; ${sessionScope.cartCount > 0 ? '' : 'display:none;'}">
+                ${sessionScope.cartCount}
+            </span>
         </a>
 
-        <!-- Cart: chỉ hiển thị icon giỏ hàng khi khách login -->
-        <% if (currentUser != null) { %>
-            <a href="${pageContext.request.contextPath}/cart" title="Giỏ hàng" style="display: inline-flex; align-items: center; gap: 6px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="9" cy="21" r="1"></circle>
-                    <circle cx="20" cy="21" r="1"></circle>
-                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                </svg>
-                Giỏ hàng
-                <span id="navCartBadge" style="background: #ef4444; color: #fff; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 9999px; ${sessionScope.cartCount > 0 ? '' : 'display:none;'}">
-                    ${sessionScope.cartCount}
-                </span>
-            </a>
-        <c:if test="${not isShopOwner and not empty sessionScope.user}">
-            <a href="${pageContext.request.contextPath}/my-subscriptions" class="nav-mysub-link">
-                Gói Của Tôi
-            </a>
-        </c:if>
+        <!-- Dropdown Tài khoản Người dùng -->
+        <c:choose>
+            <c:when test="${not empty sessionScope.user}">
+                <div class="nav-dropdown">
+                    <button type="button" class="nav-dropdown-toggle" style="border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 9999px; padding: 4px 12px 4px 6px;">
+                        <span style="width: 26px; height: 26px; border-radius: 50%; background: #dcfce7; color: #16a34a; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px;">
+                            ${fn:toUpperCase(fn:substring(sessionScope.user.fullName != null ? sessionScope.user.fullName : sessionScope.user.username, 0, 1))}
+                        </span>
+                        <span style="font-weight: 600; color: #1e293b; max-width: 130px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13.5px;">
+                            ${sessionScope.user.fullName != null ? sessionScope.user.fullName : sessionScope.user.username}
+                        </span>
+                        <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
 
-            <!-- My Account -->
-            <a href="${pageContext.request.contextPath}/profile">
-                Tài khoản
-            </a>
-        <% } else { %>
-            <a href="${pageContext.request.contextPath}/login">
-                Đăng nhập
-            </a>
-        <% } %>
+                    <div class="nav-dropdown-menu" style="min-width: 230px;">
+                        <div class="nav-dropdown-header">
+                            <div class="nav-dropdown-user-name">${sessionScope.user.fullName != null ? sessionScope.user.fullName : sessionScope.user.username}</div>
+                            <div class="nav-dropdown-user-role">${sessionScope.user.roleName != null ? sessionScope.user.roleName : 'Thành viên'}</div>
+                        </div>
 
+                        <!-- Dashboard theo vai trò -->
+                        <c:if test="${not empty dashboardUrl}">
+                            <a href="${dashboardUrl}" class="nav-dropdown-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="14" width="7" height="7"></rect>
+                                    <rect x="3" y="14" width="7" height="7"></rect>
+                                </svg>
+                                ${dashboardName}
+                            </a>
+                        </c:if>
 
-        <!-- Dashboard -->
-        <% if (dashboardUrl != null) { %>
+                        <!-- Đơn hàng & Thanh toán -->
+                        <a href="${pageContext.request.contextPath}/orders" class="nav-dropdown-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                                <line x1="3" y1="6" x2="21" y2="6"></line>
+                                <path d="M16 10a4 4 0 0 1-8 0"></path>
+                            </svg>
+                            Đơn hàng của tôi
+                        </a>
 
-            <a href="<%= dashboardUrl %>">
-                <%= dashboardName %>
-            </a>
+                        <a href="${pageContext.request.contextPath}/payments" class="nav-dropdown-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                                <line x1="12" y1="8" x2="12" y2="16"></line>
+                                <line x1="8" y1="12" x2="16" y2="12"></line>
+                            </svg>
+                            Lịch sử thanh toán
+                        </a>
 
-        <% } %>
+                        <a href="${pageContext.request.contextPath}/refunds" class="nav-dropdown-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="1 4 1 10 7 10"></polyline>
+                                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                            </svg>
+                            Yêu cầu hoàn tiền
+                        </a>
 
-        <!-- Đơn hàng của tôi -->
-        <% if (currentUser != null) { %>
+                        <div class="nav-dropdown-divider"></div>
 
-            <a href="${pageContext.request.contextPath}/orders">
-                Đơn hàng của tôi
-            </a>
+                        <!-- Thông tin cá nhân & Địa chỉ -->
+                        <a href="${pageContext.request.contextPath}/profile" class="nav-dropdown-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                            Thông tin tài khoản
+                        </a>
 
-        <% } %>
+                        <a href="${pageContext.request.contextPath}/addresses" class="nav-dropdown-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                <circle cx="12" cy="10" r="3"></circle>
+                            </svg>
+                            Sổ địa chỉ nhận hàng
+                        </a>
 
+                        <div class="nav-dropdown-divider"></div>
 
-        <!-- Logout -->
-        <% if (currentUser != null) { %>
+                        <!-- Đăng xuất -->
+                        <a href="${pageContext.request.contextPath}/logout" class="nav-dropdown-item logout-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                <polyline points="16 17 21 12 16 7"></polyline>
+                                <line x1="21" y1="12" x2="9" y2="12"></line>
+                            </svg>
+                            Đăng xuất
+                        </a>
+                    </div>
+                </div>
+            </c:when>
 
-            <a class="logout"
-               href="${pageContext.request.contextPath}/logout">
-                Đăng xuất
-            </a>
-
-        <% } %>
+            <c:otherwise>
+                <!-- Khách vãng lai -->
+                <a href="${pageContext.request.contextPath}/login" class="nav-link" style="font-weight: 600;">
+                    Đăng nhập
+                </a>
+                <a href="${pageContext.request.contextPath}/register" class="nav-link" style="background: #16a34a; color: #fff; padding: 6px 14px; border-radius: 6px; font-weight: 600;">
+                    Đăng ký
+                </a>
+            </c:otherwise>
+        </c:choose>
 
     </div>
 
