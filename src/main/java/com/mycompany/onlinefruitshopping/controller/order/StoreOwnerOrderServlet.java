@@ -1,9 +1,8 @@
-package com.mycompany.onlinefruitshopping.controller;
+package com.mycompany.onlinefruitshopping.controller.order;
 
-import com.mycompany.onlinefruitshopping.dao.OrderDAO;
-import com.mycompany.onlinefruitshopping.dao.ProductDAO;
 import com.mycompany.onlinefruitshopping.model.Order;
 import com.mycompany.onlinefruitshopping.model.User;
+import com.mycompany.onlinefruitshopping.service.OrderService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -19,11 +18,25 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Controller Quản trị Đơn hàng của Chủ Cửa Hàng (Store Owner).
+ * Feature 6: Order Management - In Charge: Le Duc Cuong (cuongld)
+ *
+ * Tuân thủ mô hình 3 tầng (3-Layer Architecture):
+ * Servlet chỉ đóng vai trò tiếp nhận HTTP Request, xác thực quyền và gọi OrderService để xử lý.
+ */
 @WebServlet("/store-owner/orders")
 public class StoreOwnerOrderServlet extends HttpServlet {
 
-    private final OrderDAO orderDAO = new OrderDAO();
-    private final ProductDAO productDAO = new ProductDAO();
+    private final OrderService orderService;
+
+    public StoreOwnerOrderServlet() {
+        this.orderService = new OrderService();
+    }
+
+    public StoreOwnerOrderServlet(OrderService orderService) {
+        this.orderService = orderService;
+    }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -33,10 +46,10 @@ public class StoreOwnerOrderServlet extends HttpServlet {
         if (user == null) return;
 
         try {
-            int shopId = productDAO.getOrCreateShopIdForUser(user.getUserID(), user.getFullName());
+            int shopId = orderService.getOrCreateShopIdForUser(user.getUserID(), user.getFullName());
 
             // Tự động tạo dữ liệu mẫu nếu shop chưa có đơn hàng nào để tiện kiểm thử
-            orderDAO.seedSampleOrdersIfEmpty(shopId);
+            orderService.seedSampleOrdersIfEmpty(shopId);
 
             String action = request.getParameter("action");
             if ("detail".equalsIgnoreCase(action)) {
@@ -51,13 +64,15 @@ public class StoreOwnerOrderServlet extends HttpServlet {
 
             String searchQuery = request.getParameter("q");
 
-            List<Order> orders = orderDAO.getOrdersByShop(shopId, status, searchQuery);
-            Map<String, Integer> counts = orderDAO.countOrdersByStatus(shopId);
+            List<Order> orders = orderService.getOrdersByShop(shopId, status, searchQuery);
+            Map<String, Integer> counts = orderService.countOrdersByStatus(shopId);
+            List<User> availableShippers = orderService.getAvailableDeliveryStaff();
 
             request.setAttribute("orders", orders);
             request.setAttribute("counts", counts);
             request.setAttribute("currentStatus", status);
             request.setAttribute("searchQuery", searchQuery);
+            request.setAttribute("availableShippers", availableShippers);
 
             request.getRequestDispatcher("/store-owner-orders.jsp").forward(request, response);
 
@@ -77,7 +92,7 @@ public class StoreOwnerOrderServlet extends HttpServlet {
 
         try {
             int orderId = Integer.parseInt(orderIdStr.trim());
-            Order order = orderDAO.getOrderById(orderId, shopId);
+            Order order = orderService.getOrderDetail(orderId, shopId);
             if (order == null) {
                 redirectWithError(request, response, "Không tìm thấy thông tin đơn hàng hoặc bạn không có quyền xem đơn này.");
                 return;
@@ -86,13 +101,15 @@ public class StoreOwnerOrderServlet extends HttpServlet {
             String status = request.getParameter("status");
             if (status == null || status.isBlank()) status = "all";
 
-            List<Order> orders = orderDAO.getOrdersByShop(shopId, status, null);
-            Map<String, Integer> counts = orderDAO.countOrdersByStatus(shopId);
+            List<Order> orders = orderService.getOrdersByShop(shopId, status, null);
+            Map<String, Integer> counts = orderService.countOrdersByStatus(shopId);
+            List<User> availableShippers = orderService.getAvailableDeliveryStaff();
 
             request.setAttribute("orders", orders);
             request.setAttribute("counts", counts);
             request.setAttribute("currentStatus", status);
             request.setAttribute("selectedOrder", order);
+            request.setAttribute("availableShippers", availableShippers);
 
             request.getRequestDispatcher("/store-owner-orders.jsp").forward(request, response);
 
@@ -112,7 +129,7 @@ public class StoreOwnerOrderServlet extends HttpServlet {
         if (user == null) return;
 
         try {
-            int shopId = productDAO.getOrCreateShopIdForUser(user.getUserID(), user.getFullName());
+            int shopId = orderService.getOrCreateShopIdForUser(user.getUserID(), user.getFullName());
             String action = request.getParameter("action");
             String orderIdStr = request.getParameter("orderId");
 
@@ -124,25 +141,32 @@ public class StoreOwnerOrderServlet extends HttpServlet {
             int orderId = Integer.parseInt(orderIdStr.trim());
 
             if ("confirm".equalsIgnoreCase(action)) {
-                // Xác nhận đơn: pending_confirmation -> preparing
-                orderDAO.updateOrderStatus(orderId, shopId, "preparing", user.getUserID(), "Shop đã duyệt đơn và đang đóng gói.");
+                // Xác nhận đơn thông qua OrderService
+                orderService.confirmOrder(orderId, shopId, user.getUserID());
                 redirectWithSuccess(request, response, "Xác nhận đơn hàng #" + orderId + " thành công! Trạng thái chuyển sang Đang chuẩn bị.", "preparing");
 
             } else if ("ready".equalsIgnoreCase(action)) {
-                // Đóng gói xong / Sẵn sàng giao: preparing -> shipping
-                orderDAO.updateOrderStatus(orderId, shopId, "shipping", user.getUserID(), "Shop đã đóng gói xong, bàn giao vận chuyển.");
+                // Đóng gói xong / Sẵn sàng giao thông qua OrderService
+                orderService.markOrderReady(orderId, shopId, user.getUserID());
                 redirectWithSuccess(request, response, "Đơn hàng #" + orderId + " đã sẵn sàng và chuyển sang Đang giao hàng!", "shipping");
 
             } else if ("reject".equalsIgnoreCase(action)) {
-                // Từ chối đơn: chuyển sang cancelled với lý do bắt buộc
+                // Từ chối đơn thông qua OrderService
                 String reason = request.getParameter("reason");
-                if (reason == null || reason.trim().isEmpty()) {
-                    redirectWithError(request, response, "Vui lòng nhập lý do từ chối đơn hàng!");
+                orderService.rejectOrder(orderId, shopId, user.getUserID(), reason);
+                redirectWithSuccess(request, response, "Đã từ chối đơn hàng #" + orderId + " thành công.", "cancelled");
+
+            } else if ("assign-shipper".equalsIgnoreCase(action)) {
+                // Phân công shipper thông qua OrderService (Task 12)
+                String staffIdStr = request.getParameter("staffId");
+                if (staffIdStr == null || staffIdStr.isBlank()) {
+                    redirectWithError(request, response, "Vui lòng chọn nhân viên giao hàng.");
                     return;
                 }
-
-                orderDAO.updateOrderStatus(orderId, shopId, "cancelled", user.getUserID(), "Từ chối: " + reason.trim());
-                redirectWithSuccess(request, response, "Đã từ chối đơn hàng #" + orderId + " thành công.", "cancelled");
+                int staffId = Integer.parseInt(staffIdStr.trim());
+                String shipperNote = request.getParameter("shipperNote");
+                orderService.assignDeliveryStaff(orderId, shopId, staffId, user.getUserID(), shipperNote);
+                redirectWithSuccess(request, response, "Đã phân công Shipper giao đơn hàng #" + orderId + " thành công!", "shipping");
 
             } else {
                 redirectWithError(request, response, "Thao tác không được hỗ trợ.");

@@ -64,6 +64,38 @@ public class AddressDAO {
     }
 
     // =========================================================
+    // GET DEFAULT ADDRESS OF USER
+    // =========================================================
+    public Address getDefaultAddress(int userId) throws SQLException {
+        String sql = """
+                SELECT TOP 1 address_id, user_id, recipient_name, phone, address_line, ward, district, province, is_default
+                FROM user_addresses
+                WHERE user_id = ?
+                ORDER BY is_default DESC, address_id DESC
+                """;
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Address address = new Address();
+                    address.setAddressId(rs.getInt("address_id"));
+                    address.setUserId(rs.getInt("user_id"));
+                    address.setRecipientName(rs.getString("recipient_name"));
+                    address.setPhone(rs.getString("phone"));
+                    address.setAddressLine(rs.getString("address_line"));
+                    address.setWard(rs.getString("ward"));
+                    address.setDistrict(rs.getString("district"));
+                    address.setProvince(rs.getString("province"));
+                    address.setDefault(rs.getBoolean("is_default"));
+                    return address;
+                }
+            }
+        }
+        return null;
+    }
+
+    // =========================================================
     // GET ONE ADDRESS
     // =========================================================
     public Address getAddressById(int addressId, int userId) throws SQLException {

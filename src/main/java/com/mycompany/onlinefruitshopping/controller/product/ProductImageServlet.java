@@ -1,10 +1,9 @@
-package com.mycompany.onlinefruitshopping.controller;
+package com.mycompany.onlinefruitshopping.controller.product;
 
-import com.mycompany.onlinefruitshopping.dao.ProductDAO;
-import com.mycompany.onlinefruitshopping.dao.ProductImageDAO;
 import com.mycompany.onlinefruitshopping.model.Product;
 import com.mycompany.onlinefruitshopping.model.ProductImage;
 import com.mycompany.onlinefruitshopping.model.User;
+import com.mycompany.onlinefruitshopping.service.ProductService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -19,11 +18,22 @@ import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.List;
 
+/**
+ * Controller Quản lý Thư viện Hình ảnh Sản phẩm.
+ * Tuân thủ mô hình 3 tầng: Sử dụng ProductService để xử lý nghiệp vụ.
+ */
 @WebServlet(urlPatterns = {"/store-owner/product-images", "/admin/product-images"})
 public class ProductImageServlet extends HttpServlet {
 
-    private final ProductImageDAO imageDAO = new ProductImageDAO();
-    private final ProductDAO productDAO = new ProductDAO();
+    private final ProductService productService;
+
+    public ProductImageServlet() {
+        this.productService = new ProductService();
+    }
+
+    public ProductImageServlet(ProductService productService) {
+        this.productService = productService;
+    }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -102,13 +112,13 @@ public class ProductImageServlet extends HttpServlet {
             return;
         }
 
-        Product product = productDAO.getProductById(productId);
+        Product product = productService.getProductDetail(productId);
         if (product == null) {
             response.sendRedirect(request.getContextPath() + "/store-owner/products?error=notfound");
             return;
         }
 
-        List<ProductImage> images = imageDAO.getImagesByProductId(productId);
+        List<ProductImage> images = productService.getProductImages(productId);
 
         request.setAttribute("product", product);
         request.setAttribute("images", images);
@@ -116,7 +126,7 @@ public class ProductImageServlet extends HttpServlet {
     }
 
     // =========================================================
-    // 2. ADD PRODUCT IMAGE (WITH URL VALIDATION)
+    // 2. ADD PRODUCT IMAGE
     // =========================================================
     private void handleAddImage(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, IOException {
@@ -133,96 +143,87 @@ public class ProductImageServlet extends HttpServlet {
             return;
         }
 
-        // Validation 1: Blank check
-        if (imageUrl == null || imageUrl.trim().isEmpty()) {
-            redirectWithError(request, response, productId, "Đường dẫn hình ảnh không được để trống!");
-            return;
-        }
-
-        String trimmedUrl = imageUrl.trim();
-
-        // Validation 2: URL format check
-        if (!trimmedUrl.startsWith("http://") && !trimmedUrl.startsWith("https://") && !trimmedUrl.startsWith("/")) {
-            redirectWithError(request, response, productId, "Đường dẫn ảnh phải bắt đầu bằng http://, https:// hoặc đường dẫn hợp lệ!");
-            return;
-        }
-
-        // Validation 3: Length check
-        if (trimmedUrl.length() > 255) {
-            redirectWithError(request, response, productId, "Đường dẫn ảnh quá dài (tối đa 255 ký tự)!");
-            return;
-        }
-
-        int sortOrder = 2; // Default secondary image
+        int sortOrder = 1;
         if (sortOrderStr != null && !sortOrderStr.isBlank()) {
             try {
-                int so = Integer.parseInt(sortOrderStr);
-                if (so >= 1) {
-                    sortOrder = so;
-                }
+                int s = Integer.parseInt(sortOrderStr);
+                if (s >= 1) sortOrder = s;
             } catch (NumberFormatException ignored) {}
         }
 
         ProductImage img = new ProductImage();
         img.setProductId(productId);
-        img.setImageUrl(trimmedUrl);
+        img.setImageUrl(imageUrl != null ? imageUrl.trim() : null);
         img.setSortOrder(sortOrder);
 
-        imageDAO.addImage(img);
-        response.sendRedirect(request.getRequestURI() + "?productId=" + productId + "&success=added");
-    }
-
-    // =========================================================
-    // 3. SET PRIMARY IMAGE
-    // =========================================================
-    private void handleSetPrimary(HttpServletRequest request, HttpServletResponse response)
-            throws SQLException, IOException {
-
-        String imageIdStr = request.getParameter("imageId");
-        String productIdStr = request.getParameter("productId");
-
-        int imageId;
-        int productId;
         try {
-            imageId = Integer.parseInt(imageIdStr);
-            productId = Integer.parseInt(productIdStr);
-        } catch (Exception e) {
-            response.sendRedirect(request.getContextPath() + "/store-owner/products?error=invalid_id");
-            return;
+            productService.addImage(img);
+            response.sendRedirect(request.getRequestURI() + "?productId=" + productId + "&success=added");
+        } catch (IllegalArgumentException e) {
+            redirectWithError(request, response, productId, e.getMessage());
         }
-
-        imageDAO.setPrimaryImage(productId, imageId);
-        response.sendRedirect(request.getRequestURI() + "?productId=" + productId + "&success=primary");
     }
 
     // =========================================================
-    // 4. DELETE IMAGE (WITH VALIDATION)
+    // 3. DELETE PRODUCT IMAGE
     // =========================================================
     private void handleDeleteImage(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, IOException {
 
-        String imageIdStr = request.getParameter("imageId");
+        String imageIdStr = request.getParameter("id");
         String productIdStr = request.getParameter("productId");
 
-        int imageId;
-        int productId;
-        try {
-            imageId = Integer.parseInt(imageIdStr);
-            productId = Integer.parseInt(productIdStr);
-        } catch (Exception e) {
+        if (imageIdStr == null || productIdStr == null) {
             response.sendRedirect(request.getContextPath() + "/store-owner/products?error=invalid_id");
             return;
         }
 
-        // Validation: A product should maintain at least 1 image
-        int totalImages = imageDAO.countImagesByProductId(productId);
-        if (totalImages <= 1) {
-            redirectWithError(request, response, productId, "Không thể xóa hình ảnh duy nhất này! Sản phẩm cần ít nhất 1 hình ảnh đại diện.");
+        int imageId, productId;
+        try {
+            imageId = Integer.parseInt(imageIdStr);
+            productId = Integer.parseInt(productIdStr);
+        } catch (NumberFormatException e) {
+            response.sendRedirect(request.getContextPath() + "/store-owner/products?error=invalid_id");
             return;
         }
 
-        imageDAO.deleteImage(imageId);
-        response.sendRedirect(request.getRequestURI() + "?productId=" + productId + "&success=deleted");
+        try {
+            productService.deleteImage(imageId);
+            response.sendRedirect(request.getRequestURI() + "?productId=" + productId + "&success=deleted");
+        } catch (IllegalArgumentException e) {
+            redirectWithError(request, response, productId, e.getMessage());
+        }
+    }
+
+    // =========================================================
+    // 4. SET PRIMARY IMAGE
+    // =========================================================
+    private void handleSetPrimary(HttpServletRequest request, HttpServletResponse response)
+            throws SQLException, IOException {
+
+        String imageIdStr = request.getParameter("id");
+        String productIdStr = request.getParameter("productId");
+
+        if (imageIdStr == null || productIdStr == null) {
+            response.sendRedirect(request.getContextPath() + "/store-owner/products?error=invalid_id");
+            return;
+        }
+
+        int imageId, productId;
+        try {
+            imageId = Integer.parseInt(imageIdStr);
+            productId = Integer.parseInt(productIdStr);
+        } catch (NumberFormatException e) {
+            response.sendRedirect(request.getContextPath() + "/store-owner/products?error=invalid_id");
+            return;
+        }
+
+        try {
+            productService.setPrimaryImage(productId, imageId);
+            response.sendRedirect(request.getRequestURI() + "?productId=" + productId + "&success=setprimary");
+        } catch (IllegalArgumentException e) {
+            redirectWithError(request, response, productId, e.getMessage());
+        }
     }
 
     private void redirectWithError(HttpServletRequest request, HttpServletResponse response, int productId, String message)

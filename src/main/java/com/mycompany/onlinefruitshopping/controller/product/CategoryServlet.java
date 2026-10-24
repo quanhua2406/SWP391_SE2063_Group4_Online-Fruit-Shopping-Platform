@@ -1,8 +1,8 @@
-package com.mycompany.onlinefruitshopping.controller;
+package com.mycompany.onlinefruitshopping.controller.product;
 
-import com.mycompany.onlinefruitshopping.dao.CategoryDAO;
 import com.mycompany.onlinefruitshopping.model.Category;
 import com.mycompany.onlinefruitshopping.model.User;
+import com.mycompany.onlinefruitshopping.service.CategoryService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -17,10 +17,22 @@ import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.List;
 
+/**
+ * Controller Quản lý Danh mục hoa quả.
+ * Tuân thủ mô hình 3 tầng: Sử dụng CategoryService để xử lý toàn bộ logic nghiệp vụ và ràng buộc toàn vẹn.
+ */
 @WebServlet(urlPatterns = {"/store-owner/categories", "/admin/categories"})
 public class CategoryServlet extends HttpServlet {
 
-    private final CategoryDAO categoryDAO = new CategoryDAO();
+    private final CategoryService categoryService;
+
+    public CategoryServlet() {
+        this.categoryService = new CategoryService();
+    }
+
+    public CategoryServlet(CategoryService categoryService) {
+        this.categoryService = categoryService;
+    }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -85,8 +97,8 @@ public class CategoryServlet extends HttpServlet {
     private void showCategoryList(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, ServletException, IOException {
 
-        List<Category> categories = categoryDAO.getAllCategoriesWithProductCount();
-        List<Category> parentOptions = categoryDAO.getAllCategories();
+        List<Category> categories = categoryService.getAllCategoriesWithProductCount();
+        List<Category> parentOptions = categoryService.getAllCategories();
 
         request.setAttribute("categories", categories);
         request.setAttribute("parentOptions", parentOptions);
@@ -94,7 +106,7 @@ public class CategoryServlet extends HttpServlet {
     }
 
     // =========================================================
-    // 2. ADD CATEGORY (WITH VALIDATION)
+    // 2. ADD CATEGORY (VIA SERVICE)
     // =========================================================
     private void handleAddCategory(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, IOException {
@@ -102,46 +114,28 @@ public class CategoryServlet extends HttpServlet {
         String categoryName = request.getParameter("categoryName");
         String parentIdStr = request.getParameter("parentId");
 
-        // Validation 1: Blank or empty check
-        if (categoryName == null || categoryName.trim().isEmpty()) {
-            redirectWithError(request, response, "Tên danh mục không được để trống!");
-            return;
-        }
-
-        String trimmedName = categoryName.trim();
-
-        // Validation 2: Length check
-        if (trimmedName.length() < 2 || trimmedName.length() > 100) {
-            redirectWithError(request, response, "Tên danh mục phải từ 2 đến 100 ký tự!");
-            return;
-        }
-
-        // Validation 3: Duplicate name check (case-insensitive)
-        if (categoryDAO.isCategoryNameExists(trimmedName, null)) {
-            redirectWithError(request, response, "Danh mục '" + trimmedName + "' đã tồn tại trong hệ thống!");
-            return;
-        }
-
         Integer parentId = null;
         if (parentIdStr != null && !parentIdStr.isBlank()) {
             try {
                 int pid = Integer.parseInt(parentIdStr);
-                if (pid > 0) {
-                    parentId = pid;
-                }
+                if (pid > 0) parentId = pid;
             } catch (NumberFormatException ignored) {}
         }
 
         Category cat = new Category();
-        cat.setCategoryName(trimmedName);
+        cat.setCategoryName(categoryName != null ? categoryName.trim() : null);
         cat.setParentId(parentId);
 
-        categoryDAO.addCategory(cat);
-        response.sendRedirect(request.getRequestURI() + "?success=added");
+        try {
+            categoryService.addCategory(cat);
+            response.sendRedirect(request.getRequestURI() + "?success=added");
+        } catch (IllegalArgumentException e) {
+            redirectWithError(request, response, e.getMessage());
+        }
     }
 
     // =========================================================
-    // 3. EDIT CATEGORY (WITH VALIDATION)
+    // 3. EDIT CATEGORY (VIA SERVICE)
     // =========================================================
     private void handleEditCategory(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, IOException {
@@ -163,54 +157,29 @@ public class CategoryServlet extends HttpServlet {
             return;
         }
 
-        Category existing = categoryDAO.getCategoryById(categoryId);
-        if (existing == null) {
-            redirectWithError(request, response, "Không tìm thấy danh mục cần cập nhật!");
-            return;
-        }
-
-        if (categoryName == null || categoryName.trim().isEmpty()) {
-            redirectWithError(request, response, "Tên danh mục không được để trống!");
-            return;
-        }
-
-        String trimmedName = categoryName.trim();
-        if (trimmedName.length() < 2 || trimmedName.length() > 100) {
-            redirectWithError(request, response, "Tên danh mục phải từ 2 đến 100 ký tự!");
-            return;
-        }
-
-        if (categoryDAO.isCategoryNameExists(trimmedName, categoryId)) {
-            redirectWithError(request, response, "Tên danh mục '" + trimmedName + "' đã trùng với danh mục khác!");
-            return;
-        }
-
         Integer parentId = null;
         if (parentIdStr != null && !parentIdStr.isBlank()) {
             try {
                 int pid = Integer.parseInt(parentIdStr);
-                if (pid > 0) {
-                    // Prevent circular reference: parentId cannot be self
-                    if (pid == categoryId) {
-                        redirectWithError(request, response, "Danh mục không thể làm danh mục cha của chính nó!");
-                        return;
-                    }
-                    parentId = pid;
-                }
+                if (pid > 0) parentId = pid;
             } catch (NumberFormatException ignored) {}
         }
 
         Category cat = new Category();
         cat.setCategoryId(categoryId);
-        cat.setCategoryName(trimmedName);
+        cat.setCategoryName(categoryName != null ? categoryName.trim() : null);
         cat.setParentId(parentId);
 
-        categoryDAO.updateCategory(cat);
-        response.sendRedirect(request.getRequestURI() + "?success=updated");
+        try {
+            categoryService.updateCategory(cat);
+            response.sendRedirect(request.getRequestURI() + "?success=updated");
+        } catch (IllegalArgumentException e) {
+            redirectWithError(request, response, e.getMessage());
+        }
     }
 
     // =========================================================
-    // 4. DELETE CATEGORY (WITH STRICT RELATIONAL VALIDATION)
+    // 4. DELETE CATEGORY (VIA SERVICE)
     // =========================================================
     private void handleDeleteCategory(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, IOException {
@@ -229,30 +198,12 @@ public class CategoryServlet extends HttpServlet {
             return;
         }
 
-        Category cat = categoryDAO.getCategoryById(categoryId);
-        if (cat == null) {
-            redirectWithError(request, response, "Không tìm thấy danh mục cần xóa!");
-            return;
+        try {
+            categoryService.deleteCategory(categoryId);
+            response.sendRedirect(request.getRequestURI() + "?success=deleted");
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            redirectWithError(request, response, e.getMessage());
         }
-
-        // Relational Check 1: Check if any products are assigned to this category
-        int productCount = categoryDAO.countProductsByCategoryId(categoryId);
-        if (productCount > 0) {
-            redirectWithError(request, response, "Không thể xóa danh mục '" + cat.getCategoryName() 
-                    + "' vì đang có " + productCount + " sản phẩm trực thuộc! Vui lòng chuyển hoặc xóa sản phẩm trước.");
-            return;
-        }
-
-        // Relational Check 2: Check if any subcategories belong to this category
-        int subCount = categoryDAO.countSubCategories(categoryId);
-        if (subCount > 0) {
-            redirectWithError(request, response, "Không thể xóa danh mục '" + cat.getCategoryName() 
-                    + "' vì đang chứa " + subCount + " danh mục con!");
-            return;
-        }
-
-        categoryDAO.deleteCategory(categoryId);
-        response.sendRedirect(request.getRequestURI() + "?success=deleted");
     }
 
     private void redirectWithError(HttpServletRequest request, HttpServletResponse response, String message)

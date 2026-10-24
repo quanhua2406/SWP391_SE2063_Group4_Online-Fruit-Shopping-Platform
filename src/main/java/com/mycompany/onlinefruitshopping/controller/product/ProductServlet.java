@@ -1,10 +1,10 @@
-package com.mycompany.onlinefruitshopping.controller;
+package com.mycompany.onlinefruitshopping.controller.product;
 
-import com.mycompany.onlinefruitshopping.dao.CategoryDAO;
-import com.mycompany.onlinefruitshopping.dao.ProductDAO;
 import com.mycompany.onlinefruitshopping.model.Category;
 import com.mycompany.onlinefruitshopping.model.Product;
 import com.mycompany.onlinefruitshopping.model.User;
+import com.mycompany.onlinefruitshopping.service.CategoryService;
+import com.mycompany.onlinefruitshopping.service.ProductService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -17,11 +17,25 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
+/**
+ * Controller Quản trị Sản phẩm của Chủ Shop / Admin.
+ * Tuân thủ mô hình 3 tầng: Sử dụng ProductService và CategoryService để xử lý nghiệp vụ.
+ */
 @WebServlet(urlPatterns = {"/store-owner/products", "/admin/products"})
 public class ProductServlet extends HttpServlet {
 
-    private final ProductDAO productDAO = new ProductDAO();
-    private final CategoryDAO categoryDAO = new CategoryDAO();
+    private final ProductService productService;
+    private final CategoryService categoryService;
+
+    public ProductServlet() {
+        this.productService = new ProductService();
+        this.categoryService = new CategoryService();
+    }
+
+    public ProductServlet(ProductService productService, CategoryService categoryService) {
+        this.productService = productService;
+        this.categoryService = categoryService;
+    }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -68,9 +82,7 @@ public class ProductServlet extends HttpServlet {
         if (user == null) return;
 
         String action = request.getParameter("action");
-        if (action == null) {
-            action = "list";
-        }
+        if (action == null) action = "";
 
         try {
             switch (action) {
@@ -79,9 +91,6 @@ public class ProductServlet extends HttpServlet {
                     break;
                 case "edit":
                     processEditProduct(request, response);
-                    break;
-                case "delete":
-                    handleDelete(request, response, user);
                     break;
                 default:
                     response.sendRedirect(request.getRequestURI());
@@ -93,7 +102,7 @@ public class ProductServlet extends HttpServlet {
     }
 
     // =========================================================
-    // 1. VIEW PRODUCTS (LIST)
+    // 1. PRODUCT LIST
     // =========================================================
     private void showProductList(HttpServletRequest request, HttpServletResponse response, User user)
             throws SQLException, ServletException, IOException {
@@ -112,11 +121,11 @@ public class ProductServlet extends HttpServlet {
         Integer shopId = null;
         String role = (user.getRoleName() != null) ? user.getRoleName().toUpperCase() : "";
         if (role.contains("SHOP") || role.contains("OWNER")) {
-            shopId = productDAO.getOrCreateShopIdForUser(user.getUserID(), user.getFullName());
+            shopId = productService.getOrCreateShopIdForUser(user.getUserID(), user.getFullName());
         }
 
-        List<Product> products = productDAO.getProducts(shopId, keyword, categoryId, status);
-        List<Category> categories = categoryDAO.getAllCategories();
+        List<Product> products = productService.getStoreProducts(shopId, keyword, categoryId, status);
+        List<Category> categories = categoryService.getAllCategories();
 
         request.setAttribute("products", products);
         request.setAttribute("categories", categories);
@@ -133,7 +142,7 @@ public class ProductServlet extends HttpServlet {
     private void showAddForm(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, ServletException, IOException {
 
-        List<Category> categories = categoryDAO.getAllCategories();
+        List<Category> categories = categoryService.getAllCategories();
         request.setAttribute("categories", categories);
         request.getRequestDispatcher("/add-product.jsp").forward(request, response);
     }
@@ -196,12 +205,12 @@ public class ProductServlet extends HttpServlet {
             request.setAttribute("stock", stockStr);
             request.setAttribute("imageUrl", imageUrl);
             request.setAttribute("description", description);
-            request.setAttribute("categories", categoryDAO.getAllCategories());
+            request.setAttribute("categories", categoryService.getAllCategories());
             request.getRequestDispatcher("/add-product.jsp").forward(request, response);
             return;
         }
 
-        int shopId = productDAO.getOrCreateShopIdForUser(user.getUserID(), user.getFullName());
+        int shopId = productService.getOrCreateShopIdForUser(user.getUserID(), user.getFullName());
 
         Product p = new Product();
         p.setShopId(shopId);
@@ -216,7 +225,7 @@ public class ProductServlet extends HttpServlet {
         p.setStock(stock);
         p.setImageUrl((imageUrl != null && !imageUrl.isBlank()) ? imageUrl.trim() : "https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=500");
 
-        productDAO.addProduct(p);
+        productService.addProduct(p);
         response.sendRedirect(request.getRequestURI() + "?success=added");
     }
 
@@ -233,14 +242,14 @@ public class ProductServlet extends HttpServlet {
         }
 
         int id = Integer.parseInt(idStr);
-        Product product = productDAO.getProductById(id);
+        Product product = productService.getProductDetail(id);
         if (product == null) {
             response.sendRedirect(request.getRequestURI() + "?error=notfound");
             return;
         }
 
         request.setAttribute("product", product);
-        request.setAttribute("categories", categoryDAO.getAllCategories());
+        request.setAttribute("categories", categoryService.getAllCategories());
         request.getRequestDispatcher("/edit-product.jsp").forward(request, response);
     }
 
@@ -294,10 +303,10 @@ public class ProductServlet extends HttpServlet {
         }
 
         if (error != null) {
-            Product p = productDAO.getProductById(productId);
+            Product p = productService.getProductDetail(productId);
             request.setAttribute("error", error);
             request.setAttribute("product", p);
-            request.setAttribute("categories", categoryDAO.getAllCategories());
+            request.setAttribute("categories", categoryService.getAllCategories());
             request.getRequestDispatcher("/edit-product.jsp").forward(request, response);
             return;
         }
@@ -315,7 +324,7 @@ public class ProductServlet extends HttpServlet {
         p.setStock(stock);
         p.setImageUrl((imageUrl != null && !imageUrl.isBlank()) ? imageUrl.trim() : "");
 
-        productDAO.updateProduct(p);
+        productService.updateProduct(p);
         response.sendRedirect(request.getRequestURI() + "?success=updated");
     }
 
@@ -328,7 +337,7 @@ public class ProductServlet extends HttpServlet {
         String idStr = request.getParameter("id");
         if (idStr != null && !idStr.isBlank()) {
             int productId = Integer.parseInt(idStr);
-            productDAO.deleteProduct(productId);
+            productService.deleteProduct(productId);
         }
         response.sendRedirect(request.getRequestURI() + "?success=deleted");
     }
@@ -350,10 +359,10 @@ public class ProductServlet extends HttpServlet {
             Integer shopId = null;
             String role = (user.getRoleName() != null) ? user.getRoleName().toUpperCase() : "";
             if (role.contains("SHOP") || role.contains("OWNER")) {
-                shopId = productDAO.getOrCreateShopIdForUser(user.getUserID(), user.getFullName());
+                shopId = productService.getOrCreateShopIdForUser(user.getUserID(), user.getFullName());
             }
 
-            boolean success = productDAO.toggleProductStatus(productId, shopId);
+            boolean success = productService.toggleProductStatus(productId, shopId);
             if (success) {
                 response.sendRedirect(request.getRequestURI() + "?success=status");
             } else {
