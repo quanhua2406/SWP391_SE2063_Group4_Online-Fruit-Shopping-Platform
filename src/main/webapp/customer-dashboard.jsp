@@ -23,7 +23,7 @@
             🏠 Home
         </a>
 
-        <a href="#" class="cart-link">
+        <a href="${pageContext.request.contextPath}/cart" class="cart-link">
             🛒 Cart
         </a>
 
@@ -58,7 +58,7 @@
             <div class="dashboard-icon">🛒</div>
             <h3>My Cart</h3>
             <p>View and manage the fruits in your shopping cart.</p>
-            <a href="#">View Cart</a>
+            <a href="${pageContext.request.contextPath}/cart">View Cart</a>
         </div>
 
         <div class="dashboard-card">
@@ -72,7 +72,7 @@
             <div class="dashboard-icon">🚚</div>
             <h3>Track Delivery</h3>
             <p>Check the current status of your delivery.</p>
-            <a href="#">Track Order</a>
+            <a href="${pageContext.request.contextPath}/shopowner/delivery/list">Track Order</a>
         </div>
 
         <div class="dashboard-card" style="border: 2px solid #4caf50;">

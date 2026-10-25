@@ -5,6 +5,7 @@ import com.mycompany.onlinefruitshopping.dao.ProductDAO;
 import com.mycompany.onlinefruitshopping.model.Category;
 import com.mycompany.onlinefruitshopping.model.Product;
 import com.mycompany.onlinefruitshopping.model.User;
+import com.mycompany.onlinefruitshopping.service.auth.LoginService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -111,7 +112,7 @@ public class ProductServlet extends HttpServlet {
 
         Integer shopId = null;
         String role = (user.getRoleName() != null) ? user.getRoleName().toUpperCase() : "";
-        if (role.contains("SHOP") || role.contains("OWNER")) {
+        if (LoginService.roleMatches(user.getRoleName(), "ShopOwner") || LoginService.roleMatches(user.getRoleName(), "SHOP") || LoginService.roleMatches(user.getRoleName(), "OWNER")) {
             shopId = productDAO.getOrCreateShopIdForUser(user.getUserID(), user.getFullName());
         }
 
@@ -349,7 +350,7 @@ public class ProductServlet extends HttpServlet {
             int productId = Integer.parseInt(idStr);
             Integer shopId = null;
             String role = (user.getRoleName() != null) ? user.getRoleName().toUpperCase() : "";
-            if (role.contains("SHOP") || role.contains("OWNER")) {
+            if (LoginService.roleMatches(user.getRoleName(), "ShopOwner") || LoginService.roleMatches(user.getRoleName(), "SHOP") || LoginService.roleMatches(user.getRoleName(), "OWNER")) {
                 shopId = productDAO.getOrCreateShopIdForUser(user.getUserID(), user.getFullName());
             }
 

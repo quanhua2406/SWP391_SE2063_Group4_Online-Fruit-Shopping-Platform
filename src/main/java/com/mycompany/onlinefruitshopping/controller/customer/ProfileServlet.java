@@ -2,6 +2,7 @@ package com.mycompany.onlinefruitshopping.controller.customer;
 
 import com.mycompany.onlinefruitshopping.model.User;
 import com.mycompany.onlinefruitshopping.service.user.UserService;
+import com.mycompany.onlinefruitshopping.utils.UserSession;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -73,16 +74,7 @@ public class ProfileServlet extends HttpServlet {
             }
 
 
-            // Update session with latest user information
-            session.setAttribute(
-                    "user",
-                    user
-            );
-
-            session.setAttribute(
-                    "roleName",
-                    user.getRoleName()
-            );
+            UserSession.refresh(session, user);
 
 
             // -------------------------------------------------
@@ -346,16 +338,7 @@ public class ProfileServlet extends HttpServlet {
 
 
             if (updatedUser != null) {
-
-                session.setAttribute(
-                        "user",
-                        updatedUser
-                );
-
-                session.setAttribute(
-                        "roleName",
-                        updatedUser.getRoleName()
-                );
+                UserSession.refresh(session, updatedUser);
             }
 
 

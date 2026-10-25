@@ -243,7 +243,7 @@
             🏠 Home
         </a>
 
-        <a href="#">
+        <a href="${pageContext.request.contextPath}/cart">
             🛒 Cart
         </a>
 

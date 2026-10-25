@@ -127,4 +127,10 @@ public class User {
     public void setIsMember(boolean isMember) {
         this.isMember = isMember;
     }
+
+    public int getId() { return userID; }
+    public void setId(int id) { this.userID = id; }
+
+    public String getRole() { return roleName; }
+    public void setRole(String role) { this.roleName = role; }
 }

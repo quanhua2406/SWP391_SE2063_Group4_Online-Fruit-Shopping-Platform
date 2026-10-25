@@ -6,18 +6,7 @@ import org.mindrot.jbcrypt.BCrypt;
 
 import java.sql.SQLException;
 
-/**
- * Handles authentication logic for the login screen.
- *
- * <p>The login screen lets the user choose which role they want to sign in
- * as (Customer, Shop Owner, Delivery Staff, Admin). Login only succeeds when
- * the credentials are valid AND the account really owns the selected role.
- */
 public class LoginService {
-
-    // =========================================================
-    // RESULT TYPES
-    // =========================================================
 
     public enum Status {
         SUCCESS,
@@ -57,142 +46,113 @@ public class LoginService {
         }
     }
 
-    // =========================================================
-    // FIELDS
-    // =========================================================
+    private final UserDAO userDAO;
 
-    private final UserDAO userDAO = new UserDAO();
+    public LoginService() {
+        this(new UserDAO());
+    }
 
-    // =========================================================
-    // LOGIN
-    // =========================================================
+    LoginService(UserDAO userDAO) {
+        this.userDAO = userDAO;
+    }
 
     public LoginResult login(String email,
                              String password,
-                             String selectedRole)
-            throws SQLException {
+                             String requestedRole) {
 
-        if (email == null || email.isBlank()
-                || password == null || password.isEmpty()) {
-
-            return new LoginResult(
-                    Status.INVALID_CREDENTIALS,
-                    null,
-                    "Invalid email or password."
-            );
-        }
-
-        // -----------------------------------------------------
-        // Find account (including locked accounts)
-        // -----------------------------------------------------
-
-        User user =
-                userDAO.getUserByEmailForLogin(email.trim());
-
-        boolean passwordMatches = false;
-
-        if (user != null && user.getPasswordHash() != null) {
-            try {
-                passwordMatches = BCrypt.checkpw(
-                        password,
-                        user.getPasswordHash());
-            } catch (IllegalArgumentException e) {
-                // Fallback: password in DB is raw (not BCrypt-hashed yet)
-                passwordMatches =
-                        password.equals(user.getPasswordHash());
+        try {
+            if (email == null || password == null || requestedRole == null) {
+                return new LoginResult(Status.INVALID_CREDENTIALS, null,
+                        "Vui lÃ²ng nháº­p Ä‘áº§y Ä‘á»§ email, máº­t kháº©u vÃ  vai trÃ².");
             }
+
+            email = email.trim().toLowerCase();
+
+            if (email.isEmpty() || password.isEmpty()) {
+                return new LoginResult(Status.INVALID_CREDENTIALS, null,
+                        "Vui lÃ²ng nháº­p Ä‘áº§y Ä‘á»§ email, máº­t kháº©u vÃ  vai trÃ².");
+            }
+
+            String normalizedRequestedRole =
+                    normalizeRole(requestedRole);
+
+            if (normalizedRequestedRole.isEmpty()) {
+                return new LoginResult(Status.INVALID_CREDENTIALS, null,
+                        "Vui lÃ²ng chá»n vai trÃ² há»£p lá»‡.");
+            }
+
+            User user = userDAO.findByEmail(email);
+
+            if (user == null) {
+                return new LoginResult(Status.INVALID_CREDENTIALS, null,
+                        "Email hoáº·c máº­t kháº©u khÃ´ng Ä‘Ãºng.");
+            }
+
+            if (user.getPasswordHash() == null
+                    || !BCrypt.checkpw(password, user.getPasswordHash())) {
+                return new LoginResult(Status.INVALID_CREDENTIALS, null,
+                        "Email hoáº·c máº­t kháº©u khÃ´ng Ä‘Ãºng.");
+            }
+
+            if (user.getStatus() != null
+                    && !"ACTIVE".equalsIgnoreCase(user.getStatus())) {
+                return new LoginResult(Status.ACCOUNT_LOCKED, null,
+                        "TÃ i khoáº£n Ä‘Ã£ bá»‹ khÃ³a hoáº·c chÆ°a Ä‘Æ°á»£c kÃ­ch hoáº¡t.");
+            }
+
+            String actualRole = normalizeRole(user.getRoleName());
+
+            if (!actualRole.equals(normalizedRequestedRole)) {
+                return new LoginResult(Status.ROLE_MISMATCH, null,
+                        "TÃ i khoáº£n nÃ y khÃ´ng thuá»™c vai trÃ² Ä‘Ã£ chá»n.");
+            }
+
+            if (user.getRoleName() == null || user.getRoleName().isBlank()) {
+                user.setRoleName(actualRole);
+            }
+
+            return new LoginResult(Status.SUCCESS, user, "ÄÄƒng nháº­p thÃ nh cÃ´ng.");
+        } catch (SQLException e) {
+            throw new RuntimeException("KhÃ´ng thá»ƒ Ä‘Äƒng nháº­p.", e);
         }
-
-        if (user == null || !passwordMatches) {
-
-            return new LoginResult(
-                    Status.INVALID_CREDENTIALS,
-                    null,
-                    "Invalid email or password."
-            );
-        }
-
-        // -----------------------------------------------------
-        // Blocked account
-        // -----------------------------------------------------
-
-        if (!"active".equalsIgnoreCase(user.getStatus())) {
-
-            return new LoginResult(
-                    Status.ACCOUNT_LOCKED,
-                    null,
-                    "Your account has been blocked."
-            );
-        }
-
-        // -----------------------------------------------------
-        // Role must match the selected login type
-        // -----------------------------------------------------
-
-        if (!roleMatches(
-                user.getRoleName(),
-                selectedRole)) {
-
-            return new LoginResult(
-                    Status.ROLE_MISMATCH,
-                    null,
-                    "This account is registered as a "
-                            + displayRole(user.getRoleName())
-                            + ". Please choose the correct "
-                            + "login type."
-            );
-        }
-
-        return new LoginResult(
-                Status.SUCCESS,
-                user,
-                null
-        );
     }
 
-    // =========================================================
-    // ROLE HELPERS
-    // =========================================================
-
-    /**
-     * Normalizes a role name so that values like {@code ShopOwner},
-     * {@code SHOP_OWNER} and {@code Shop Owner} all compare equal.
-     */
     public static String normalizeRole(String role) {
+        if (role == null) {
+            return "";
+        }
 
-        return com.mycompany.onlinefruitshopping.utils
-                .ValidationUtil.normalizeRoleName(role);
+        String normalized = role.trim()
+                .replace(" ", "")
+                .replace("_", "")
+                .toUpperCase();
+
+        if ("DELIVERY".equals(normalized)
+                || "SHIPPER".equals(normalized)) {
+            return "DELIVERYSTAFF";
+        }
+
+        return normalized;
     }
 
-    public static boolean roleMatches(String userRole,
-                                      String selectedRole) {
+    public static boolean roleMatches(String role1, String role2) {
+        String r1 = normalizeRole(role1);
+        String r2 = normalizeRole(role2);
 
-        String normalizedUser = normalizeRole(userRole);
-        String normalizedSelected = normalizeRole(selectedRole);
+        if (r1.isEmpty() || r2.isEmpty()) {
+            return false;
+        }
 
-        return !normalizedUser.isEmpty()
-                && normalizedUser.equals(normalizedSelected);
+        if (r1.equals(r2)) {
+            return true;
+        }
+
+        boolean r1IsDelivery = "DELIVERYSTAFF".equals(r1);
+        boolean r2IsDelivery = "DELIVERYSTAFF".equals(r2);
+
+        return r1IsDelivery && r2IsDelivery;
     }
 
-    /**
-     * Friendly label used inside error messages.
-     */
-    public static String displayRole(String role) {
-
-        String normalized = normalizeRole(role);
-
-        return switch (normalized) {
-            case "CUSTOMER" -> "Customer";
-            case "SHOPOWNER" -> "Shop Owner";
-            case "DELIVERYSTAFF" -> "Delivery Staff";
-            case "ADMIN" -> "Admin";
-            default -> role == null ? "user" : role;
-        };
-    }
-
-    /**
-     * Landing page for a role after a successful login.
-     */
     public static String dashboardPath(String role) {
 
         return switch (normalizeRole(role)) {
@@ -202,5 +162,13 @@ public class LoginService {
             case "CUSTOMER" -> "/customer/dashboard";
             default -> "/home";
         };
+    }
+
+    public boolean isSessionValid(User user) throws SQLException {
+        return user != null
+                && userDAO.isActiveWithRole(
+                        user.getUserID(),
+                        user.getRoleName()
+                );
     }
 }
