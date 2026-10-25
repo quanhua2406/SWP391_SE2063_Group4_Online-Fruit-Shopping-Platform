@@ -1,6 +1,7 @@
 package com.mycompany.onlinefruitshopping.controller.shopowner;
 
 import com.mycompany.onlinefruitshopping.model.User;
+import com.mycompany.onlinefruitshopping.service.auth.LoginService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -29,7 +30,12 @@ final class ShopOwnerSupport {
         if (session != null
                 && session.getAttribute("user") instanceof User) {
 
-            return (User) session.getAttribute("user");
+            User user = (User) session.getAttribute("user");
+            if (!LoginService.roleMatches(user.getRoleName(), "SHOPOWNER")) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                return null;
+            }
+            return user;
         }
 
         response.sendRedirect(

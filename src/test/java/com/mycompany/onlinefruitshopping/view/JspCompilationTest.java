@@ -23,6 +23,9 @@ class JspCompilationTest {
                     .forEach(p -> pages.add(webapp.relativize(p).toString().replace('\\', '/')));
         }
         pages.add("jsp/customer/customer-dashboard.jsp"); pages.add("customer-dashboard.jsp");
+        for (String name : List.of("commission-report", "commission", "create-shop", "store-owner-dashboard",
+                "inventory", "inventory-update", "inventory-restock", "inventory-low-stock", "inventory-history",
+                "pricing", "promotions")) pages.add("jsp/shopowner/" + name + ".jsp");
         for (String page : pages) assertTrue(Files.isRegularFile(webapp.resolve(page)), page);
         // Check the complete relative include graph, including nested JSPF includes.
         Set<Path> visited = new HashSet<>();

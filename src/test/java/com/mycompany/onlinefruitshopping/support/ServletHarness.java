@@ -14,7 +14,8 @@ public final class ServletHarness {
     public final Map<String, String> headers = new HashMap<>();
     public final Map<String, String> responseHeaders = new HashMap<>();
     public String path = "/profile", method = "GET", context = "/fruit", redirect;
-    public int status = 200, chainCalls, sessionsCreated;
+    public int status = 200, chainCalls, sessionsCreated, sessionIdChanges;
+    public String forwarded, pathInfo;
     public boolean hasSession, invalidated;
     public final HttpSession session = proxy(HttpSession.class, (p, m, a) -> switch (m.getName()) {
         case "getAttribute" -> sessionAttributes.get(a[0]);
@@ -36,7 +37,13 @@ public final class ServletHarness {
         case "getServletPath" -> path;
         case "getMethod" -> method;
         case "getContextPath" -> context;
-        case "getPathInfo", "getQueryString" -> null;
+        case "getPathInfo" -> pathInfo;
+        case "getQueryString" -> null;
+        case "changeSessionId" -> { sessionIdChanges++; yield "new-session-id"; }
+        case "getRequestDispatcher" -> proxy(RequestDispatcher.class, (p2, m2, a2) -> {
+            if (!m2.getName().equals("forward")) throw new UnsupportedOperationException(m2.getName());
+            forwarded = (String) a[0]; return null;
+        });
         case "getServletContext" -> servletContext;
         case "getHeader" -> headers.get(a[0]);
         case "getParameter" -> parameters.get(a[0]);

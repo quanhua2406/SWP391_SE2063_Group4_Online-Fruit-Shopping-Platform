@@ -1,5 +1,69 @@
 # Hướng dẫn cập nhật ShopOwner
 
+## Bổ sung chức năng sau `5e58e98` (25/10/2026)
+
+Phần 1–9 bên dưới lưu kết quả và các thiếu sót tại bước 11. Trạng thái hiện tại
+được cập nhật ở mục này: đã khôi phục handler của cả 7 servlet và tích hợp
+`UserSession.signIn` vào LoginServlet bằng code, kèm test thực thi servlet.
+
+Đối chiếu `git diff --find-renames --name-status 33e359e^ 33e359e -- src/main/java`,
+đọc source trước khi xóa, tìm annotation và web.xml: cả 7 trường hợp đều mất
+chức năng, không có handler hợp nhất tương đương. Các class được khôi phục trong
+`controller.shopowner`, dùng `model.User`; mapping không trùng servlet khác.
+
+| Servlet (tiền tố StoreOwner, hậu tố Servlet.java) | URL / HTTP method | Chức năng và nơi còn gọi | Kết luận hiện tại |
+|---|---|---|---|
+| CommissionReport | `/store-owner/commission-report`, GET | Báo cáo theo ngày/trạng thái/section và CSV; `commission-report.jsp`, dashboard, commission | Khôi phục handler gọi CommissionReportService |
+| Commission | `/store-owner/commission`, GET | Sản phẩm và phí nền tảng, lọc/phân trang; `commission.jsp`, dashboard/report | Khôi phục handler gọi CommissionReportService |
+| CreateShop | `/store-owner/create-shop`, GET/POST | Form, validation, tạo shop theo owner, chuyển dashboard khi đã có shop; `create-shop.jsp`, dashboard | Khôi phục handler gọi ShopService |
+| Dashboard | `/store-owner/dashboard`, GET | Shop, tên owner, thống kê kho; LoginService.dashboardPath, header và các trang shop | Khôi phục handler gọi ShopService |
+| Inventory | `/store-owner/inventory` và `/store-owner/inventory/*`, GET/POST | Đọc stock/update/restock/low-stock/history; ghi batch/restock/threshold/notification; JSP inventory và inventory-nav.jspf | Khôi phục handler gọi InventoryService |
+| Pricing | `/store-owner/pricing`, GET/POST | Danh sách giá và sửa giá variant; `pricing.jsp`, dashboard, inventory-common.jspf | Khôi phục handler gọi PricingService |
+| Promotion | `/store-owner/promotions`, GET/POST | Danh sách, gửi yêu cầu giá khuyến mãi có thời hạn và xóa; `promotions.jsp`, pricing | Khôi phục handler và VariantPromotionService; khác campaign PromotionService |
+
+GET cũng hỗ trợ HEAD theo HttpServlet. Inventory chọn trang qua pathInfo;
+POST chọn nghiệp vụ qua action như source cũ. Link/form vẫn dùng URL hiện có.
+Service và DAO của shop/kho/giá/báo cáo vẫn tồn tại; service khuyến mãi variant
+đã bị ghi đè nên được khôi phục riêng thành `service.promotion.VariantPromotionService`.
+Service campaign `service.promotion.PromotionService` tiếp tục phục vụ `/shopowner/shop/promotions`.
+Variant service giữ kiểm tra sở hữu và quy trình yêu cầu duyệt trước đây.
+
+AuthorizationFilter vẫn xác minh session/role cho `/store-owner/*` theo AccessPolicy;
+ShopOwnerSupport kiểm tra thêm role SHOPOWNER bằng helper chuẩn hóa. Dashboard
+cũng dùng ShopOwnerSupport. Chính sách CSRF hiện có không bao gồm `/store-owner/*`;
+việc khôi phục không được hiểu là đã mở rộng CSRF cho các form này.
+
+Trong nhánh login thành công, ngay sau `request.changeSessionId()`,
+`LoginServlet` gọi đúng một lần `UserSession.signIn(session, user)` với User từ
+LoginResult. Các lệnh lưu userId/roleName riêng được bỏ. Giữ merge guest cart,
+cartCount, redirectAfterLogin và dashboard theo role. Constructor package-private
+cho phép test thay LoginService/CartDAO, constructor public vẫn dùng implementation thật.
+
+Kiểm tra mới:
+- LoginServletTest chạy doPost thật: đúng User, dọn trạng thái cũ, token mới,
+  session ID đổi một lần, merge đúng cart/owner, redirect đã lưu và dashboard;
+  lỗi merge giữ giỏ khách theo hành vi trước đây.
+- RestoredShopOwnerServletTest gọi servlet.service thật: mapping 7 handler,
+  guest/role sai, tạo shop/validation, dashboard, truyền filter báo cáo và redirect
+  khi chưa có shop, ghi giá/khuyến mãi, bốn action kho và path lạ.
+- VariantPromotionServiceTest gọi service thật với fake DAO: ownership, validation,
+  discount, ngày hết hạn, truyền actor/ngày và xóa khuyến mãi.
+- Jasper thêm 11 JSP của các handler khôi phục.
+
+`mvn -B clean verify` thành công; XML Surefire: **88 tests, 0 failures, 0 errors,
+0 skipped**. Jasper biên dịch **27 JSP**, tiếp tục kiểm tra 5 JSPF module qua
+include. `git diff --check` và `git diff --cached --check` đạt. Lần chạy đầu gặp
+lỗi testCompile do fake DAO khai báo sai return type removePromotion; đã sửa
+thành boolean đúng source và chạy lại clean verify thành công.
+
+Chưa deploy, kiểm thử browser/EL/menu, CSV trên server hoặc thực thi DB production.
+Chưa kiểm thử transaction/khóa SQL Server, tạo shop đồng thời, cập nhật kho/giá và
+duyệt khuyến mãi end-to-end. Các mục runtime ở phần 9 vẫn chưa thực hiện.
+
+`target/` chứa class Maven sinh ra; `.gitignore` đã có `/target/`.
+Việc bỏ tracking 14 class build được tách thành commit chore riêng, dùng
+`git rm --cached` để giữ các file build trên máy.
+
 ## 1. Phạm vi và cấu trúc
 
 Ghi nhận source của nhánh `refactor/shopowner-common` sau bước 10, ngày
