@@ -14,21 +14,12 @@
 
         html.append("<option value=\"\"")
             .append(selected.isEmpty() ? " selected" : "")
-            .append(">Delivered (fee basis)</option>");
+            .append(">Completed (fee basis)</option>");
 
-        String[][] statuses = {
-            {"pending_confirmation", "Pending confirmation"},
-            {"preparing", "Preparing"},
-            {"shipping", "Shipping"},
-            {"delivered", "Delivered"},
-            {"cancelled", "Cancelled"},
-            {"failed", "Failed"}
-        };
-
-        for (String[] s : statuses) {
-            html.append("<option value=\"").append(s[0]).append('"')
-                .append(s[0].equals(selected) ? " selected" : "")
-                .append('>').append(s[1]).append("</option>");
+        for (String status : CommissionReportDAO.STATUSES) {
+            html.append("<option value=\"").append(status).append('"')
+                .append(status.equalsIgnoreCase(selected) ? " selected" : "")
+                .append('>').append(status).append("</option>");
         }
 
         return html.toString();
@@ -108,14 +99,14 @@
         }
 
         switch (value.toString().toLowerCase()) {
-            case "pending_confirmation":
-                return "Pending confirmation";
-            case "preparing":
-                return "Preparing";
+            case "pending":
+                return "Pending";
+            case "confirmed":
+                return "Confirmed";
             case "shipping":
                 return "Shipping";
-            case "delivered":
-                return "Delivered";
+            case "completed":
+                return "Completed";
             case "cancelled":
                 return "Cancelled";
             case "failed":
@@ -131,7 +122,7 @@
         }
 
         switch (value.toString().toLowerCase()) {
-            case "delivered":
+            case "completed":
                 return "pill-ok";
             case "cancelled":
             case "failed":
@@ -378,8 +369,8 @@
 
         <p class="panel-hint">
             Settlement for the selected period. Commission is
-            counted on <em>delivered</em> orders only; cancelled and
-            failed orders are reported as refunds. The discount line
+            counted on <em>Completed</em> orders only; Cancelled
+            orders are reported as refunds. The discount line
             compares the sold price with the current listed price.
         </p>
 
@@ -570,7 +561,7 @@
         <h2>🚚 Fee by Order Status</h2>
 
         <p class="panel-hint">
-            Commission is counted on <em>delivered</em> orders —
+            Commission is counted on <em>Completed</em> orders —
             the money actually due. Every other status is listed
             here for reference; use the status filter above to
             inspect a single status.

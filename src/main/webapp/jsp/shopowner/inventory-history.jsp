@@ -68,6 +68,7 @@
                 <th>Batch</th>
                 <th>Type</th>
                 <th>Quantity</th>
+                <th>Actor</th>
                 <th>Reason</th>
             </tr>
         </thead>
@@ -76,7 +77,7 @@
         <% if (adjustmentsPage == null || adjustmentsPage.isEmpty()) { %>
 
             <tr>
-                <td colspan="7">
+                <td colspan="8">
                     No inventory changes yet.
                 </td>
             </tr>
@@ -95,6 +96,7 @@
                     </span>
                 </td>
                 <td><%= qty(a.get("quantity")) %></td>
+                <td><%= esc(a.get("actor")) %></td>
                 <td><%= esc(a.get("reason")) %></td>
             </tr>
         <%

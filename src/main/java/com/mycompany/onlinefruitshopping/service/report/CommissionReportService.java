@@ -19,7 +19,7 @@ import java.util.Map;
  *
  * <p>A report shows how much platform fee is collected: the shop
  * owner sees the fee their own shop pays, the administrator sees
- * the fee of every shop. The basis is the <b>delivered</b> orders
+ * the fee of every shop. The basis is the <b>Completed</b> orders
  * only, with a Shopee-style fee breakdown (service fee on top of
  * the product commission).</p>
  */
@@ -557,7 +557,9 @@ public class CommissionReportService {
                .append(" to ")
                .append(to.isEmpty() ? "..." : to)
                .append("; status: ")
-               .append(status.isEmpty() ? "delivered (fee basis)" : status)
+               .append(status.isEmpty()
+                       ? CommissionReportDAO.DELIVERED_STATUS + " (fee basis)"
+                       : status)
                .append("\"\n");
         }
     }

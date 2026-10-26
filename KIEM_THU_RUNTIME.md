@@ -1,33 +1,43 @@
-# Kiểm thử runtime ShopOwner — 25/10/2026
+# Kiểm thử runtime ShopOwner
 
-## Cập nhật 26/10/2026 — môi trường riêng đã chạy
+## Cập nhật 26/10/2026 — sửa 5 lỗi runtime và chạy lại toàn bộ
 
-Mục này thay thế kết luận môi trường bị chặn ngày 25/10 ở bên dưới; giữ phần cũ
-làm lịch sử. Source nền `3923639` cộng thay đổi DB config và hiển thị tên Customer.
+Mục này thay thế kết luận ngày 25/10 và bản cập nhật môi trường trước đó; phần cũ
+ở dưới giữ làm lịch sử. Nền hiện tại là `fb90284` trên nhánh
+`refactor/shopowner-common`, cộng commit sửa 5 lỗi runtime (xem `git log`).
 
 ### Môi trường thực tế và artifact
 
-- DB `OnlineFruitShopping_Test` mới tạo trên `TAI`/localhost:1433; schema-only từ
-  metadata DB nguồn rồi áp dụng các migration test được mô tả trong RUNTIME_SETUP.md.
+- DB `OnlineFruitShopping_Test` trên `TAI`/localhost:1433; schema-only từ metadata
+  DB nguồn rồi áp dụng các migration test được mô tả trong RUNTIME_SETUP.md.
 - Probe qua **DBConnection production** trả `server=TAI; database=OnlineFruitShopping_Test`.
   App dùng SQL auth `fruitshop_runtime_test`, không dùng Windows auth.
 - 8 tài khoản test và 4 role; Customer/Owner/Shipper A/B cùng admin và owner.new.
   2 shop ban đầu, shop thứ ba được tạo qua POST. Password local ignored, không ghi báo cáo.
 - Tomcat 10.1.17/JDK17.0.12, CATALINA_BASE `<repo>/.runtime/tomcat-test`;
-  listener **127.0.0.1:8081**, shutdown disabled. PID lần start mới nhất 17456.
-- BASE mới: `http://127.0.0.1:8081/OnlineFruitShopping` (browser cũng dùng hostname localhost).
+  listener **127.0.0.1:8081**, shutdown disabled. PID lần start mới nhất 16100.
+- BASE: `http://127.0.0.1:8081/OnlineFruitShopping` (browser cũng dùng hostname localhost).
 - Descriptor test deploy đúng `<repo>/target/OnlineFruitShopping-1.0-SNAPSHOT.war`.
-  SHA256 cuối: **8CE30E1C889CBA8A31EF5782636BDE85EA2E201CDA6621DE00DDEF98769753F1**.
-- `mvn -B clean verify` cuối: BUILD SUCCESS, XML Surefire **92/0/0/0**;
+  SHA256 cuối: **7462C1256EA3991BED04F21E15F0CCD4BB2DF43E1949DFB9493DF0D698FB4661**
+  (392 entry).
+- `mvn -B clean verify` cuối: BUILD SUCCESS, XML Surefire **98/0/0/0** (22 test class);
   Jasper **27 JSP**. ZIP WAR không chứa db.properties/db-test.properties/test-accounts.properties.
+- Không thêm migration/cột mới cho đợt sửa này: DAO được đổi sang đúng schema thật
+  (`orders.order_status`, `orders.order_date`, `order_items.price`,
+  `inventory_adjustments.quantity_change/adjusted_by/created_at`).
 
 ### Bằng chứng và kết quả thực chạy
 
-HTTP harness `scripts/test-runtime-http.ps1` chạy 56 kiểm tra, **51 PASS / 5 FAIL**.
-Số này là kiểm tra HTTP/SQL, không phải số test JUnit; nhiều ca chỉ xác nhận status
-và redirect, không chứng minh mọi nội dung giao diện. Bằng chứng local ignored:
-`.runtime/http-results.json`, `tomcat-test/logs/localhost_access_log.*`,
-`tomcat-test/logs/localhost.*.log`, `tomcat-test/logs/catalina.*.log`.
+HTTP harness `scripts/test-runtime-http.ps1` chạy 69 kiểm tra, **69 PASS / 0 FAIL**
+(56 ca cũ giữ nguyên ID + 13 ca bổ sung). Các ca mới không chỉ kiểm tra status mà
+đọc SQL/nội dung: doanh thu 200 + fee 20 + earning 180, CSV đúng dòng và BOM
+`EF BB BF`/`charset=UTF-8`, filter Completed/Cancelled/ngày, escape dấu phẩy/ngoặc
+kép và giữ ký tự UTF-8 (`đ`); batch 100→90 với đúng một log `-10`, restock 7 với đúng một log `+7`, actor
+lấy từ session, history hiển thị số lượng/actor/reason, cross-shop bị từ chối và
+log insert lỗi thì rollback. Số này là kiểm tra HTTP/SQL, không phải số test JUnit.
+Bằng chứng local ignored: `.runtime/http-results.json`,
+`tomcat-test/logs/localhost_access_log.*`, `tomcat-test/logs/localhost.*.log`,
+`tomcat-test/logs/catalina.*.log` (đã khử credential/password).
 
 | Tình huống | Kết quả mong đợi | Kết quả thực tế | PASS/FAIL/CHƯA CHẠY | Bằng chứng |
 |---|---|---|---|---|
@@ -41,13 +51,13 @@ và redirect, không chứng minh mọi nội dung giao diện. Bằng chứng l
 | Track Order/detail click | List chỉ A, detail/items A | Bấm thật, header Customer A; delivery #1/shop A/item FIXTURE-3, qty 2 | PASS | Browser snapshot list/detail |
 | Tên Customer Dashboard | User.fullName | Ban đầu chữ Customer cố định; đã sửa c:out, build/deploy lại thấy “Welcome back, Customer A!” | PASS sau sửa | Browser snapshot + HTTP regression name check |
 | Customer dashboard Console | Không có JS error | Không có error ở document mới nhất | PASS | browser.console |
-| Owner dashboard/commission/list kho/giá/promo | HTTP 200 | HTTP 200 | PASS (HTTP) | HTTP JSON; chưa đối chiếu toàn bộ số liệu UI |
+| Owner dashboard/commission/list kho/giá/promo | HTTP 200 | HTTP 200; báo cáo/kho đã đối chiếu số liệu ở ca 48-60 | PASS (HTTP + nội dung 5 vùng) | HTTP JSON + SQL; widget khác chưa review |
 | Tạo shop | Lưu đúng owner, không trùng | Lần đầu shop=created, DB có 1 shop cho owner.new; chạy lại shop=exists | PASS | HTTP + SQL count |
 | Giá/promo biến thể | Persist đúng và promo pending/xóa | Giá 95; promo pending, xóa còn 0 row | PASS | HTTP + SQL |
 | Ngưỡng/cảnh báo | Lưu ngưỡng, xử lý request alert | Threshold=150; redirect msg=notified | PASS (request) | HTTP + SQL; chưa xác nhận email đến inbox |
-| Báo cáo và CSV | HTTP 200/file CSV | Cả hai HTTP 500, Invalid column name 'status' | FAIL (2 ca) | localhost log, CommissionReportDAO |
-| Lịch sử kho | HTTP 200 | HTTP 500, Invalid column name 'adjustment_type' | FAIL | localhost log, InventoryDAO |
-| Cập nhật batch/nhập hàng | POST thành công | HTTP 500 do cột audit không khớp | FAIL (2 ca) | localhost log, InventoryDAO |
+| Báo cáo và CSV | HTTP 200, tổng khớp fixture | 200; HTML section=products có A, revenue 200 đ, fee 20 đ, không có B; CSV đúng dòng `Fixture Shop A Apple,2.00,200.00,10.00,20.00,180.00` | PASS sau sửa | HTTP + SQL fixture; JSON ca 22/23 + ca mới 54-60 |
+| Lịch sử kho | HTTP 200, hiển thị đúng | 200; có batch/quantity 7 và 10, actor `Owner A`, reason `Runtime test` | PASS sau sửa | HTTP + SQL; JSON ca 29 + 51 |
+| Cập nhật batch/nhập hàng | POST thành công, batch + đúng 1 log | 200→90 với log `-10`; restock tạo batch 7 + log `+7`; actor đúng; cross-shop không đổi; log lỗi rollback (500, batch vẫn 90, 1 log) | PASS sau sửa | HTTP + SQL; JSON ca 46-53 |
 | Customer A detail B | 404, không lộ items | 404 | PASS | HTTP JSON |
 | Owner A sửa giá B | Từ chối | Redirect msg=forbidden | PASS (phản hồi) | HTTP JSON |
 | Shipper A sửa delivery B | Không ghi | POST redirect, SQL delivery B không đổi | PASS | HTTP + SQL |
@@ -60,25 +70,38 @@ và redirect, không chứng minh mọi nội dung giao diện. Bằng chứng l
 | Hai accept đồng thời/retry | Một transition, một notification | Hai POST qua hai session, Accepted và count tăng 1; retry không tăng thêm | PASS | HTTP+SQL |
 | Đồng thời assign, action xung đột, COD hoàn tất | Đúng khóa/thanh toán từng tình huống | Chưa chạy | CHƯA CHẠY | Chỉ concurrent accept đã chạy |
 | Toàn bộ menu/EL của Owner/Admin/Shipper bằng browser | Hiển thị đúng fixture | Chỉ xác nhận GET dashboard 200; chưa review mọi widget | CHƯA CHẠY | Không suy từ HTTP 200 |
-| CSV content, email inbox, subscription | Nội dung/luồng đúng | CSV bị chặn; email chưa xác minh; subscription thiếu schema | CHƯA CHẠY | Không có bằng chứng hoàn tất |
+| CSV content, email inbox, subscription | Nội dung/luồng đúng | CSV content/BOM/escape đã kiểm; email inbox chưa xác minh; subscription thiếu schema | CHƯA CHẠY một phần | JSON ca 56/57/60; email/subscription chưa có bằng chứng |
 
-### Lỗi còn tái hiện và ranh giới schema
+### Năm lỗi FAIL cũ: nguyên nhân → nơi sửa → kết quả
 
-1. Login Owner A → GET `/store-owner/commission-report` hoặc thêm `?format=csv`:
-   500, `SQLServerException: Invalid column name 'status'`. CommissionReportDAO
-   dùng `o.status`; metadata có `orders.order_status` với vocabulary riêng. Cần
-   thống nhất mapping Completed/Delivered và filter báo cáo, không thêm cột giả.
-2. GET `/store-owner/inventory/history`, POST `/store-owner/inventory/update`
-   (batch fixture, quantity=99) và `/store-owner/inventory/restock` (variant fixture):
-   500. DAO dùng `adjustment_type`, `quantity`, `created_by`; metadata có signed
-   `quantity_change`, `adjusted_by`. Cần migration/SQL thống nhất ý nghĩa tăng/giảm.
-3. Home/subscription log `Invalid object name 'subscription_plans'`. Không có bảng
-   này trong snapshot metadata đã đọc; không lấy status 200 ở nơi khác để kết luận module đạt.
+| # | Ca FAIL cũ | Nguyên nhân gốc | Nơi sửa | Kết quả chạy lại |
+|---|---|---|---|---|
+| 1 | `owner GET /store-owner/commission-report` (ca 22) | SQL dùng `o.status`, `o.created_at`, `oi.unit_price`; schema thật là `order_status`, `order_date`, `price` → `Invalid column name 'status'` | `dao/report/CommissionReportDAO.java`: các SELECT/scope, `STATUSES`, `DELIVERED_STATUS=Completed`, `REFUND_STATUSES`; `service/report/CommissionReportService.java` nhãn CSV; JSP shopowner/admin dùng status thật | 200; ca 54 PASS: A Completed 2×100 → revenue 200 đ, fee 20 đ; không lộ B |
+| 2 | `owner GET ...commission-report?format=csv` (ca 23) | Cùng SQL sai cột; nhãn filter còn ghi “Delivered” trong khi basis là `Completed` | `CommissionReportDAO` + `CommissionReportService` (nhãn dùng `DELIVERED_STATUS`); CSV dùng chung `loadOwnerReport`/filter với HTML | 200; ca 56/57/60 PASS: đúng dòng 2.00/200.00/10.00/20.00/180.00, BOM `EF BB BF`, charset UTF-8, escape `"`/`,` và giữ `đ` |
+| 3 | `owner GET /store-owner/inventory/history` (ca 29) | SELECT đọc `adjustment_type`, `quantity`, `created_by`; schema thật chỉ có `quantity_change`, `adjusted_by`, `created_at`, `reason` | `dao/inventory/InventoryDAO.java`: history SELECT dùng `quantity_change`/`adjusted_by` + `LEFT JOIN users`, suy ra `adjustment_type`/`quantity` cho JSP; `jsp/shopowner/inventory-history.jsp` thêm cột Actor | 200; ca 51 PASS: thấy batch RUNTIME-RESTOCK, quantity 7/10, actor `Owner A`, reason `Runtime test` |
+| 4 | `POST /store-owner/inventory/update` (ca 46) | INSERT log dùng cột không tồn tại và ghi số tuyệt đối thay vì delta; không khóa batch/transaction | `InventoryDAO.setBatchQuantity`: `UPDLOCK, ROWLOCK`, UPDATE batch, INSERT `(batch_id, quantity_change, reason, adjusted_by, created_at)` với delta, cùng connection; rollback khi log lỗi | 302; ca 48/49 PASS: 100→90, đúng 1 log `-10`, actor = user session, reason đúng; ca 52 cross-shop bị chặn, không đổi dữ liệu; ca 53 trigger lỗi → 500, batch vẫn 90, vẫn 1 log |
+| 5 | `POST /store-owner/inventory/restock` (ca 47) | Cùng lỗi cột audit; batch mới và log phải atomic | `InventoryDAO.restock`: batch mới quantity 7, log `+7`, `adjusted_by` từ session, cùng transaction | 302; ca 50 PASS: batch 7, đúng 1 log `+7`, actor đúng |
 
-Các DAO report/inventory nêu trên chưa được đổi trong đợt cấu hình; lỗi còn mở,
-không ghi là đã sửa chỉ vì thêm tài liệu. Runtime test môi trường đã hoạt động nhưng
-chưa đủ điều kiện nghiệm thu toàn bộ chức năng. Các kết luận “chưa chạy” dưới đây
-là lịch sử ngày 25/10; ưu tiên bảng cập nhật ở trên.
+Ngoài 5 ca: `deductStockForOrder` (chưa được gọi) đã bỏ `order_items.batch_id`
+(không có trong schema) và lấy FIFO batch của variant, log `quantity_change` âm;
+`takeFromBatch`/`lockedBatchSql` không dùng đã xóa. Không có migration mới.
+
+### Còn FAIL / BLOCKED / CHƯA CHẠY
+
+- **FAIL:** không còn trong 69 ca harness.
+- **BLOCKED:** subscription/home vẫn log `Invalid object name 'subscription_plans'`;
+  schema test không có bảng này, ngoài phạm vi 5 lỗi.
+- **CHƯA CHẠY:** đồng thời assign/action xung đột/COD hoàn tất; review browser toàn
+  bộ widget Owner/Admin/Shipper; email đến inbox; trang báo cáo phía Admin (dùng
+  chung DAO nhưng servlet Admin chưa được harness gọi); `deductStockForOrder` chưa
+  có nơi gọi.
+- **Rủi ro schema còn mở:** `OrderDAO`, `AdminOrderDAO`, `database/sample_orders.sql`
+  vẫn dùng `status`, `created_at`, `unit_price`, `batch_id`; không được harness chạy
+  nên không kết luận đạt. Cần xử lý riêng trước khi nghiệm thu toàn bộ.
+- Các ca cũ chỉ kiểm tra status/redirect vẫn giữ nguyên tiêu chí; 13 ca mới bổ sung
+  kiểm tra nội dung/SQL cho đúng 5 vùng lỗi. Không suy PASS toàn bộ chức năng từ 69 ca.
+
+## Lịch sử 25/10 (giữ nguyên)
 
 ## Phạm vi và kết luận
 

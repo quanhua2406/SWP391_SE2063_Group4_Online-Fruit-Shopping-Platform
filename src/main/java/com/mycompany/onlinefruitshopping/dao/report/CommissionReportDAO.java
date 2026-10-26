@@ -33,15 +33,17 @@ import java.util.Map;
  * </ul>
  *
  * <p><b>Fee basis:</b> commission is counted on
- * {@code delivered} orders only - the money the platform has
- * actually earned. Every report can additionally be narrowed down
- * with a date range ({@code from}/{@code to}, inclusive) and an
- * order-status slice; the "Fee by Order Status" table then shows
- * the statuses outside that basis for reference.</p>
+ * {@code Completed} orders only (the status the delivery flow sets
+ * once an order is delivered) - the money the platform has actually
+ * earned. Every report can additionally be narrowed down with a
+ * date range on {@code orders.order_date} ({@code from}/{@code to},
+ * inclusive) and an order-status slice; the "Fee by Order Status"
+ * table then shows the statuses outside that basis for reference.</p>
  *
- * <p>Orders with the status {@code cancelled} or {@code failed}
- * never count towards the fee; their value is reported separately
- * as refunds in the fee breakdown.</p>
+ * <p>Orders with the status {@code Cancelled} never count towards
+ * the fee; their value is reported separately as refunds in the fee
+ * breakdown. Revenue always uses the historical purchase price
+ * ({@code order_items.price}), never the current variant price.</p>
  */
 public class CommissionReportDAO {
 
@@ -53,10 +55,19 @@ public class CommissionReportDAO {
     public static final BigDecimal SERVICE_FEE_RATE =
             new BigDecimal("2");
 
-    /** Every status an order can have (mirrors the DB CHECK). */
-    private static final List<String> STATUSES = List.of(
-            "pending_confirmation", "preparing", "shipping",
-            "delivered", "cancelled", "failed");
+    /**
+     * Every status an order can have in {@code orders.order_status}
+     * (see DeliveryRules.orderStatus and AssignmentDAO).
+     */
+    public static final List<String> STATUSES = List.of(
+            "Pending", "Confirmed", "Shipping", "Completed", "Cancelled");
+
+    /** The status meaning "the money is actually earned". */
+    public static final String DELIVERED_STATUS = "Completed";
+
+    /** The statuses whose value is reported as refunds. */
+    public static final List<String> REFUND_STATUSES =
+            List.of("Cancelled", "Failed");
 
     // =========================================================
     // ORDER SCOPE (date range + status slice)
@@ -68,13 +79,19 @@ public class CommissionReportDAO {
      */
     public static String normalizeStatus(String value) {
 
-        String status = value == null ? "" : value.trim().toLowerCase();
+        String status = value == null ? "" : value.trim();
 
         if (status.isEmpty()) {
             return "";
         }
 
-        return STATUSES.contains(status) ? status : "";
+        for (String known : STATUSES) {
+            if (known.equalsIgnoreCase(status)) {
+                return known;
+            }
+        }
+
+        return "";
     }
 
     /**
@@ -113,21 +130,22 @@ public class CommissionReportDAO {
 
             if (status == null || status.isEmpty()) {
                 // Default fee basis: money actually earned.
-                statusSql = "o.status = 'delivered'";
+                statusSql = "o.order_status = N'" + DELIVERED_STATUS + "'";
             } else {
-                statusSql = "o.status = ?";
-                statusParams.add(status);
+                String known = normalizeStatus(status);
+                statusSql = "o.order_status = ?";
+                statusParams.add(known.isEmpty() ? status : known);
             }
 
             StringBuilder dates = new StringBuilder();
 
             if (from != null && !from.isEmpty()) {
-                dates.append(" AND o.created_at >= ?");
+                dates.append(" AND o.order_date >= ?");
                 dateParams.add(startOfDay(from));
             }
 
             if (to != null && !to.isEmpty()) {
-                dates.append(" AND o.created_at < ?");
+                dates.append(" AND o.order_date < ?");
                 dateParams.add(startOfDay(
                         LocalDate.parse(to).plusDays(1).toString()));
             }
@@ -179,7 +197,7 @@ public class CommissionReportDAO {
                 + "       ISNULL(SUM(CASE WHEN " + scope.counted()
                 + "             THEN oi.quantity ELSE 0 END), 0) AS sold_qty, "
                 + "       ISNULL(SUM(CASE WHEN " + scope.counted()
-                + "             THEN oi.quantity * oi.unit_price ELSE 0 END), 0) AS revenue "
+                + "             THEN oi.quantity * oi.price ELSE 0 END), 0) AS revenue "
                 + "FROM products p "
                 + "JOIN shops s ON s.shop_id = p.shop_id "
                 + "LEFT JOIN product_variants v ON v.product_id = p.product_id "
@@ -237,7 +255,7 @@ public class CommissionReportDAO {
                 + "       ISNULL(SUM(CASE WHEN " + scope.counted()
                 + "             THEN oi.quantity ELSE 0 END), 0) AS sold_qty, "
                 + "       ISNULL(SUM(CASE WHEN " + scope.counted()
-                + "             THEN oi.quantity * oi.unit_price ELSE 0 END), 0) AS revenue "
+                + "             THEN oi.quantity * oi.price ELSE 0 END), 0) AS revenue "
                 + "FROM products p "
                 + "JOIN shops s ON s.shop_id = p.shop_id "
                 + "LEFT JOIN product_variants v ON v.product_id = p.product_id "
@@ -292,9 +310,9 @@ public class CommissionReportDAO {
                 + "       ISNULL(SUM(CASE WHEN " + scope.counted()
                 + "             THEN oi.quantity ELSE 0 END), 0) AS sold_qty, "
                 + "       ISNULL(SUM(CASE WHEN " + scope.counted()
-                + "             THEN oi.quantity * oi.unit_price ELSE 0 END), 0) AS revenue, "
+                + "             THEN oi.quantity * oi.price ELSE 0 END), 0) AS revenue, "
                 + "       ISNULL(SUM(CASE WHEN " + scope.counted()
-                + "             THEN oi.quantity * oi.unit_price "
+                + "             THEN oi.quantity * oi.price "
                 + "                  * ISNULL(p.commission_rate, 0) / 100.0 "
                 + "             ELSE 0 END), 0) AS platform_fee "
                 + "FROM shops s "
@@ -353,7 +371,7 @@ public class CommissionReportDAO {
                 + "       ISNULL(SUM(CASE WHEN " + scope.counted()
                 + "             THEN oi.quantity ELSE 0 END), 0) AS sold_qty, "
                 + "       ISNULL(SUM(CASE WHEN " + scope.counted()
-                + "             THEN oi.quantity * oi.unit_price ELSE 0 END), 0) AS revenue "
+                + "             THEN oi.quantity * oi.price ELSE 0 END), 0) AS revenue "
                 + "FROM products p "
                 + "LEFT JOIN product_variants v ON v.product_id = p.product_id "
                 + "LEFT JOIN order_items oi ON oi.variant_id = v.variant_id "
@@ -413,14 +431,14 @@ public class CommissionReportDAO {
         where.append(scope.dateSql);
 
         if (status != null && !status.isEmpty()) {
-            where.append(" AND o.status = ?");
+            where.append(" AND o.order_status = ?");
         }
 
         String sql =
-                "SELECT o.status, "
+                "SELECT o.order_status AS status, "
                 + "       ISNULL(SUM(oi.quantity), 0) AS sold_qty, "
-                + "       ISNULL(SUM(oi.quantity * oi.unit_price), 0) AS revenue, "
-                + "       ISNULL(SUM(oi.quantity * oi.unit_price "
+                + "       ISNULL(SUM(oi.quantity * oi.price), 0) AS revenue, "
+                + "       ISNULL(SUM(oi.quantity * oi.price "
                 + "                  * ISNULL(p.commission_rate, 0) / 100.0), 0) AS platform_fee "
                 + "FROM products p "
                 + "JOIN shops s ON s.shop_id = p.shop_id "
@@ -428,8 +446,8 @@ public class CommissionReportDAO {
                 + "JOIN order_items oi ON oi.variant_id = v.variant_id "
                 + "JOIN orders o ON o.order_id = oi.order_id "
                 + where
-                + " GROUP BY o.status "
-                + "ORDER BY o.status";
+                + " GROUP BY o.order_status "
+                + "ORDER BY o.order_status";
 
         List<Map<String, Object>> rows = new ArrayList<>();
 
@@ -529,16 +547,16 @@ public class CommissionReportDAO {
     private static final String SELECT_BREAKDOWN =
             "SELECT "
             + "  ISNULL(SUM(CASE WHEN {counted} "
-            + "        THEN oi.quantity * oi.unit_price END), 0) AS revenue, "
+            + "        THEN oi.quantity * oi.price END), 0) AS revenue, "
             + "  ISNULL(SUM(CASE WHEN {counted} THEN "
-            + "        CASE WHEN v.price > oi.unit_price "
-            + "             THEN oi.quantity * (v.price - oi.unit_price) "
+            + "        CASE WHEN v.price > oi.price "
+            + "             THEN oi.quantity * (v.price - oi.price) "
             + "             ELSE 0 END END), 0) AS promotional_discount, "
             + "  ISNULL(SUM(CASE WHEN {dates} "
-            + "        AND o.status IN ('cancelled', 'failed') "
-            + "        THEN oi.quantity * oi.unit_price END), 0) AS refunds, "
+            + "        AND o.order_status IN (N'" + String.join("', N'", REFUND_STATUSES) + "') "
+            + "        THEN oi.quantity * oi.price END), 0) AS refunds, "
             + "  ISNULL(SUM(CASE WHEN {dates} "
-            + "        THEN oi.quantity * oi.unit_price END), 0) AS gross_sales ";
+            + "        THEN oi.quantity * oi.price END), 0) AS gross_sales ";
 
     private static int bindBreakdownParams(PreparedStatement ps,
                                            Scope scope)

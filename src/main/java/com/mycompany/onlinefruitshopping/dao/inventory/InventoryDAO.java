@@ -493,8 +493,8 @@ public class InventoryDAO {
 
         String logSql = """
                 INSERT INTO inventory_adjustments
-                    (batch_id, adjustment_type, quantity, reason, created_by, created_at)
-                VALUES (?, ?, ?, ?, ?, GETDATE())
+                    (batch_id, quantity_change, reason, adjusted_by, created_at)
+                VALUES (?, ?, ?, ?, GETDATE())
                 """;
 
         Connection conn = null;
@@ -526,14 +526,16 @@ public class InventoryDAO {
             }
 
             double delta = newQuantity - oldQuantity.doubleValue();
-            String type = delta >= 0 ? "import" : "export";
 
             try (PreparedStatement ps = conn.prepareStatement(logSql)) {
                 ps.setInt(1, batchId);
-                ps.setString(2, type);
-                ps.setBigDecimal(3, BigDecimal.valueOf(Math.abs(delta)));
-                ps.setString(4, reason);
-                ps.setInt(5, userId);
+                ps.setBigDecimal(2, BigDecimal.valueOf(delta));
+                ps.setString(3, reason);
+                if (userId <= 0) {
+                    ps.setObject(4, null);
+                } else {
+                    ps.setInt(4, userId);
+                }
                 ps.executeUpdate();
             }
 
@@ -609,8 +611,8 @@ public class InventoryDAO {
 
         String logSql = """
                 INSERT INTO inventory_adjustments
-                    (batch_id, adjustment_type, quantity, reason, created_by, created_at)
-                VALUES (?, 'import', ?, ?, ?, GETDATE())
+                    (batch_id, quantity_change, reason, adjusted_by, created_at)
+                VALUES (?, ?, ?, ?, GETDATE())
                 """;
 
         Connection conn = null;
@@ -646,7 +648,11 @@ public class InventoryDAO {
                 ps.setInt(1, batchId);
                 ps.setBigDecimal(2, BigDecimal.valueOf(quantity));
                 ps.setString(3, reason);
-                ps.setInt(4, userId);
+                if (userId <= 0) {
+                    ps.setObject(4, null);
+                } else {
+                    ps.setInt(4, userId);
+                }
                 ps.executeUpdate();
             }
 
@@ -704,15 +710,10 @@ public class InventoryDAO {
                 """;
 
         String itemsSql = """
-                SELECT variant_id, batch_id, quantity
+                SELECT variant_id, quantity
                 FROM order_items
                 WHERE order_id = ?
                 ORDER BY order_item_id
-                """;
-
-        String lockedBatchSql = """
-                SELECT quantity FROM inventory_batches WITH (UPDLOCK, ROWLOCK)
-                WHERE batch_id = ?
                 """;
 
         String takeBatchesSql = """
@@ -731,8 +732,8 @@ public class InventoryDAO {
 
         String logSql = """
                 INSERT INTO inventory_adjustments
-                    (batch_id, adjustment_type, quantity, reason, created_by, created_at)
-                VALUES (?, 'export', ?, ?, ?, GETDATE())
+                    (batch_id, quantity_change, reason, adjusted_by, created_at)
+                VALUES (?, ?, ?, ?, GETDATE())
                 """;
 
         Connection conn = null;
@@ -754,8 +755,10 @@ public class InventoryDAO {
                 }
             }
 
-            // 2) Read the order lines.
-            List<int[]> lines = new ArrayList<>();
+            // 2) Read the order lines. The current schema keeps no
+            //    batch on the order line, so stock is taken FIFO from
+            //    the variant's active batches.
+            List<Integer> lineVariants = new ArrayList<>();
             List<BigDecimal> lineQty = new ArrayList<>();
 
             try (PreparedStatement ps = conn.prepareStatement(itemsSql)) {
@@ -763,44 +766,31 @@ public class InventoryDAO {
 
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
-                        int batchId = rs.getInt("batch_id");
-                        lines.add(new int[]{
-                            rs.getInt("variant_id"),
-                            rs.wasNull() ? -1 : batchId
-                        });
+                        lineVariants.add(rs.getInt("variant_id"));
                         lineQty.add(rs.getBigDecimal("quantity"));
                     }
                 }
             }
 
-            if (lines.isEmpty()) {
+            if (lineVariants.isEmpty()) {
                 conn.rollback();
                 return false;
             }
 
-            // 3) Deduct each line, preferring the batch recorded on
-            //    the order line and then walking active batches FIFO.
-            for (int i = 0; i < lines.size(); i++) {
+            // 3) Deduct each line, walking the variant's active
+            //    batches FIFO (oldest expiry first).
+            for (int i = 0; i < lineVariants.size(); i++) {
 
-                int variantId = lines.get(i)[0];
-                int preferredBatch = lines.get(i)[1];
                 BigDecimal remaining = lineQty.get(i);
 
-                if (preferredBatch > 0) {
-                    remaining = takeFromBatch(
-                            conn, preferredBatch, remaining,
-                            orderId, userId, lockedBatchSql,
-                            deductSql, logSql);
-                }
-
-                if (remaining.signum() > 0) {
+                if (remaining != null && remaining.signum() > 0) {
                     remaining = takeFromVariant(
-                            conn, variantId, remaining,
+                            conn, lineVariants.get(i), remaining,
                             orderId, userId, takeBatchesSql,
                             deductSql, logSql);
                 }
 
-                if (remaining.signum() > 0) {
+                if (remaining != null && remaining.signum() > 0) {
                     conn.rollback();
                     return false;
                 }
@@ -834,48 +824,6 @@ public class InventoryDAO {
                 }
             }
         }
-    }
-
-    /**
-     * Takes as much as possible from one batch and returns the
-     * quantity that is still outstanding.
-     */
-    private BigDecimal takeFromBatch(Connection conn,
-                                     int batchId,
-                                     BigDecimal requested,
-                                     int orderId,
-                                     int userId,
-                                     String lockedBatchSql,
-                                     String deductSql,
-                                     String logSql)
-            throws SQLException {
-
-        if (requested.signum() <= 0) {
-            return BigDecimal.ZERO;
-        }
-
-        BigDecimal available;
-
-        try (PreparedStatement ps = conn.prepareStatement(lockedBatchSql)) {
-            ps.setInt(1, batchId);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) {
-                    return requested;
-                }
-
-                available = rs.getBigDecimal("quantity");
-            }
-        }
-
-        if (available == null || available.signum() <= 0) {
-            return requested;
-        }
-
-        BigDecimal taken = available.min(requested);
-        writeDeduction(conn, batchId, taken, orderId, userId, deductSql, logSql);
-
-        return requested.subtract(taken);
     }
 
     /**
@@ -947,9 +895,13 @@ public class InventoryDAO {
 
         try (PreparedStatement ps = conn.prepareStatement(logSql)) {
             ps.setInt(1, batchId);
-            ps.setBigDecimal(2, quantity);
+            ps.setBigDecimal(2, quantity.negate());
             ps.setString(3, "Order #" + orderId);
-            ps.setInt(4, userId);
+            if (userId <= 0) {
+                ps.setObject(4, null);
+            } else {
+                ps.setInt(4, userId);
+            }
             ps.executeUpdate();
         }
     }
@@ -963,11 +915,11 @@ public class InventoryDAO {
 
         String sql = """
                 SELECT a.adjustment_id,
-                       a.adjustment_type,
-                       a.quantity,
+                       a.quantity_change,
                        a.reason,
                        a.created_at,
-                       a.created_by,
+                       a.adjusted_by,
+                       u.full_name AS actor,
                        b.batch_code,
                        p.product_name,
                        v.sku
@@ -975,6 +927,7 @@ public class InventoryDAO {
                 JOIN inventory_batches b ON b.batch_id = a.batch_id
                 JOIN product_variants v ON v.variant_id = b.variant_id
                 JOIN products p ON p.product_id = v.product_id
+                LEFT JOIN users u ON u.user_id = a.adjusted_by
                 WHERE p.shop_id = ?
                 ORDER BY a.created_at DESC, a.adjustment_id DESC
                 """;
@@ -994,11 +947,16 @@ public class InventoryDAO {
                     while (rs.next()) {
                         Map<String, Object> item = new LinkedHashMap<>();
                         item.put("adjustment_id", rs.getInt("adjustment_id"));
-                        item.put("adjustment_type", rs.getString("adjustment_type"));
-                        item.put("quantity", rs.getBigDecimal("quantity"));
+                        BigDecimal change = rs.getBigDecimal("quantity_change");
+                        item.put("quantity_change", change);
+                        item.put("adjustment_type", change != null && change.signum() >= 0 ? "import" : "export");
+                        item.put("quantity", change == null ? java.math.BigDecimal.ZERO : change.abs());
                         item.put("reason", rs.getString("reason"));
                         item.put("created_at", rs.getTimestamp("created_at"));
-                        item.put("created_by", rs.getInt("created_by"));
+                        Object ab = rs.getObject("adjusted_by");
+                        item.put("created_by", ab == null ? 0 : ((Number) ab).intValue());
+                        item.put("adjusted_by", ab);
+                        item.put("actor", rs.getString("actor"));
                         item.put("batch_code", rs.getString("batch_code"));
                         item.put("product_name", rs.getString("product_name"));
                         item.put("sku", rs.getString("sku"));

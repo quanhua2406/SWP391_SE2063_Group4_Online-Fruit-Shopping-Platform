@@ -74,10 +74,16 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-runtime-http.ps
 
 Script này **ghi fixture DB test**, đặt trigger lỗi tạm thời để kiểm tra rollback,
 chạy hai POST đồng thời và lưu `.runtime/http-results.json`; không phải unit test.
-Trigger được xóa trong finally; role/status account được khôi phục. Delivery #1
-kết thúc ở Accepted, giá/ngưỡng và notification fixture thay đổi sau khi chạy.
-Không dùng script trên dữ liệu không phải fixture. Tổng hợp PASS/FAIL trong JSON,
-không suy PASS từ exit code PowerShell hoặc từ HTTP redirect đơn lẻ.
+Bản 26/10 có **69 kiểm tra** (56 ca cũ giữ nguyên ID + 13 ca bổ sung cho báo cáo
+hoa hồng và kho). Trước khi kiểm tra, script tự đặt lại batch/restock và các order
+`runtime-report-fixture` để phép tính `100 - 10 = 90`, `7` và doanh thu 200/50
+không phụ thuộc lần chạy trước. Các ca mới đối chiếu cả nội dung HTML/CSV
+(revenue, fee, số lượng, actor, reason) và đọc SQL trực tiếp, không chỉ HTTP 200/302.
+Hai trigger (`notifications`, `inventory_adjustments`) được xóa trong finally;
+role/status account được khôi phục. Delivery #1 kết thúc ở Accepted, giá/ngưỡng và
+notification fixture thay đổi sau khi chạy. Không dùng script trên dữ liệu không
+phải fixture. Tổng hợp PASS/FAIL trong JSON, không suy PASS từ exit code PowerShell
+hoặc từ HTTP redirect đơn lẻ.
 
 ## Schema: nguồn và chênh lệch đã xác định
 
@@ -100,11 +106,21 @@ Các điều chỉnh chỉ áp dụng DB test, được ghi tách khỏi snapsho
 - Account status hỗ trợ active/blocked/inactive/pending; dùng blocked để test khóa,
   không dùng giá trị locked ngoài constraint.
 
-**Chưa giải quyết:** CommissionReportDAO dùng orders.status trong khi metadata
-chỉ có order_status; InventoryDAO cần adjustment_type/quantity/created_by trong
-khi metadata có quantity_change/adjusted_by. Không thêm cột giả hoặc sửa ngầm
-quy tắc signed quantity để làm runtime xanh. Năm ca tương ứng đang FAIL.
-Module subscription còn thiếu subscription_plans ngoài phạm vi fixture này.
-Cần thống nhất migration/SQL nghiệp vụ các module đó trước khi nghiệm thu toàn bộ.
+**Đã giải quyết 26/10 (không thêm migration/cột giả):** CommissionReportDAO đã đổi
+`orders.status` → `orders.order_status`, `orders.created_at` → `orders.order_date`,
+`order_items.unit_price` → `order_items.price`; trạng thái dùng đúng
+`Pending/Confirmed/Shipping/Completed/Cancelled`, fee basis `Completed`, refund
+`Cancelled/Failed`. InventoryDAO đã đổi INSERT/SELECT lịch sử sang
+`quantity_change` (signed), `adjusted_by`, `created_at`, `reason`; cập nhật batch
+ghi delta và lịch sử trong cùng transaction/connection, rollback nếu insert log
+lỗi. `deductStockForOrder` (chưa được gọi) cũng bỏ `order_items.batch_id` và dùng
+FIFO batch của variant. Năm ca FAIL cũ (báo cáo, CSV, lịch sử kho, cập nhật batch,
+nhập hàng) đã PASS; không cần sửa schema test.
+
+**Còn mở (ngoài phạm vi 5 ca):** `OrderDAO`, `AdminOrderDAO` và
+`database/sample_orders.sql` vẫn dùng từ vựng cột cũ (`status`, `created_at`,
+`unit_price`, `batch_id`); các luồng này chưa được harness chạy nên vẫn là rủi ro
+schema. Module subscription còn thiếu bảng `subscription_plans` ngoài phạm vi
+fixture này. Cần xử lý riêng trước khi nghiệm thu toàn bộ.
 
 Kết quả và giới hạn chi tiết: [KIEM_THU_RUNTIME.md](KIEM_THU_RUNTIME.md).
