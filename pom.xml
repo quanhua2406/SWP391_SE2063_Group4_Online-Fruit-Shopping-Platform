@@ -103,6 +103,12 @@
 
     <!-- BUILD -->
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <excludes><exclude>**/db.properties</exclude><exclude>**/db-test.properties</exclude></excludes>
+            </resource>
+        </resources>
         <plugins>
 
             <!-- Java Compiler -->
@@ -122,6 +128,7 @@
                 <version>3.4.0</version>
                 <configuration>
                     <failOnMissingWebXml>false</failOnMissingWebXml>
+                    <packagingExcludes>**/db.properties,**/db-test.properties,**/test-accounts.properties</packagingExcludes>
                 </configuration>
             </plugin>
 

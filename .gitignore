@@ -45,5 +45,8 @@ Thumbs.db
 *.log
 .env
 
-# Personal DB config (see src/main/resources/db.properties.example)
+# External DB config (see config/db.properties.example)
 db.properties
+/config/db-test.properties
+/config/test-accounts.properties
+/.runtime/

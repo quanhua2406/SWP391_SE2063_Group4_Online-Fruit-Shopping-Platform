@@ -1,4 +1,5 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@taglib prefix="c" uri="jakarta.tags.core"%>
 
 <!DOCTYPE html>
 <html>
@@ -40,7 +41,7 @@
     <h1>Customer Dashboard</h1>
 
     <p class="dashboard-welcome">
-        Welcome back, Customer!
+        Welcome back, <c:out value="${sessionScope.user.fullName}"/>!
     </p>
 
     <div class="dashboard-grid">

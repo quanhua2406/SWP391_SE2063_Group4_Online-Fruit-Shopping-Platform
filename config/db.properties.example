@@ -1,0 +1,5 @@
+# File cấu hình bên ngoài WAR.
+# Điền JDBC URL và thông tin SQL authentication tại máy chạy.
+db.url=
+db.user=
+db.password=

@@ -1,5 +1,30 @@
 # Hướng dẫn cập nhật ShopOwner
 
+## Runtime test riêng đã chạy (26/10/2026)
+
+Đã chuyển DBConnection sang cấu hình file bên ngoài, tạo DB `OnlineFruitShopping_Test`
+và fixture riêng, deploy WAR mới trên Tomcat test `127.0.0.1:8081/OnlineFruitShopping`.
+Build mới: 92 tests, 0 failures/errors/skipped; 27 JSP. Runtime HTTP/SQL: 56 kiểm tra,
+51 PASS và 5 FAIL do chênh lệch schema báo cáo/kho. Không coi build xanh là toàn bộ runtime đạt.
+Đã bấm thật Cart/Track Order/detail; sửa Customer Dashboard để hiển thị tên từ User
+thay vì chữ Customer cố định, và xác minh lại sau build/deploy.
+
+Hướng dẫn cấu hình/khởi động: [RUNTIME_SETUP.md](RUNTIME_SETUP.md).
+Kết quả, lỗi tái hiện và phạm vi chưa chạy: [KIEM_THU_RUNTIME.md](KIEM_THU_RUNTIME.md).
+Các mục ngày 25/10 bên dưới là lịch sử, không mô tả trạng thái deployment mới nhất.
+
+## Tiền kiểm runtime tại `3923639` (25/10/2026)
+
+Đã kiểm tra môi trường thực tế; chưa chạy được các ca nghiệp vụ runtime.
+Tomcat cấu hình port 8080/context `/OnlineFruitShopping` nhưng không phục vụ HTTP,
+descriptor trỏ bản trong Downloads. DBConnection ghi cứng `OnlineFruitShopping`,
+không đọc db.properties đang trỏ DB khác; chưa xác nhận DB test riêng/tài khoản fixture.
+Không ghi nhận PASS cho click Customer, handler, quyền/CSRF hay transaction SQL Server.
+
+Bằng chứng, bảng kết quả và checklist URL/thao tác:
+[Kiểm thử runtime](KIEM_THU_RUNTIME.md). Kết quả tự động bên dưới vẫn là lịch sử
+build/test, không phải xác nhận ứng dụng đã hoạt động trên server.
+
 ## Bổ sung chức năng sau `5e58e98` (25/10/2026)
 
 Phần 1–9 bên dưới lưu kết quả và các thiếu sót tại bước 11. Trạng thái hiện tại

@@ -14,7 +14,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
-public class ReviewDAO extends DBConnection {
+public class ReviewDAO {
 
     private static final Logger LOG = Logger.getLogger(ReviewDAO.class.getName());
 
