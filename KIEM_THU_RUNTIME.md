@@ -82,6 +82,13 @@ Bằng chứng local ignored: `.runtime/http-results.json`,
 | 4 | `POST /store-owner/inventory/update` (ca 46) | INSERT log dùng cột không tồn tại và ghi số tuyệt đối thay vì delta; không khóa batch/transaction | `InventoryDAO.setBatchQuantity`: `UPDLOCK, ROWLOCK`, UPDATE batch, INSERT `(batch_id, quantity_change, reason, adjusted_by, created_at)` với delta, cùng connection; rollback khi log lỗi | 302; ca 48/49 PASS: 100→90, đúng 1 log `-10`, actor = user session, reason đúng; ca 52 cross-shop bị chặn, không đổi dữ liệu; ca 53 trigger lỗi → 500, batch vẫn 90, vẫn 1 log |
 | 5 | `POST /store-owner/inventory/restock` (ca 47) | Cùng lỗi cột audit; batch mới và log phải atomic | `InventoryDAO.restock`: batch mới quantity 7, log `+7`, `adjusted_by` từ session, cùng transaction | 302; ca 50 PASS: batch 7, đúng 1 log `+7`, actor đúng |
 
+Đối chiếu ba nguồn — schema DB test đọc từ metadata, migration/snapshot trong repo
+và SQL của DAO — cho thấy cả 5 lỗi đều do DAO dùng từ vựng cột cũ
+(`status/created_at/unit_price`, `adjustment_type/quantity/created_by`), **không
+phải test env thiếu migration**. Vì vậy không áp migration/cột mới; chỉ sửa DAO,
+service và JSP. `orders.order_date` đã có default `getdate()` nên fixture report
+không cần cột giả.
+
 Ngoài 5 ca: `deductStockForOrder` (chưa được gọi) đã bỏ `order_items.batch_id`
 (không có trong schema) và lấy FIFO batch của variant, log `quantity_change` âm;
 `takeFromBatch`/`lockedBatchSql` không dùng đã xóa. Không có migration mới.
