@@ -458,14 +458,14 @@
                         <c:choose>
                             <c:when test="${not empty addresses}">
                                 <c:forEach var="addr" items="${addresses}">
-                                    <label class="address-item ${addr.default ? 'selected' : ''}" onclick="selectAddress(this)">
+                                    <label class="address-item ${addr.isDefault ? 'selected' : ''}" onclick="selectAddress(this)">
                                         <input type="radio" name="addressId" value="${addr.addressId}" class="address-radio"
-                                               ${addr.default ? 'checked' : ''} onchange="onAddressChanged(this)">
+                                               ${addr.isDefault ? 'checked' : ''} onchange="onAddressChanged(this)">
                                         <div class="address-info">
                                             <div>
                                                 <span class="address-name">${addr.recipientName}</span>
                                                 <span class="address-phone">${addr.phone}</span>
-                                                <c:if test="${addr.default}">
+                                                <c:if test="${addr.isDefault}">
                                                     <span class="badge-default">Mặc định</span>
                                                 </c:if>
                                             </div>
