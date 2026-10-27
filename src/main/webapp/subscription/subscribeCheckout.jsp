@@ -8,28 +8,14 @@
                 <meta charset="UTF-8" />
                 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
                 <title>Xác nhận đăng ký gói ${plan.name} | FreshFruit</title>
+                <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css" />
                 <link rel="stylesheet" href="${pageContext.request.contextPath}/css/quanht/style.css" />
             </head>
 
             <body class="subscribe-checkout-page">
 
-                <!-- Navigation -->
-                <header class="cust-navbar">
-                    <a href="${pageContext.request.contextPath}/home" class="brand">
-                        <span>FreshFruit</span>
-                    </a>
-                    <nav class="nav-links">
-                        <a href="${pageContext.request.contextPath}/subscriptions" class="nav-link">← Xem các gói
-                            khác</a>
-                        <c:if test="${not empty sessionScope.user}">
-                            <a href="${pageContext.request.contextPath}/my-subscriptions" class="nav-link">Gói của
-                                tôi</a>
-                            <span style="font-size:0.9rem; font-weight:700; color:var(--primary-900);">
-                                ${sessionScope.user.fullName}
-                            </span>
-                        </c:if>
-                    </nav>
-                </header>
+                <!-- Navigation (Reusable Component) -->
+                <jsp:include page="/includes/header.jsp" />
 
                 <div class="customer-container">
 
@@ -300,6 +286,9 @@
                     </div>
 
                 </div>
+
+                <!-- Footer (Reusable Component) -->
+                <jsp:include page="/includes/footer.jsp" />
 
             </body>
 

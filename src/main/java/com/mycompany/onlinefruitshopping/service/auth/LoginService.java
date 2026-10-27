@@ -14,6 +14,10 @@ import java.sql.SQLException;
  * the credentials are valid AND the account really owns the selected role.
  */
 public class LoginService {
+    public boolean isSessionValid(User user) throws SQLException {
+        return user != null && userDAO.isActiveWithRole(user.getUserID(), user.getRoleName());
+    }
+
 
     // =========================================================
     // RESULT TYPES
@@ -116,7 +120,7 @@ public class LoginService {
         // Blocked account
         // -----------------------------------------------------
 
-        if ("locked".equalsIgnoreCase(user.getStatus())) {
+        if (!"active".equalsIgnoreCase(user.getStatus())) {
 
             return new LoginResult(
                     Status.ACCOUNT_LOCKED,

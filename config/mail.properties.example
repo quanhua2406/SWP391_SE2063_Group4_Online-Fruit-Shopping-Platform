@@ -1,0 +1,3 @@
+# Configure outside the project using your existing mail setup.
+mail.username=
+mail.password=

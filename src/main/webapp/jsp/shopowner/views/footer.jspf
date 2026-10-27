@@ -1,0 +1,9 @@
+<%@ page pageEncoding="UTF-8" %>
+</main>
+<footer class="footer management-footer">
+    <h3><svg class="icon" width="26" height="26" aria-hidden="true" focusable="false"><use href="${ctx}/assets/icons.svg#fruit"/></svg> FreshFruit</h3>
+    <p>Fresh fruits. Healthy life.</p>
+    <p class="footer-caption">Online Fruit Shopping</p>
+</footer>
+</body>
+</html>

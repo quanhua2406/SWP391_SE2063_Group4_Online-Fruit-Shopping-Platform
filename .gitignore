@@ -47,3 +47,9 @@ Thumbs.db
 
 # Personal DB config (see src/main/resources/db.properties.example)
 db.properties
+
+# Local runtime and credentials (not included in the returned source archive)
+.runtime/
+/fruitshop-mail.properties.txt
+/src/main/resources/mail.properties
+/config/*.local.*

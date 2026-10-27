@@ -71,7 +71,23 @@ public class AdminProductEditServlet extends HttpServlet {
 
         int productId = parseInt(request.getParameter("productId"), -1);
 
+        if (productId <= 0) {
+            response.sendRedirect(
+                    request.getContextPath()
+                            + "/admin/product-management?message=invalid"
+            );
+            return;
+        }
+
         try {
+            if (productService.getProductForEdit(productId) == null) {
+                response.sendRedirect(
+                        request.getContextPath()
+                                + "/admin/product-management?message=notfound"
+                );
+                return;
+            }
+
             AdminProductService.SaveResult result =
                     productService.updateProduct(
                             request.getParameter("productId"),

@@ -546,56 +546,8 @@
 
 <body>
 
-<!-- Header Navigation Bar -->
-<header class="navbar">
-    <div class="logo">
-        <a href="${pageContext.request.contextPath}/home" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px;">
-            FreshFruit
-        </a>
-    </div>
-
-    <div class="search-box-wrapper" style="flex: 1; max-width: 520px; position: relative;">
-        <form action="${pageContext.request.contextPath}/products" method="get" class="search-box">
-            <input type="text" name="keyword" placeholder="Tìm kiếm trái cây..." autocomplete="off">
-            <button type="submit" aria-label="Tìm kiếm">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-            </button>
-        </form>
-    </div>
-
-    <div class="nav-actions">
-        <a href="${pageContext.request.contextPath}/products" style="color: #16a34a; font-weight: 700;">
-            Khám Phá Trái Cây
-        </a>
-
-        <a href="${pageContext.request.contextPath}/cart" class="active" title="Giỏ hàng" style="display: inline-flex; align-items: center; gap: 6px; color: #16a34a; font-weight: 700;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="9" cy="21" r="1"></circle>
-                <circle cx="20" cy="21" r="1"></circle>
-                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-            </svg>
-            Giỏ hàng
-            <c:if test="${sessionScope.cartCount > 0}">
-                <span style="background: #ef4444; color: #fff; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 9999px;">
-                    ${sessionScope.cartCount}
-                </span>
-            </c:if>
-        </a>
-
-        <c:choose>
-            <c:when test="${not empty sessionScope.user}">
-                <a href="${pageContext.request.contextPath}/profile">Tài khoản</a>
-                <a href="${pageContext.request.contextPath}/logout" style="color: #ef4444;">Đăng xuất</a>
-            </c:when>
-            <c:otherwise>
-                <a href="${pageContext.request.contextPath}/login">Đăng nhập</a>
-            </c:otherwise>
-        </c:choose>
-    </div>
-</header>
+<!-- Header Navigation Bar (Reusable Component) -->
+<jsp:include page="/includes/header.jsp" />
 
 <div class="cart-page-wrapper">
     <div class="cart-container">
@@ -815,14 +767,14 @@
 
                             <c:choose>
                                 <c:when test="${empty sessionScope.user}">
-                                    <a href="${pageContext.request.contextPath}/login" class="btn-checkout">
+                                    <a href="${pageContext.request.contextPath}/login?redirect=/checkout" class="btn-checkout" style="display:block; text-align:center; text-decoration:none;">
                                         Đăng Nhập Để Thanh Toán
                                     </a>
                                 </c:when>
                                 <c:otherwise>
-                                    <button type="button" class="btn-checkout" onclick="alert('Đơn hàng đã được xác nhận thông tin! Chức năng thanh toán và giao hàng sẽ kết nối ở bước tiếp theo.');">
+                                    <a href="${pageContext.request.contextPath}/checkout" class="btn-checkout" style="display:block; text-align:center; text-decoration:none;">
                                         Tiến Hành Đặt Hàng
-                                    </button>
+                                    </a>
                                 </c:otherwise>
                             </c:choose>
 
@@ -976,6 +928,9 @@
         });
     }
 </script>
+
+<!-- Footer (Reusable Component) -->
+<jsp:include page="/includes/footer.jsp" />
 
 </body>
 </html>

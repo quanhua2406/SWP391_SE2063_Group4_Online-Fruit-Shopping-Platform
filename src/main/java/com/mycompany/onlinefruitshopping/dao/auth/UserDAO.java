@@ -2,6 +2,8 @@ package com.mycompany.onlinefruitshopping.dao.auth;
 
 import com.mycompany.onlinefruitshopping.model.User;
 import com.mycompany.onlinefruitshopping.utils.DBConnection;
+import com.mycompany.onlinefruitshopping.utils.ConnectionProvider;
+import com.mycompany.onlinefruitshopping.utils.ValidationUtil;
 import org.mindrot.jbcrypt.BCrypt;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +13,37 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class UserDAO {
+    private final ConnectionProvider connections;
+
+    public UserDAO() { this(DBConnection::getConnection); }
+
+    UserDAO(ConnectionProvider connections) {
+        this.connections = java.util.Objects.requireNonNull(connections);
+    }
+
+    public boolean isActiveWithRole(int userId, String roleName) throws SQLException {
+        String role = ValidationUtil.normalizeRoleName(roleName);
+        if (userId <= 0 || role.isEmpty()) return false;
+        String sql = """
+            SELECT 1
+            FROM users u
+            JOIN user_roles ur ON ur.user_id = u.user_id
+            JOIN roles r ON r.role_id = ur.role_id
+            WHERE u.user_id = ? AND LOWER(u.status) = 'active'
+              AND REPLACE(REPLACE(UPPER(r.role_name), ' ', ''), '_', '') = ?
+            """;
+        try (Connection connection = connections.open();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, userId);
+            statement.setString(2, role);
+            try (ResultSet result = statement.executeQuery()) {
+                return result.next();
+            }
+        }
+    }
+
+
+
 
     // =========================================================
     // CHECK EMAIL EXISTS
@@ -24,7 +57,7 @@ public class UserDAO {
                 WHERE email = ?
                 """;
 
-        try (Connection conn = DBConnection.getConnection();
+        try (Connection conn = connections.open();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, email);
@@ -50,7 +83,7 @@ public class UserDAO {
                 WHERE REPLACE(REPLACE(UPPER(role_name), ' ', ''), '_', '') = ?
                 """;
 
-        try (Connection conn = DBConnection.getConnection();
+        try (Connection conn = connections.open();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1,
@@ -104,7 +137,7 @@ public class UserDAO {
 
         try {
 
-            conn = DBConnection.getConnection();
+            conn = connections.open();
 
             conn.setAutoCommit(false);
 
@@ -239,7 +272,7 @@ public class UserDAO {
                 ORDER BY r.role_id
                 """;
 
-        try (Connection conn = DBConnection.getConnection();
+        try (Connection conn = connections.open();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, email);
@@ -317,7 +350,7 @@ public User getUserByEmailForLogin(String email)
             ORDER BY r.role_id
             """;
 
-    try (Connection conn = DBConnection.getConnection();
+    try (Connection conn = connections.open();
          PreparedStatement ps = conn.prepareStatement(sql)) {
 
         ps.setString(1, email);
@@ -422,7 +455,7 @@ public User getUserByEmailForLogin(String email)
                 ORDER BY r.role_id
                 """;
 
-        try (Connection conn = DBConnection.getConnection();
+        try (Connection conn = connections.open();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, userId);
@@ -493,7 +526,7 @@ public User getUserByEmailForLogin(String email)
                 WHERE user_id = ?
                 """;
 
-        try (Connection conn = DBConnection.getConnection();
+        try (Connection conn = connections.open();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, fullName);
@@ -522,7 +555,7 @@ public User getUserByEmailForLogin(String email)
                 WHERE email = ?
                 """;
 
-        try (Connection conn = DBConnection.getConnection();
+        try (Connection conn = connections.open();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, otp);
@@ -550,7 +583,7 @@ public User getUserByEmailForLogin(String email)
                   AND reset_otp_expiry > GETDATE()
                 """;
 
-        try (Connection conn = DBConnection.getConnection();
+        try (Connection conn = connections.open();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, email);
@@ -582,7 +615,7 @@ public User getUserByEmailForLogin(String email)
                 WHERE email = ?
                 """;
 
-        try (Connection conn = DBConnection.getConnection();
+        try (Connection conn = connections.open();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, email);
@@ -615,7 +648,7 @@ public User getUserByEmailForLogin(String email)
                 WHERE email = ?
                 """;
 
-        try (Connection conn = DBConnection.getConnection();
+        try (Connection conn = connections.open();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, passwordHash);
@@ -646,7 +679,7 @@ public User getUserByEmailForLogin(String email)
             ORDER BY u.user_id DESC
             """;
 
-    try (Connection conn = DBConnection.getConnection();
+    try (Connection conn = connections.open();
          PreparedStatement ps = conn.prepareStatement(sql);
          ResultSet rs = ps.executeQuery()) {
 

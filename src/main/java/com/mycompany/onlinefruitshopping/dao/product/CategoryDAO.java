@@ -162,4 +162,42 @@ public class CategoryDAO {
             }
         }
     }
+
+    /**
+     * Follows the parent chain upwards from {@code categoryId} and
+     * reports whether {@code possibleAncestorId} is reached. Used to
+     * stop a category from being made a child of one of its own
+     * descendants (which would create a cycle in the tree).
+     */
+    public boolean isDescendantOf(int categoryId, int possibleAncestorId)
+            throws SQLException {
+
+        String sql = "SELECT parent_id FROM categories WHERE category_id = ?";
+
+        int current = categoryId;
+        // The tree is tiny; a hard cap keeps a pre-existing cycle from
+        // looping forever.
+        for (int guard = 0; guard < 100 && current > 0; guard++) {
+
+            if (current == possibleAncestorId) {
+                return true;
+            }
+
+            try (Connection conn = DBConnection.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
+
+                ps.setInt(1, current);
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) {
+                        return false;
+                    }
+                    int parent = rs.getInt("parent_id");
+                    current = rs.wasNull() ? 0 : parent;
+                }
+            }
+        }
+
+        return false;
+    }
 }

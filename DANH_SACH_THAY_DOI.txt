@@ -1,0 +1,107 @@
+Thay doi so voi ZIP dau vao (A: them, M: sua, D: xoa, R: doi vi tri).
+Khong phai diff so voi remote GitHub.
+
+M	.gitignore
+A	HUONG_DAN_CAP_NHAT.md
+A	KET_QUA_KIEM_THU.txt
+M	README.md
+A	config/mail.properties.example
+M	pom.xml
+R083	src/main/java/com/mycompany/onlinefruitshopping/shopowner/controller/LoginController.java	src/main/java/com/mycompany/onlinefruitshopping/controller/auth/LegacyLoginRedirectServlet.java
+M	src/main/java/com/mycompany/onlinefruitshopping/controller/auth/LoginServlet.java
+M	src/main/java/com/mycompany/onlinefruitshopping/controller/auth/LogoutServlet.java
+R085	src/main/java/com/mycompany/onlinefruitshopping/shopowner/controller/CustomerCouponController.java	src/main/java/com/mycompany/onlinefruitshopping/controller/customer/CustomerCouponController.java
+R078	src/main/java/com/mycompany/onlinefruitshopping/shopowner/controller/DeliveryController.java	src/main/java/com/mycompany/onlinefruitshopping/controller/delivery/DeliveryController.java
+R078	src/main/java/com/mycompany/onlinefruitshopping/shopowner/controller/NotificationController.java	src/main/java/com/mycompany/onlinefruitshopping/controller/notification/NotificationController.java
+R090	src/main/java/com/mycompany/onlinefruitshopping/shopowner/controller/CouponController.java	src/main/java/com/mycompany/onlinefruitshopping/controller/shopowner/CouponController.java
+R089	src/main/java/com/mycompany/onlinefruitshopping/shopowner/controller/PromotionController.java	src/main/java/com/mycompany/onlinefruitshopping/controller/shopowner/PromotionController.java
+R080	src/main/java/com/mycompany/onlinefruitshopping/shopowner/controller/ShopDeliveryController.java	src/main/java/com/mycompany/onlinefruitshopping/controller/shopowner/ShopDeliveryController.java
+M	src/main/java/com/mycompany/onlinefruitshopping/dao/auth/UserDAO.java
+R096	src/main/java/com/mycompany/onlinefruitshopping/shopowner/dao/CouponApplicationDAO.java	src/main/java/com/mycompany/onlinefruitshopping/dao/coupon/CouponApplicationDAO.java
+R097	src/main/java/com/mycompany/onlinefruitshopping/shopowner/dao/CouponDAO.java	src/main/java/com/mycompany/onlinefruitshopping/dao/coupon/CouponDAO.java
+R090	src/main/java/com/mycompany/onlinefruitshopping/shopowner/dao/AssignmentDAO.java	src/main/java/com/mycompany/onlinefruitshopping/dao/delivery/AssignmentDAO.java
+R078	src/main/java/com/mycompany/onlinefruitshopping/shopowner/dao/DeliveryDAO.java	src/main/java/com/mycompany/onlinefruitshopping/dao/delivery/DeliveryDAO.java
+R094	src/main/java/com/mycompany/onlinefruitshopping/shopowner/dao/NotificationDAO.java	src/main/java/com/mycompany/onlinefruitshopping/dao/notification/NotificationDAO.java
+R097	src/main/java/com/mycompany/onlinefruitshopping/shopowner/dao/PromotionDAO.java	src/main/java/com/mycompany/onlinefruitshopping/dao/promotion/PromotionDAO.java
+R091	src/main/java/com/mycompany/onlinefruitshopping/shopowner/model/OrderItem.java	src/main/java/com/mycompany/onlinefruitshopping/dto/delivery/DeliveryOrderItem.java
+A	src/main/java/com/mycompany/onlinefruitshopping/filter/AccessPolicy.java
+M	src/main/java/com/mycompany/onlinefruitshopping/filter/AuthorizationFilter.java
+R095	src/main/java/com/mycompany/onlinefruitshopping/shopowner/model/Coupon.java	src/main/java/com/mycompany/onlinefruitshopping/model/Coupon.java
+R097	src/main/java/com/mycompany/onlinefruitshopping/shopowner/model/CouponOrder.java	src/main/java/com/mycompany/onlinefruitshopping/model/CouponOrder.java
+R093	src/main/java/com/mycompany/onlinefruitshopping/shopowner/model/CouponQuote.java	src/main/java/com/mycompany/onlinefruitshopping/model/CouponQuote.java
+R097	src/main/java/com/mycompany/onlinefruitshopping/shopowner/model/CouponUsage.java	src/main/java/com/mycompany/onlinefruitshopping/model/CouponUsage.java
+M	src/main/java/com/mycompany/onlinefruitshopping/model/Delivery.java
+R093	src/main/java/com/mycompany/onlinefruitshopping/shopowner/model/Notification.java	src/main/java/com/mycompany/onlinefruitshopping/model/Notification.java
+R095	src/main/java/com/mycompany/onlinefruitshopping/shopowner/model/OrderOption.java	src/main/java/com/mycompany/onlinefruitshopping/model/OrderOption.java
+R095	src/main/java/com/mycompany/onlinefruitshopping/shopowner/model/Promotion.java	src/main/java/com/mycompany/onlinefruitshopping/model/Promotion.java
+R095	src/main/java/com/mycompany/onlinefruitshopping/shopowner/model/PromotionPrice.java	src/main/java/com/mycompany/onlinefruitshopping/model/PromotionPrice.java
+R089	src/main/java/com/mycompany/onlinefruitshopping/shopowner/model/PromotionProduct.java	src/main/java/com/mycompany/onlinefruitshopping/model/PromotionProduct.java
+R084	src/main/java/com/mycompany/onlinefruitshopping/shopowner/model/ShopOption.java	src/main/java/com/mycompany/onlinefruitshopping/model/ShopOption.java
+R089	src/main/java/com/mycompany/onlinefruitshopping/shopowner/model/Staff.java	src/main/java/com/mycompany/onlinefruitshopping/model/Staff.java
+M	src/main/java/com/mycompany/onlinefruitshopping/service/auth/LoginService.java
+R050	src/main/java/com/mycompany/onlinefruitshopping/shopowner/service/ServiceChecks.java	src/main/java/com/mycompany/onlinefruitshopping/service/common/ServiceChecks.java
+R079	src/main/java/com/mycompany/onlinefruitshopping/shopowner/service/CouponApplicationService.java	src/main/java/com/mycompany/onlinefruitshopping/service/coupon/CouponApplicationService.java
+R085	src/main/java/com/mycompany/onlinefruitshopping/shopowner/service/CouponService.java	src/main/java/com/mycompany/onlinefruitshopping/service/coupon/CouponService.java
+R051	src/main/java/com/mycompany/onlinefruitshopping/shopowner/service/DeliveryService.java	src/main/java/com/mycompany/onlinefruitshopping/service/delivery/DeliveryService.java
+R075	src/main/java/com/mycompany/onlinefruitshopping/shopowner/service/NotificationService.java	src/main/java/com/mycompany/onlinefruitshopping/service/notification/NotificationService.java
+R081	src/main/java/com/mycompany/onlinefruitshopping/shopowner/service/PromotionService.java	src/main/java/com/mycompany/onlinefruitshopping/service/promotion/CampaignPromotionService.java
+D	src/main/java/com/mycompany/onlinefruitshopping/shopowner/controller/LogoutController.java
+D	src/main/java/com/mycompany/onlinefruitshopping/shopowner/dao/AccountDAO.java
+D	src/main/java/com/mycompany/onlinefruitshopping/shopowner/filter/AuthFilter.java
+D	src/main/java/com/mycompany/onlinefruitshopping/shopowner/model/Account.java
+D	src/main/java/com/mycompany/onlinefruitshopping/shopowner/model/Delivery.java
+D	src/main/java/com/mycompany/onlinefruitshopping/shopowner/service/AccountService.java
+A	src/main/java/com/mycompany/onlinefruitshopping/utils/ConnectionProvider.java
+R096	src/main/java/com/mycompany/onlinefruitshopping/shopowner/utils/CouponRules.java	src/main/java/com/mycompany/onlinefruitshopping/utils/CouponRules.java
+M	src/main/java/com/mycompany/onlinefruitshopping/utils/DBConnection.java
+R097	src/main/java/com/mycompany/onlinefruitshopping/shopowner/utils/DeliveryList.java	src/main/java/com/mycompany/onlinefruitshopping/utils/DeliveryList.java
+R097	src/main/java/com/mycompany/onlinefruitshopping/shopowner/utils/DeliveryRules.java	src/main/java/com/mycompany/onlinefruitshopping/utils/DeliveryRules.java
+R097	src/main/java/com/mycompany/onlinefruitshopping/shopowner/utils/PromotionRules.java	src/main/java/com/mycompany/onlinefruitshopping/utils/PromotionRules.java
+A	src/main/java/com/mycompany/onlinefruitshopping/utils/UserSession.java
+M	src/main/java/com/mycompany/onlinefruitshopping/utils/VNPayConfig.java
+R054	src/main/java/com/mycompany/onlinefruitshopping/shopowner/utils/WebUtil.java	src/main/java/com/mycompany/onlinefruitshopping/utils/WebUtil.java
+M	src/main/resources/sql/README-shopowner.md
+D	src/main/webapp/WEB-INF/shopowner/views/deliveries.jsp
+M	src/main/webapp/customer-dashboard.jsp
+R086	src/main/webapp/WEB-INF/shopowner/views/coupon-detail.jsp	src/main/webapp/jsp/shopowner/views/coupon-detail.jsp
+R098	src/main/webapp/WEB-INF/shopowner/views/coupon-form.jsp	src/main/webapp/jsp/shopowner/views/coupon-form.jsp
+R100	src/main/webapp/WEB-INF/shopowner/views/coupon-history.jsp	src/main/webapp/jsp/shopowner/views/coupon-history.jsp
+R100	src/main/webapp/WEB-INF/shopowner/views/coupon-usage-table.jspf	src/main/webapp/jsp/shopowner/views/coupon-usage-table.jspf
+R095	src/main/webapp/WEB-INF/shopowner/views/coupons.jsp	src/main/webapp/jsp/shopowner/views/coupons.jsp
+R092	src/main/webapp/WEB-INF/shopowner/views/customer-coupons.jsp	src/main/webapp/jsp/shopowner/views/customer-coupons.jsp
+A	src/main/webapp/jsp/shopowner/views/deliveries.jsp
+R087	src/main/webapp/WEB-INF/shopowner/views/delivery-filters.jspf	src/main/webapp/jsp/shopowner/views/delivery-filters.jspf
+R100	src/main/webapp/WEB-INF/shopowner/views/delivery-table.jspf	src/main/webapp/jsp/shopowner/views/delivery-table.jspf
+R090	src/main/webapp/WEB-INF/shopowner/views/detail.jsp	src/main/webapp/jsp/shopowner/views/detail.jsp
+R100	src/main/webapp/WEB-INF/shopowner/views/error.jsp	src/main/webapp/jsp/shopowner/views/error.jsp
+R100	src/main/webapp/WEB-INF/shopowner/views/footer.jspf	src/main/webapp/jsp/shopowner/views/footer.jspf
+R055	src/main/webapp/WEB-INF/shopowner/views/header.jspf	src/main/webapp/jsp/shopowner/views/header.jspf
+R096	src/main/webapp/WEB-INF/shopowner/views/login.jsp	src/main/webapp/jsp/shopowner/views/login.jsp
+R092	src/main/webapp/WEB-INF/shopowner/views/notifications.jsp	src/main/webapp/jsp/shopowner/views/notifications.jsp
+R096	src/main/webapp/WEB-INF/shopowner/views/promotion-detail.jsp	src/main/webapp/jsp/shopowner/views/promotion-detail.jsp
+R098	src/main/webapp/WEB-INF/shopowner/views/promotion-form.jsp	src/main/webapp/jsp/shopowner/views/promotion-form.jsp
+R097	src/main/webapp/WEB-INF/shopowner/views/promotions.jsp	src/main/webapp/jsp/shopowner/views/promotions.jsp
+R097	src/main/webapp/WEB-INF/shopowner/views/shop.jsp	src/main/webapp/jsp/shopowner/views/shop.jsp
+A	src/test/java/com/mycompany/onlinefruitshopping/dao/auth/UserSessionValidationTest.java
+A	src/test/java/com/mycompany/onlinefruitshopping/dao/delivery/DeliveryOwnershipTest.java
+A	src/test/java/com/mycompany/onlinefruitshopping/dao/delivery/DeliveryTransactionTest.java
+A	src/test/java/com/mycompany/onlinefruitshopping/filter/AccessPolicyTest.java
+A	src/test/java/com/mycompany/onlinefruitshopping/filter/AuthorizationFilterTest.java
+A	src/test/java/com/mycompany/onlinefruitshopping/model/DeliveryCompatibilityTest.java
+A	src/test/java/com/mycompany/onlinefruitshopping/service/coupon/CouponApplicationServiceTest.java
+A	src/test/java/com/mycompany/onlinefruitshopping/service/coupon/CouponServiceTest.java
+A	src/test/java/com/mycompany/onlinefruitshopping/service/delivery/DeliveryReadServiceTest.java
+A	src/test/java/com/mycompany/onlinefruitshopping/service/delivery/DeliveryServiceTest.java
+A	src/test/java/com/mycompany/onlinefruitshopping/service/notification/NotificationServiceTest.java
+A	src/test/java/com/mycompany/onlinefruitshopping/service/promotion/CampaignPromotionServiceTest.java
+D	src/test/java/com/mycompany/onlinefruitshopping/shopowner/service/ServiceValidationTest.java
+A	src/test/java/com/mycompany/onlinefruitshopping/support/ServletHarness.java
+R097	src/test/java/com/mycompany/onlinefruitshopping/shopowner/utils/CouponRulesTest.java	src/test/java/com/mycompany/onlinefruitshopping/utils/CouponRulesTest.java
+R096	src/test/java/com/mycompany/onlinefruitshopping/shopowner/utils/DeliveryFilterTest.java	src/test/java/com/mycompany/onlinefruitshopping/utils/DeliveryFilterTest.java
+R098	src/test/java/com/mycompany/onlinefruitshopping/shopowner/utils/DeliveryRulesTest.java	src/test/java/com/mycompany/onlinefruitshopping/utils/DeliveryRulesTest.java
+R097	src/test/java/com/mycompany/onlinefruitshopping/shopowner/utils/PromotionRulesTest.java	src/test/java/com/mycompany/onlinefruitshopping/utils/PromotionRulesTest.java
+A	src/test/java/com/mycompany/onlinefruitshopping/utils/UserSessionTest.java
+A	src/test/java/com/mycompany/onlinefruitshopping/view/JspCompilationTest.java
+A	tools/check-module-schema.sql
+
+Loai khoi goi: .git, IDE settings, target, out, log, src/main/resources/mail.properties, fruitshop-mail.properties.txt.

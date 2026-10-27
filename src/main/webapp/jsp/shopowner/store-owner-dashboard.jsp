@@ -191,6 +191,16 @@
 
         <div class="dashboard-grid">
 
+            <div class="dashboard-card">
+                <div class="dashboard-icon">🚚</div>
+                <h3>Quản lý giao hàng</h3>
+                <p>Phân công nhân viên và theo dõi trạng thái giao hàng.</p>
+
+                <a href="${pageContext.request.contextPath}/shopowner/shop/deliveries">
+                    Mở quản lý giao hàng
+                </a>
+            </div>
+
             <!-- PRODUCT MANAGEMENT -->
 
             <div class="dashboard-card">
@@ -275,13 +285,9 @@
 
                 <h3>Promotion Management</h3>
 
-                <p>
-                    Request limited-time promotional prices for your
-                    product variants; an admin approves them before
-                    they apply.
-                </p>
+                <p>Quản lý chương trình khuyến mãi cho sản phẩm của cửa hàng.</p>
 
-                <a href="<%= contextPath %>/store-owner/promotions">
+                <a href="${pageContext.request.contextPath}/shopowner/shop/promotions">
                     Manage Promotions
                 </a>
 
@@ -299,7 +305,7 @@
                     Create discount coupons and track their usage.
                 </p>
 
-                <a href="#">
+                <a href="${pageContext.request.contextPath}/shopowner/shop/coupons">
                     Manage Coupons
                 </a>
 

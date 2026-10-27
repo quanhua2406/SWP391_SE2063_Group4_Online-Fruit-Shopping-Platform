@@ -42,6 +42,20 @@ public class ProductDAO {
         return 1;
     }
 
+    public int getShopIdByProductId(int productId) throws SQLException {
+        String sql = "SELECT shop_id FROM products WHERE product_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, productId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("shop_id");
+                }
+            }
+        }
+        return 1;
+    }
+
     // =========================================================
     // SEARCH & FILTER PRODUCTS
     // =========================================================
@@ -677,7 +691,8 @@ public class ProductDAO {
 
     private void buildFilterClauses(StringBuilder sql, List<Object> params,
                                     String keyword, Integer categoryId, List<String> origins,
-                                    Double minPrice, Double maxPrice, Boolean inStockOnly) {
+                                    Double minPrice, Double maxPrice, Boolean inStockOnly)
+            throws SQLException {
         // Multi-field search
         if (keyword != null && !keyword.trim().isEmpty()) {
             sql.append("""
@@ -700,10 +715,17 @@ public class ProductDAO {
             }
         }
 
-        // Category
+        // Category. Picking a parent category also shows the products of
+        // every category underneath it, so the parent / child tree really
+        // means something to the customer.
         if (categoryId != null && categoryId > 0) {
-            sql.append(" AND p.category_id = ?");
-            params.add(categoryId);
+            List<Integer> categoryIds = collectCategoryIdsWithDescendants(categoryId);
+            sql.append(" AND p.category_id IN (");
+            for (int i = 0; i < categoryIds.size(); i++) {
+                sql.append(i == 0 ? "?" : ", ?");
+                params.add(categoryIds.get(i));
+            }
+            sql.append(")");
         }
 
         // Origins filter
@@ -730,6 +752,46 @@ public class ProductDAO {
         if (Boolean.TRUE.equals(inStockOnly)) {
             sql.append(" AND ISNULL(b.stock, 0) > 0");
         }
+    }
+
+    /**
+     * Returns the given category plus every category below it (children,
+     * grand-children, ...). Used so that filtering the customer catalog by
+     * a parent category also returns the products filed under its
+     * sub-categories.
+     *
+     * <p>The category tree is tiny, so the walk is done in Java with a
+     * visited guard against a (pre-existing) cycle in the data.</p>
+     */
+    private List<Integer> collectCategoryIdsWithDescendants(int rootCategoryId) throws SQLException {
+        List<Integer> ids = new ArrayList<>();
+        ids.add(rootCategoryId);
+
+        String sql = "SELECT category_id FROM categories WHERE parent_id = ?";
+        java.util.Set<Integer> visited = new java.util.HashSet<>();
+        visited.add(rootCategoryId);
+
+        java.util.ArrayDeque<Integer> queue = new java.util.ArrayDeque<>();
+        queue.add(rootCategoryId);
+
+        try (Connection conn = DBConnection.getConnection()) {
+            while (!queue.isEmpty()) {
+                int current = queue.poll();
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    ps.setInt(1, current);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            int childId = rs.getInt("category_id");
+                            if (visited.add(childId)) {
+                                ids.add(childId);
+                                queue.add(childId);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return ids;
     }
 
     // =========================================================

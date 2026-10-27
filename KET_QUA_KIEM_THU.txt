@@ -1,0 +1,34 @@
+KIEM THU BAN SUA 27/10/2026
+Command: mvn -B clean verify (offline cache at final verification)
+JDK: 17
+BUILD SUCCESS
+Totals: {'tests': 126, 'failures': 0, 'errors': 0, 'skipped': 0}
+JSP: 20 compiled by Jasper, 0 errors
+WAR SHA256: 56d514d896f25565c9ef8c47928ca4358a69ecc4fb0df1a795dbf31dc7edee86
+WAR scan: no obsolete module classes/views; no SMTP config; no test-only dependencies; no prior VNPay signing key.
+
+Suites:
+com.mycompany.onlinefruitshopping.dao.auth.UserSessionValidationTest: tests=4, failures=0, errors=0, skipped=0
+com.mycompany.onlinefruitshopping.dao.delivery.DeliveryOwnershipTest: tests=7, failures=0, errors=0, skipped=0
+com.mycompany.onlinefruitshopping.dao.delivery.DeliveryTransactionTest: tests=8, failures=0, errors=0, skipped=0
+com.mycompany.onlinefruitshopping.filter.AccessPolicyTest: tests=36, failures=0, errors=0, skipped=0
+com.mycompany.onlinefruitshopping.filter.AuthorizationFilterTest: tests=17, failures=0, errors=0, skipped=0
+com.mycompany.onlinefruitshopping.model.DeliveryCompatibilityTest: tests=1, failures=0, errors=0, skipped=0
+com.mycompany.onlinefruitshopping.service.coupon.CouponApplicationServiceTest: tests=2, failures=0, errors=0, skipped=0
+com.mycompany.onlinefruitshopping.service.coupon.CouponServiceTest: tests=3, failures=0, errors=0, skipped=0
+com.mycompany.onlinefruitshopping.service.delivery.DeliveryReadServiceTest: tests=2, failures=0, errors=0, skipped=0
+com.mycompany.onlinefruitshopping.service.delivery.DeliveryServiceTest: tests=4, failures=0, errors=0, skipped=0
+com.mycompany.onlinefruitshopping.service.notification.NotificationServiceTest: tests=1, failures=0, errors=0, skipped=0
+com.mycompany.onlinefruitshopping.service.promotion.CampaignPromotionServiceTest: tests=2, failures=0, errors=0, skipped=0
+com.mycompany.onlinefruitshopping.utils.CouponRulesTest: tests=9, failures=0, errors=0, skipped=0
+com.mycompany.onlinefruitshopping.utils.DeliveryFilterTest: tests=7, failures=0, errors=0, skipped=0
+com.mycompany.onlinefruitshopping.utils.DeliveryRulesTest: tests=8, failures=0, errors=0, skipped=0
+com.mycompany.onlinefruitshopping.utils.PromotionRulesTest: tests=9, failures=0, errors=0, skipped=0
+com.mycompany.onlinefruitshopping.utils.UserSessionTest: tests=5, failures=0, errors=0, skipped=0
+com.mycompany.onlinefruitshopping.view.JspCompilationTest: tests=1, failures=0, errors=0, skipped=0
+
+SQL/transaction tests above use isolated H2; no SQL Server runtime or HTTP concurrency result is claimed.
+SQL Server concurrent assignment: BLOCKED (test environment unavailable).
+SQL Server concurrent status actions: BLOCKED (test environment unavailable).
+Tomcat/SQL Server end-to-end COD, Coupon/Promotion CRUD: BLOCKED (test environment unavailable).
+No remote Git push performed.
