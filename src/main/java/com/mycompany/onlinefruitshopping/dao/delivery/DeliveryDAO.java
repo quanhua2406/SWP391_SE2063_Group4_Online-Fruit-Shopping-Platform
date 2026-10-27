@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import com.mycompany.onlinefruitshopping.model.User;
 import com.mycompany.onlinefruitshopping.model.Delivery;
-import com.mycompany.onlinefruitshopping.dto.delivery.DeliveryOrderItem;
+import com.mycompany.onlinefruitshopping.model.DeliveryOrderItem;
 import com.mycompany.onlinefruitshopping.utils.DeliveryRules;
 
 public class DeliveryDAO {

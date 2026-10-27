@@ -1,4 +1,4 @@
-package com.mycompany.onlinefruitshopping.dto.delivery;
+package com.mycompany.onlinefruitshopping.model;
 
 /** Model chứa dữ liệu; getter để JSP đọc, setter để DAO gán giá trị. */
 public class DeliveryOrderItem {

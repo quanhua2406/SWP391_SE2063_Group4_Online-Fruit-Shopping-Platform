@@ -2,7 +2,7 @@ package com.mycompany.onlinefruitshopping.service.delivery;
 
 import com.mycompany.onlinefruitshopping.dao.delivery.AssignmentDAO;
 import com.mycompany.onlinefruitshopping.dao.delivery.DeliveryDAO;
-import com.mycompany.onlinefruitshopping.dto.delivery.DeliveryOrderItem;
+import com.mycompany.onlinefruitshopping.model.DeliveryOrderItem;
 import com.mycompany.onlinefruitshopping.model.Delivery;
 import com.mycompany.onlinefruitshopping.model.User;
 import com.mycompany.onlinefruitshopping.support.ServletHarness;
