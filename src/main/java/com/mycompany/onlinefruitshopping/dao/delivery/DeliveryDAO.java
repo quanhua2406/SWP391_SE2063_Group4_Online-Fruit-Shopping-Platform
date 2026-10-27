@@ -1,0 +1,247 @@
+package com.mycompany.onlinefruitshopping.dao.delivery;
+
+import com.mycompany.onlinefruitshopping.dao.notification.NotificationDAO;
+
+import com.mycompany.onlinefruitshopping.utils.DBConnection;
+import com.mycompany.onlinefruitshopping.utils.ConnectionProvider;
+import com.mycompany.onlinefruitshopping.utils.ValidationUtil;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+import com.mycompany.onlinefruitshopping.model.User;
+import com.mycompany.onlinefruitshopping.model.Delivery;
+import com.mycompany.onlinefruitshopping.dto.delivery.DeliveryOrderItem;
+import com.mycompany.onlinefruitshopping.utils.DeliveryRules;
+
+public class DeliveryDAO {
+    private final ConnectionProvider connections;
+
+    public DeliveryDAO() {
+        this(DBConnection::getConnection);
+    }
+
+    DeliveryDAO(ConnectionProvider connections) {
+        this.connections = java.util.Objects.requireNonNull(connections);
+    }
+
+    private static final String SELECT_DELIVERY = """
+        SELECT d.delivery_id, d.order_id, d.shop_id, d.shipper_id, d.delivery_status,
+               d.pickup_time, d.delivered_time, d.note AS delivery_note,
+               s.shop_name, s.pickup_address, a.full_name AS shipper_name,
+               o.receiver_name, o.receiver_phone, o.shipping_address,
+               o.total_amount, o.order_status, o.payment_method, o.payment_status,
+               o.note AS order_note
+        FROM deliveries d
+        JOIN orders o ON o.order_id = d.order_id AND o.shop_id = d.shop_id
+        JOIN shops s ON s.shop_id = d.shop_id
+        LEFT JOIN users a ON a.user_id = d.shipper_id
+        LEFT JOIN shop_delivery_staff t ON t.shop_id = d.shop_id AND t.shipper_id = d.shipper_id
+        WHERE s.status = N'active'
+        """;
+
+    // Chỉ nối các điều kiện SQL cố định; dữ liệu người dùng luôn truyền qua dấu ?.
+    private String scope(User user) {
+        if (user == null || user.getUserID() <= 0) {
+            throw new IllegalArgumentException("Người dùng không hợp lệ.");
+        }
+        return switch (ValidationUtil.normalizeRoleName(user.getRoleName())) {
+            case "SHOPOWNER" -> " AND s.owner_id = ?";
+            case "DELIVERYSTAFF" -> " AND d.shipper_id = ? AND t.status = N'Active'";
+            case "CUSTOMER" -> " AND o.user_id = ?";
+            default -> throw new IllegalArgumentException("Bạn không có quyền xem giao hàng.");
+        };
+    }
+
+    public List<Delivery> findAll(User user) throws SQLException {
+        List<Delivery> list = new ArrayList<>();
+        String sql = SELECT_DELIVERY + scope(user) + " ORDER BY d.delivery_id DESC";
+        try (Connection c = connections.open(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, user.getUserID());
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) list.add(map(rs));
+            }
+        }
+        return list;
+    }
+
+    public Delivery findById(int id, User user) throws SQLException {
+        String sql = SELECT_DELIVERY + scope(user) + " AND d.delivery_id = ?";
+        try (Connection c = connections.open(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, user.getUserID());
+            ps.setInt(2, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? map(rs) : null;
+            }
+        }
+    }
+
+    public List<DeliveryOrderItem> findItems(int deliveryId, User user) throws SQLException {
+        // Kiểm tra quyền cả khi đọc sản phẩm, không chỉ ở trang danh sách.
+        Delivery delivery = findById(deliveryId, user);
+        if (delivery == null) throw new IllegalArgumentException("Không tìm thấy giao hàng thuộc quyền của bạn.");
+        List<DeliveryOrderItem> list = new ArrayList<>();
+        String sql = """
+            SELECT p.product_name, v.sku AS variant_name, od.price, od.quantity
+            FROM deliveries d
+            JOIN orders o ON o.order_id = d.order_id AND o.shop_id = d.shop_id
+            JOIN shops s ON s.shop_id = d.shop_id
+            LEFT JOIN shop_delivery_staff t ON t.shop_id = d.shop_id AND t.shipper_id = d.shipper_id
+            JOIN order_items od ON od.order_id = o.order_id
+            JOIN product_variants v ON v.variant_id = od.variant_id
+            JOIN products p ON p.product_id = v.product_id
+            WHERE s.status = N'active' AND d.delivery_id = ?
+            """ + scope(user) + " ORDER BY od.order_item_id";
+        try (Connection c = connections.open(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, deliveryId);
+            ps.setInt(2, user.getUserID());
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    DeliveryOrderItem item = new DeliveryOrderItem();
+                    item.setProductName(rs.getString("product_name"));
+                    item.setVariantName(rs.getString("variant_name"));
+                    item.setPrice(rs.getBigDecimal("price"));
+                    item.setQuantity(rs.getInt("quantity"));
+                    list.add(item);
+                }
+            }
+        }
+        return list;
+    }
+
+    /** Một transaction: kiểm tra quyền -> kiểm tra trạng thái -> cập nhật -> thông báo. */
+    public void updateStatus(int deliveryId, int shipperId, String action,
+                             String reason, boolean collected) throws SQLException {
+        try (Connection c = connections.open()) {
+            c.setAutoCommit(false);
+            try {
+                // Khóa đơn trước. Các thao tác phân công cũng khóa đơn theo cách này.
+                // Hai lần bấm đồng thời sẽ không cùng thay đổi một đơn hàng.
+                String orderSql = """
+                    SELECT o.order_id, o.order_status, o.user_id, o.payment_method,
+                           o.payment_status, s.owner_id
+                    FROM orders o WITH (UPDLOCK, HOLDLOCK)
+                    JOIN shops s ON s.shop_id = o.shop_id
+                    WHERE o.order_id = (
+                        SELECT order_id FROM deliveries WHERE delivery_id = ? AND shipper_id = ?
+                    ) AND s.status = N'active'
+                    """;
+                int orderId;
+                int customerId;
+                int ownerId;
+                String orderStatus;
+                String paymentMethod;
+                String paymentStatus;
+                try (PreparedStatement ps = c.prepareStatement(orderSql)) {
+                    ps.setInt(1, deliveryId);
+                    ps.setInt(2, shipperId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) throw new IllegalArgumentException("Không tìm thấy đơn được phân công cho bạn.");
+                        orderId = rs.getInt("order_id");
+                        customerId = rs.getInt("user_id");
+                        ownerId = rs.getInt("owner_id");
+                        orderStatus = rs.getString("order_status");
+                        paymentMethod = rs.getString("payment_method");
+                        paymentStatus = rs.getString("payment_status");
+                    }
+                }
+
+                String oldStatus;
+                String deliverySql = """
+                    SELECT d.delivery_status, d.note
+                    FROM deliveries d WITH (UPDLOCK, HOLDLOCK)
+                    JOIN shop_delivery_staff t WITH (HOLDLOCK)
+                      ON t.shop_id = d.shop_id AND t.shipper_id = d.shipper_id
+                    JOIN users a WITH (HOLDLOCK) ON a.user_id = d.shipper_id
+                    JOIN user_roles ur ON ur.user_id = a.user_id
+                    JOIN roles r ON r.role_id = ur.role_id AND r.role_name = N'DeliveryStaff'
+                    WHERE d.delivery_id = ? AND d.shipper_id = ?
+                      AND t.status = N'Active' AND a.status = N'active'
+                    """;
+                try (PreparedStatement ps = c.prepareStatement(deliverySql)) {
+                    ps.setInt(1, deliveryId);
+                    ps.setInt(2, shipperId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) throw new IllegalArgumentException("Bạn không còn là shipper đang hoạt động của shop.");
+                        oldStatus = rs.getString("delivery_status");
+                    }
+                }
+
+                String nextStatus = DeliveryRules.nextStatus(oldStatus, action);
+                String cleanReason = DeliveryRules.validateReason(nextStatus, reason);
+                if (!DeliveryRules.orderStatus(oldStatus).equals(orderStatus)) {
+                    throw new IllegalArgumentException("Trạng thái đơn hàng đã thay đổi. Hãy liên hệ chủ shop.");
+                }
+                if ("Delivered".equals(nextStatus)) {
+                    DeliveryRules.validatePayment(paymentMethod, paymentStatus, collected);
+                }
+
+                String updateDelivery = """
+                    UPDATE deliveries SET delivery_status = ?, note = ?,
+                        pickup_time = CASE WHEN ? = N'PickedUp' THEN GETDATE() ELSE pickup_time END,
+                        delivered_time = CASE WHEN ? = N'Delivered' THEN GETDATE() ELSE delivered_time END
+                    WHERE delivery_id = ? AND shipper_id = ? AND delivery_status = ?
+                    """;
+                try (PreparedStatement ps = c.prepareStatement(updateDelivery)) {
+                    ps.setNString(1, nextStatus);
+                    ps.setNString(2, cleanReason.isEmpty() ? DeliveryRules.label(nextStatus) + "." : cleanReason);
+                    ps.setNString(3, nextStatus);
+                    ps.setNString(4, nextStatus);
+                    ps.setInt(5, deliveryId);
+                    ps.setInt(6, shipperId);
+                    ps.setNString(7, oldStatus);
+                    if (ps.executeUpdate() != 1) throw new SQLException("Giao hàng đã thay đổi, hãy thử lại.");
+                }
+
+                String updateOrder = """
+                    UPDATE orders SET order_status = ?,
+                        payment_status = CASE WHEN ? = N'Delivered' AND payment_method = N'COD'
+                                              THEN N'Paid' ELSE payment_status END
+                    WHERE order_id = ?
+                    """;
+                try (PreparedStatement ps = c.prepareStatement(updateOrder)) {
+                    ps.setNString(1, DeliveryRules.orderStatus(nextStatus));
+                    ps.setNString(2, nextStatus);
+                    ps.setInt(3, orderId);
+                    if (ps.executeUpdate() != 1) throw new SQLException("Đơn hàng đã thay đổi.");
+                }
+
+                NotificationDAO notifications = new NotificationDAO();
+                String message = "Đơn #" + orderId + ": " + DeliveryRules.label(nextStatus)
+                        + (cleanReason.isEmpty() ? "." : ". Lý do: " + cleanReason);
+                notifications.insert(c, ownerId, "Cập nhật giao hàng", message);
+                if ("Delivered".equals(nextStatus) || "Failed".equals(nextStatus)) {
+                    notifications.insert(c, customerId, "Kết quả giao hàng", message);
+                    notifications.insert(c, shipperId, "Đã ghi nhận kết quả giao hàng", message);
+                }
+                c.commit();
+            } catch (SQLException | RuntimeException e) {
+                c.rollback();
+                throw e;
+            }
+        }
+    }
+
+    private Delivery map(ResultSet rs) throws SQLException {
+        Delivery d = new Delivery();
+        d.setId(rs.getInt("delivery_id"));
+        d.setOrderId(rs.getInt("order_id"));
+        d.setShopId(rs.getInt("shop_id"));
+        d.setStatus(rs.getString("delivery_status"));
+        d.setShopName(rs.getString("shop_name"));
+        d.setPickupAddress(rs.getString("pickup_address"));
+        d.setShipperId(rs.getInt("shipper_id"));
+        d.setShipperName(rs.getString("shipper_name"));
+        d.setReceiverName(rs.getString("receiver_name"));
+        d.setReceiverPhone(rs.getString("receiver_phone"));
+        d.setShippingAddress(rs.getString("shipping_address"));
+        d.setTotalAmount(rs.getBigDecimal("total_amount"));
+        d.setOrderStatus(rs.getString("order_status"));
+        d.setPaymentMethod(rs.getString("payment_method"));
+        d.setPaymentStatus(rs.getString("payment_status"));
+        d.setOrderNote(rs.getString("order_note"));
+        d.setNote(rs.getString("delivery_note"));
+        d.setPickupTime(rs.getTimestamp("pickup_time"));
+        d.setDeliveredTime(rs.getTimestamp("delivered_time"));
+        return d;
+    }
+}

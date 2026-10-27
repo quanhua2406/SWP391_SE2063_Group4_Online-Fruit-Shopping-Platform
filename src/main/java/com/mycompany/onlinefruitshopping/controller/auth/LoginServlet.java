@@ -133,6 +133,9 @@ public class LoginServlet extends HttpServlet {
             // Xóa dữ liệu module của lần đăng nhập trước.
             session.removeAttribute("shopUser");
             session.removeAttribute("shopcsrf");
+            session.removeAttribute("shopId");
+            session.removeAttribute("csrfToken");
+            com.mycompany.onlinefruitshopping.utils.WebUtil.createCsrfToken(session);
 
             session.setAttribute("user", user);
             session.setAttribute("userId", user.getUserID());
