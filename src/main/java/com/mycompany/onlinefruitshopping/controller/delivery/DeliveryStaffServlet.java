@@ -1,5 +1,6 @@
 package com.mycompany.onlinefruitshopping.controller.delivery;
 
+import com.mycompany.onlinefruitshopping.utils.WebUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -13,10 +14,15 @@ public class DeliveryStaffServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request,
-                          HttpServletResponse response)
+                         HttpServletResponse response)
             throws ServletException, IOException {
 
-        request.getRequestDispatcher("/jsp/delivery/delivery-dashboard.jsp")
-                .forward(request, response);
+        request.setAttribute("currentRole", "DELIVERYSTAFF");
+
+        WebUtil.createCsrfToken(request.getSession());
+
+        request.getRequestDispatcher(
+                "/jsp/delivery/delivery-dashboard.jsp"
+        ).forward(request, response);
     }
 }
