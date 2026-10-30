@@ -26,8 +26,12 @@
     <title>FreshFruit · <c:out value="${roleLabel}"/></title>
     <link rel="stylesheet" href="${ctx}/assets/freshfruit-base.css?v=20261014-3">
     <link rel="stylesheet" href="${ctx}/assets/freshfruit-management.css?v=20261014-3">
+    <c:if test="${requestScope.currentRole == 'DELIVERYSTAFF'}">
+        <link rel="stylesheet"
+              href="${ctx}/assets/shipper-ui.css?v=1">
+    </c:if>
 </head>
-<body class="management-page">
+<body class="management-page ${requestScope.currentRole == 'DELIVERYSTAFF' ? 'shipper-page' : ''}">
 <a class="skip-link" href="#main-content">Đến nội dung chính</a>
 <header class="navbar">
     <a class="logo" href="${ctx}${homePath}" aria-label="FreshFruit - Trang chính"><svg class="icon" width="30" height="30" aria-hidden="true" focusable="false"><use href="${ctx}/assets/icons.svg#fruit"/></svg> FreshFruit</a>
@@ -48,9 +52,10 @@
         </a>
     </c:if>
     <c:if test="${requestScope.currentRole == 'DELIVERYSTAFF'}">
-        <a class="button secondary"
-           href="${pageContext.request.contextPath}/delivery/dashboard">
-            ← Về giao diện chính
+        <a href="${ctx}/delivery/dashboard"
+           class="${currentPath == '/delivery/dashboard' ? 'is-active' : ''}"
+           ${currentPath == '/delivery/dashboard' ? 'aria-current="page"' : ''}>
+            Tổng quan
         </a>
     </c:if>
     <c:if test="${requestScope.currentRole == 'SHOPOWNER'}">
