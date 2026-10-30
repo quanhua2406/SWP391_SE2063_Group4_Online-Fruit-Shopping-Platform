@@ -24,31 +24,15 @@
             <dt>Thanh toán</dt><dd><c:out value="${delivery.paymentMethod}"/> · ${delivery.paymentStatus == 'Paid' ? 'Đã thanh toán' : 'Chưa thanh toán'}</dd>
             <dt>Tổng tiền</dt><dd><strong><fmt:formatNumber value="${delivery.totalAmount}" maxFractionDigits="0"/> đ</strong></dd>
             <dt>Cần thu COD</dt>
-            <dd><c:choose><c:when test="${delivery.paymentMethod == 'COD' and delivery.paymentStatus != 'Paid'}"><fmt:formatNumber value="${delivery.totalAmount}" maxFractionDigits="0"/> đ</c:when><c:otherwise>0 đ</c:otherwise></c:choose></dd>
+            <dd class="shipper-cod-value"><c:choose><c:when test="${delivery.paymentMethod == 'COD' and delivery.paymentStatus != 'Paid'}"><fmt:formatNumber value="${delivery.totalAmount}" maxFractionDigits="0"/> đ</c:when><c:otherwise>0 đ</c:otherwise></c:choose></dd>
             <dt>Đã lấy lúc</dt><dd><fmt:formatDate value="${delivery.pickupTime}" pattern="dd/MM/yyyy HH:mm"/><c:if test="${empty delivery.pickupTime}">Chưa lấy hàng</c:if></dd>
             <dt>Đã giao lúc</dt><dd><fmt:formatDate value="${delivery.deliveredTime}" pattern="dd/MM/yyyy HH:mm"/><c:if test="${empty delivery.deliveredTime}">Chưa hoàn tất</c:if></dd>
             <dt>Ghi chú lần giao</dt><dd><c:out value="${delivery.note}" default="Không có"/></dd>
         </dl>
     </section>
 </div>
-<section class="card">
-    <h2>Sản phẩm trong đơn</h2>
-    <div class="table-wrap" tabindex="0" role="region" aria-label="Bảng dữ liệu, cuộn ngang để xem thêm">
-    <table class="data-table">
-        <thead><tr><th scope="col">Sản phẩm</th><th scope="col">Quy cách</th><th scope="col">Đơn giá</th><th scope="col">Số lượng</th><th scope="col">Thành tiền</th></tr></thead>
-        <tbody>
-        <c:forEach var="item" items="${items}">
-            <tr><td><c:out value="${item.productName}"/></td><td><c:out value="${item.variantName}"/></td>
-                <td><fmt:formatNumber value="${item.price}" maxFractionDigits="0"/> đ</td><td>${item.quantity}</td>
-                <td><fmt:formatNumber value="${item.subtotal}" maxFractionDigits="0"/> đ</td></tr>
-        </c:forEach>
-        </tbody>
-    </table>
-    </div>
-    <p class="muted">Tổng tiền đơn phía trên đã tính giảm giá theo dữ liệu của cửa hàng.</p>
-</section>
 <c:if test="${requestScope.currentRole == 'DELIVERYSTAFF'}">
-<section class="card">
+<section class="card shipper-progress">
     <h2>Cập nhật tiến độ</h2>
     <c:choose>
         <c:when test="${delivery.status == 'Assigned'}">
@@ -103,4 +87,20 @@
     </c:choose>
 </section>
 </c:if>
+<section class="card">
+    <h2>Sản phẩm trong đơn</h2>
+    <div class="table-wrap" tabindex="0" role="region" aria-label="Bảng dữ liệu, cuộn ngang để xem thêm">
+    <table class="data-table">
+        <thead><tr><th scope="col">Sản phẩm</th><th scope="col">Quy cách</th><th scope="col">Đơn giá</th><th scope="col">Số lượng</th><th scope="col">Thành tiền</th></tr></thead>
+        <tbody>
+        <c:forEach var="item" items="${items}">
+            <tr><td><c:out value="${item.productName}"/></td><td><c:out value="${item.variantName}"/></td>
+                <td><fmt:formatNumber value="${item.price}" maxFractionDigits="0"/> đ</td><td>${item.quantity}</td>
+                <td><fmt:formatNumber value="${item.subtotal}" maxFractionDigits="0"/> đ</td></tr>
+        </c:forEach>
+        </tbody>
+    </table>
+    </div>
+    <p class="muted">Tổng tiền đơn phía trên đã tính giảm giá theo dữ liệu của cửa hàng.</p>
+</section>
 <%@ include file="footer.jspf" %>
