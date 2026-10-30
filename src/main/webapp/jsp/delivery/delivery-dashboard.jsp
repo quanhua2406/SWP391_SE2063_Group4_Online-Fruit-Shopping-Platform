@@ -1,80 +1,138 @@
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ include file="../shopowner/views/header.jspf" %>
 
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Delivery Personal Dashboard</title>
+<div class="page-heading">
+    <div>
+        <p class="eyebrow">KHÔNG GIAN LÀM VIỆC</p>
 
-    <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/css/style.css">
-</head>
+        <h1>
+            Xin chào, <c:out value="${sessionScope.user.fullName}"/>
+        </h1>
 
-<body>
-
-<header class="navbar">
-
-    <div class="logo">
-        🍊 FreshFruit
+        <p class="muted">
+            Theo dõi đơn được phân công và cập nhật tiến độ giao hàng.
+        </p>
     </div>
 
-    <div class="nav-actions">
-        <a href="${pageContext.request.contextPath}/home">
-            🏠 Home
-        </a>
+    <a class="button"
+       href="${ctx}/shopowner/delivery/list">
+        Xem tất cả lần giao
+    </a>
+</div>
 
-        <a href="${pageContext.request.contextPath}/shopowner/delivery/list" style="color: #16a34a; font-weight: 700;">Danh s&#225;ch giao h&#224;ng</a>
+<section class="shipper-overview"
+         aria-label="Truy cập nhanh theo trạng thái">
 
+    <a class="shipper-shortcut"
+       href="${ctx}/shopowner/delivery/list?status=Assigned">
 
-        <a href="${pageContext.request.contextPath}/logout"
-           class="logout">
-            Logout
-        </a>
-    </div>
+        <span class="shipper-shortcut-label">CHỜ XÁC NHẬN</span>
 
-</header>
+        <h2>Chờ nhận đơn</h2>
 
-<section class="dashboard">
+        <p>
+            Kiểm tra đơn mới và xác nhận nhận hoặc từ chối.
+        </p>
 
-    <h1>Delivery Personal Dashboard</h1>
+        <span class="shipper-shortcut-link">
+            Xem danh sách →
+        </span>
+    </a>
 
-    <p class="dashboard-welcome">
-        Welcome back, Delivery Personal!
-    </p>
+    <a class="shipper-shortcut"
+       href="${ctx}/shopowner/delivery/list?status=Accepted">
 
-    <div class="dashboard-grid">
+        <span class="shipper-shortcut-label">TẠI CỬA HÀNG</span>
 
-        <div class="dashboard-card">
-            <div class="dashboard-icon">📦</div>
-            <h3>Assigned Orders</h3>
-            <p>View orders assigned to you for delivery.</p>
-            <a href="${pageContext.request.contextPath}/shopowner/delivery/list?status=Assigned">View Orders</a>
-        </div>
+        <h2>Chờ lấy hàng</h2>
 
-        <div class="dashboard-card">
-            <div class="dashboard-icon">🚚</div>
-            <h3>Delivery Tasks</h3>
-            <p>Manage your current delivery tasks.</p>
-            <a href="${pageContext.request.contextPath}/shopowner/delivery/list">My Deliveries</a>
-        </div>
+        <p>
+            Các đơn đã nhận và đang chờ lấy hàng tại shop.
+        </p>
 
-        <div class="dashboard-card">
-            <div class="dashboard-icon">📍</div>
-            <h3>Delivery Status</h3>
-            <p>Update the status of your deliveries.</p>
-            <a href="${pageContext.request.contextPath}/shopowner/delivery/list">Update Status</a>
-        </div>
+        <span class="shipper-shortcut-link">
+            Xem danh sách →
+        </span>
+    </a>
 
-        <div class="dashboard-card">
-            <div class="dashboard-icon">✅</div>
-            <h3>Completed Deliveries</h3>
-            <p>View your completed delivery history.</p>
-            <a href="${pageContext.request.contextPath}/shopowner/delivery/list?status=Delivered">View History</a>
-        </div>
+    <a class="shipper-shortcut"
+       href="${ctx}/shopowner/delivery/list?status=PickedUp">
 
-    </div>
+        <span class="shipper-shortcut-label">SẴN SÀNG GIAO</span>
+
+        <h2>Đã lấy hàng</h2>
+
+        <p>
+            Các đơn đã lấy hàng và chờ bắt đầu giao.
+        </p>
+
+        <span class="shipper-shortcut-link">
+            Xem danh sách →
+        </span>
+    </a>
+
+    <a class="shipper-shortcut"
+       href="${ctx}/shopowner/delivery/list?status=Delivering">
+
+        <span class="shipper-shortcut-label">ĐANG THỰC HIỆN</span>
+
+        <h2>Đang giao hàng</h2>
+
+        <p>
+            Xem thông tin người nhận và cập nhật kết quả giao.
+        </p>
+
+        <span class="shipper-shortcut-link">
+            Xem danh sách →
+        </span>
+    </a>
+
+    <a class="shipper-shortcut"
+       href="${ctx}/shopowner/delivery/list?status=Delivered">
+
+        <span class="shipper-shortcut-label">LỊCH SỬ</span>
+
+        <h2>Giao thành công</h2>
+
+        <p>
+            Tra cứu các lần giao đã hoàn tất.
+        </p>
+
+        <span class="shipper-shortcut-link">
+            Xem lịch sử →
+        </span>
+    </a>
+
+    <a class="shipper-shortcut"
+       href="${ctx}/shopowner/delivery/list?status=Failed">
+
+        <span class="shipper-shortcut-label">KẾT QUẢ KHÁC</span>
+
+        <h2>Giao thất bại</h2>
+
+        <p>
+            Xem lại các lần giao không thành công và lý do.
+        </p>
+
+        <span class="shipper-shortcut-link">
+            Xem danh sách →
+        </span>
+    </a>
 
 </section>
 
-</body>
-</html>
+<section class="card">
+    <h2>Trình tự cập nhật</h2>
+
+    <p class="muted">
+        Nhận đơn → Lấy hàng tại shop → Bắt đầu giao → Cập nhật kết quả.
+    </p>
+
+    <p class="muted">
+        Với đơn COD, kiểm tra số tiền cần thu trước khi xác nhận
+        giao thành công. Nếu từ chối hoặc giao thất bại,
+        hãy ghi rõ lý do.
+    </p>
+</section>
+
+<%@ include file="../shopowner/views/footer.jspf" %>
