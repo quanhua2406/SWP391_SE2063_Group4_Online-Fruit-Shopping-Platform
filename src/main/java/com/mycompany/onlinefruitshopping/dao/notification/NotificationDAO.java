@@ -9,11 +9,24 @@ import com.mycompany.onlinefruitshopping.model.Notification;
 public class NotificationDAO {
     // Nhận Connection từ DAO giao hàng: thông báo và trạng thái cùng commit/rollback.
     public void insert(Connection c, int userId, String title, String message) throws SQLException {
-        String sql = "INSERT INTO notifications(user_id, title, message, is_read) VALUES (?, ?, ?, 0)";
+        String sql = """
+            INSERT INTO notifications (
+                user_id,
+                title,
+                content,
+                is_read
+            )
+            VALUES (?, ?, ?, 0)
+            """;
         try (PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, userId);
             ps.setNString(2, title);
-            ps.setNString(3, message.length() > 255 ? message.substring(0, 255) : message);
+            ps.setNString(
+                    3,
+                    message.length() > 500
+                            ? message.substring(0, 500)
+                            : message
+            );
             ps.executeUpdate();
         }
     }
@@ -28,7 +41,7 @@ public class NotificationDAO {
                     Notification n = new Notification();
                     n.setId(rs.getInt("notification_id"));
                     n.setTitle(rs.getString("title"));
-                    n.setMessage(rs.getString("message"));
+                    n.setMessage(rs.getString("content"));
                     n.setRead(rs.getBoolean("is_read"));
                     n.setCreatedAt(rs.getTimestamp("created_at"));
                     list.add(n);
@@ -39,7 +52,13 @@ public class NotificationDAO {
     }
 
     public void markRead(int notificationId, int userId) throws SQLException {
-        String sql = "UPDATE notifications SET is_read = 1 WHERE notification_id = ? AND user_id = ?";
+        String sql = """
+            UPDATE notifications
+            SET is_read = 1,
+                read_at = COALESCE(read_at, SYSDATETIME())
+            WHERE notification_id = ?
+              AND user_id = ?
+            """;
         try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, notificationId);
             ps.setInt(2, userId);
