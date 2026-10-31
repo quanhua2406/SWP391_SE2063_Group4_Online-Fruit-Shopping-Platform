@@ -50,10 +50,10 @@ class DeliveryServiceTest {
     @Test void assignmentRequiresShopOwnerAndPositiveIds() throws SQLException {
         RecordingAssignmentDAO dao = new RecordingAssignmentDAO();
         DeliveryService service = new DeliveryService(new RecordingDeliveryDAO(), dao);
-        assertThrows(IllegalArgumentException.class, () -> service.assign(account(10, "DeliveryStaff"), 3, 20, "Kho A"));
-        assertThrows(IllegalArgumentException.class, () -> service.assign(account(10, "ShopOwner"), 0, 20, "Kho A"));
+        assertThrows(IllegalArgumentException.class, () -> service.assign(account(10, "DeliveryStaff"), 3, 20, "Shop pickup"));
+        assertThrows(IllegalArgumentException.class, () -> service.assign(account(10, "ShopOwner"), 0, 20, "Shop pickup"));
         assertEquals(0, dao.calls);
-        service.assign(account(10, "ShopOwner"), 3, 20, "Kho A");
+        service.assign(account(10, "ShopOwner"), 3, 20, "Shop pickup");
         assertEquals(1, dao.calls);
         assertEquals(10, dao.ownerId);
     }
