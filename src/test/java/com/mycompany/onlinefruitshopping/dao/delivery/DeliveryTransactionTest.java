@@ -63,32 +63,32 @@ class DeliveryTransactionTest {
     }
 
     @Test void successfulAssignmentIsUniqueAndRetriedAssignmentHasNoSideEffects() throws Exception {
-        assignments.assign(10,101,20);
+        assignments.assign(10,101,20,"Kho A");
         assertEquals(1,count("SELECT COUNT(*) FROM deliveries WHERE order_id=101 AND shipper_id=20"));
         assertEquals(1,count("SELECT COUNT(*) FROM notifications"));
-        assertThrows(IllegalArgumentException.class, () -> assignments.assign(10,101,21));
+        assertThrows(IllegalArgumentException.class, () -> assignments.assign(10,101,21,"Kho A"));
         assertEquals(1,count("SELECT COUNT(*) FROM deliveries WHERE order_id=101"));
         assertEquals(1,count("SELECT COUNT(*) FROM notifications"));
     }
 
     @Test void assignmentNotificationFailureRollsBackInsertedDelivery() throws Exception {
         execute("ALTER TABLE notifications ADD CONSTRAINT fail_shipper CHECK(user_id <> 20)");
-        assertThrows(SQLException.class, () -> assignments.assign(10,101,20));
+        assertThrows(SQLException.class, () -> assignments.assign(10,101,20,"Kho A"));
         assertEquals(0,count("SELECT COUNT(*) FROM deliveries WHERE order_id=101"));
         assertEquals("Confirmed",scalar("SELECT order_status FROM orders WHERE order_id=101"));
         assertEquals(0,count("SELECT COUNT(*) FROM notifications"));
     }
 
     @Test void assignmentRejectsAnotherShopAndInactiveMembership() throws Exception {
-        assertThrows(IllegalArgumentException.class, () -> assignments.assign(10,102,20));
+        assertThrows(IllegalArgumentException.class, () -> assignments.assign(10,102,20,"Kho A"));
         execute("UPDATE shop_delivery_staff SET status='Inactive' WHERE shipper_id=20");
-        assertThrows(IllegalArgumentException.class, () -> assignments.assign(10,101,20));
+        assertThrows(IllegalArgumentException.class, () -> assignments.assign(10,101,20,"Kho A"));
         assertEquals(1,count("SELECT COUNT(*) FROM deliveries"));
         assertEquals(0,count("SELECT COUNT(*) FROM notifications"));
     }
 
     @Test void acceptedAssignmentCannotThenBeRejected() throws Exception {
-        assignments.assign(10,101,20);
+        assignments.assign(10,101,20,"Kho A");
         int id=count("SELECT delivery_id FROM deliveries WHERE order_id=101");
         deliveries.updateStatus(id,20,"accept","",false);
         assertThrows(IllegalArgumentException.class, () -> deliveries.updateStatus(id,20,"reject","Cannot deliver",false));

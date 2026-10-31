@@ -72,7 +72,7 @@ class DeliveryServiceTest {
 
     private static class RecordingAssignmentDAO extends AssignmentDAO {
         int calls, ownerId;
-        @Override public void assign(int ownerId, int orderId, int shipperId) {
+        @Override public void assign(int ownerId, int orderId, int shipperId, String pickupAddress) {
             calls++;
             this.ownerId = ownerId;
         }

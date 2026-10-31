@@ -16,26 +16,22 @@ public class AssignmentDAO {
 
     public AssignmentDAO() { this(DBConnection::getConnection); }
 
-    AssignmentDAO(ConnectionProvider connections) {
+    public AssignmentDAO(ConnectionProvider connections) {
         this.connections = java.util.Objects.requireNonNull(connections);
     }
 
     public List<OrderOption> findAvailableOrders(int ownerId) throws SQLException {
         List<OrderOption> list = new ArrayList<>();
         String sql = """
-            SELECT o.order_id, o.shop_id, s.shop_name, o.receiver_name,
-                   o.shipping_address, o.total_amount
-            FROM orders o JOIN shops s ON s.shop_id = o.shop_id
-            WHERE s.owner_id = ? AND s.status = N'active'
-              AND (o.order_status = N'Confirmed' OR (o.order_status = N'Shipping'
-                   AND EXISTS (SELECT 1 FROM deliveries d WHERE d.order_id = o.order_id
-                               AND d.delivery_status = N'Failed')))
-              AND NOT EXISTS (
-                  SELECT 1 FROM deliveries d WHERE d.order_id = o.order_id AND
-                  (d.delivery_status IS NULL
-                   OR d.delivery_status NOT IN (N'Failed', N'Rejected', N'Assigned')
-                   OR (d.delivery_status = N'Assigned' AND d.shipper_id IS NOT NULL))
-              )
+            SELECT o.order_id,o.shop_id,s.shop_name,ua.recipient_name AS receiver_name,
+                CONCAT_WS(N', ',NULLIF(ua.address_line,N''),NULLIF(ua.ward,N''),
+                    NULLIF(ua.district,N''),NULLIF(ua.province,N'')) AS shipping_address,o.total_amount
+            FROM orders o JOIN shops s ON s.shop_id=o.shop_id
+            LEFT JOIN user_addresses ua ON ua.address_id=o.address_id AND ua.user_id=o.user_id
+            LEFT JOIN deliveries d ON d.order_id=o.order_id
+            WHERE s.owner_id=? AND s.status=N'active' AND o.status IN(N'preparing',N'failed')
+              AND (d.delivery_id IS NULL OR d.status=N'failed' OR (d.status=N'assigned' AND d.staff_id IS NULL))
+              AND NOT EXISTS (SELECT 1 FROM delivery_attempts a WHERE a.delivery_id=d.delivery_id AND a.closed_at IS NULL)
             ORDER BY o.order_id DESC
             """;
         try (Connection c = connections.open(); PreparedStatement ps = c.prepareStatement(sql)) {
@@ -84,116 +80,101 @@ public class AssignmentDAO {
         return list;
     }
 
-    public void assign(int ownerId, int orderId, int shipperId) throws SQLException {
-        try (Connection c = connections.open()) {
+    // The new form supplies the pickup address because shops has no pickup_address column.
+    public void assign(int ownerId,int orderId,int shipperId,String pickupAddress) throws SQLException {
+        String pickup=pickupAddress==null ? "" : pickupAddress.trim();
+        if(ownerId<=0 || orderId<=0 || shipperId<=0 || pickup.isEmpty() || pickup.length()>1000)
+            throw new IllegalArgumentException("Chọn đơn, shipper và nhập địa chỉ lấy hàng (tối đa 1000 ký tự).");
+        try(Connection c=connections.open()) {
+            com.mycompany.onlinefruitshopping.utils.ModuleSql.prepare(c);
             c.setAutoCommit(false);
             try {
-                // Không nhận shop_id từ form. Lấy shop thật của đơn trong database.
-                String orderSql = """
-                    SELECT o.shop_id, o.order_status
-                    FROM orders o WITH (UPDLOCK, HOLDLOCK)
-                    JOIN shops s WITH (HOLDLOCK) ON s.shop_id = o.shop_id
-                    JOIN users a WITH (HOLDLOCK) ON a.user_id = s.owner_id
-                    JOIN user_roles ur ON ur.user_id = a.user_id
-                    JOIN roles r ON r.role_id = ur.role_id AND r.role_name = N'ShopOwner'
-                    WHERE o.order_id = ? AND s.owner_id = ? AND s.status = N'active'
-                      AND a.status = N'active'
-                    """;
-                int shopId;
-                String orderStatus;
-                try (PreparedStatement ps = c.prepareStatement(orderSql)) {
-                    ps.setInt(1, orderId);
-                    ps.setInt(2, ownerId);
-                    try (ResultSet rs = ps.executeQuery()) {
-                        if (!rs.next()) throw new IllegalArgumentException("Đơn hàng không thuộc shop của bạn.");
-                        shopId = rs.getInt("shop_id");
-                        orderStatus = rs.getString("order_status");
+                int shopId; String receiver,phone,address,state;
+                try(PreparedStatement ps=c.prepareStatement("""
+                    SELECT o.shop_id,o.user_id,o.status,ua.recipient_name,ua.phone,
+                        CONCAT_WS(N', ',NULLIF(ua.address_line,N''),NULLIF(ua.ward,N''),
+                            NULLIF(ua.district,N''),NULLIF(ua.province,N'')) AS shipping_address
+                    FROM orders o WITH(UPDLOCK,HOLDLOCK)
+                    JOIN shops s ON s.shop_id=o.shop_id
+                    LEFT JOIN user_addresses ua WITH(HOLDLOCK) ON ua.address_id=o.address_id AND ua.user_id=o.user_id
+                    WHERE o.order_id=? AND s.owner_id=? AND s.status=N'active'
+                    """)) {
+                    ps.setInt(1,orderId); ps.setInt(2,ownerId);
+                    try(ResultSet rs=ps.executeQuery()) {
+                        if(!rs.next()) throw new IllegalArgumentException("Đơn không thuộc cửa hàng đang hoạt động của bạn.");
+                        shopId=rs.getInt("shop_id"); state=rs.getString("status");
+                        receiver=rs.getString("recipient_name");phone=rs.getString("phone");address=rs.getString("shipping_address");
                     }
                 }
-                if (!"Confirmed".equals(orderStatus) && !"Shipping".equals(orderStatus)) {
-                    throw new IllegalArgumentException("Chỉ phân công đơn đã xác nhận hoặc đơn giao thất bại.");
+                requireActor(c,ownerId,"ShopOwner"); requireTeamMember(c,shopId,shipperId);
+                if(state==null || !List.of("preparing","failed").contains(state))
+                    throw new IllegalArgumentException("Chỉ phân công đơn đã xác nhận hoặc cần giao lại.");
+                if(receiver==null || receiver.isBlank() || phone==null || phone.isBlank() || address==null || address.isBlank())
+                    throw new IllegalArgumentException("Đơn chưa có đủ tên, điện thoại và địa chỉ nhận hàng.");
+                int deliveryId=0; String deliveryState=null; int oldStaff=0;
+                try(PreparedStatement ps=c.prepareStatement("SELECT delivery_id,status,staff_id FROM deliveries WITH(UPDLOCK,HOLDLOCK) WHERE order_id=?")) {
+                    ps.setInt(1,orderId);
+                    try(ResultSet rs=ps.executeQuery()) { if(rs.next()) {
+                        deliveryId=rs.getInt(1);deliveryState=rs.getString(2);oldStaff=rs.getInt(3);
+                    }}
                 }
-
-                String staffSql = """
-                    SELECT a.user_id FROM shop_delivery_staff t WITH (HOLDLOCK)
-                    JOIN users a WITH (HOLDLOCK) ON a.user_id = t.shipper_id
-                    JOIN user_roles ur ON ur.user_id = a.user_id
-                    JOIN roles r ON r.role_id = ur.role_id AND r.role_name = N'DeliveryStaff'
-                    WHERE t.shop_id = ? AND t.shipper_id = ? AND t.status = N'Active'
-                      AND a.status = N'active'
-                    """;
-                try (PreparedStatement ps = c.prepareStatement(staffSql)) {
-                    ps.setInt(1, shopId);
-                    ps.setInt(2, shipperId);
-                    try (ResultSet rs = ps.executeQuery()) {
-                        if (!rs.next()) throw new IllegalArgumentException("DeliveryStaff phải đang hoạt động và thuộc đúng đội của shop.");
+                if(deliveryId>0) {
+                    if(!"failed".equals(deliveryState) && !("assigned".equals(deliveryState) && oldStaff==0))
+                        throw new IllegalArgumentException("Đơn đã có người giao hoặc đã lấy/giao hàng.");
+                    try(PreparedStatement ps=c.prepareStatement("SELECT attempt_id FROM delivery_attempts WITH(UPDLOCK,HOLDLOCK) WHERE delivery_id=? AND closed_at IS NULL")) {
+                        ps.setInt(1,deliveryId);
+                        try(ResultSet rs=ps.executeQuery()) {if(rs.next()) throw new IllegalArgumentException("Đơn còn lần phân công đang mở.");}
                     }
-                }
-
-                // Giữ các lần giao Failed/Rejected để xem lại lịch sử.
-                // Bản ghi Assigned chưa có shipper (nếu có) sẽ được dùng lại.
-                int unassignedId = 0;
-                boolean hasFailed = false;
-                String attemptsSql = """
-                    SELECT delivery_id, delivery_status, shipper_id
-                    FROM deliveries WITH (UPDLOCK, HOLDLOCK) WHERE order_id = ?
-                    """;
-                try (PreparedStatement ps = c.prepareStatement(attemptsSql)) {
-                    ps.setInt(1, orderId);
-                    try (ResultSet rs = ps.executeQuery()) {
-                        while (rs.next()) {
-                            String status = rs.getString("delivery_status");
-                            if ("Failed".equals(status)) {
-                                hasFailed = true;
-                            } else if ("Rejected".equals(status)) {
-                                // Lần giao cũ đã kết thúc, có thể phân công lần mới.
-                            } else if ("Assigned".equals(status) && rs.getObject("shipper_id") == null && unassignedId == 0) {
-                                unassignedId = rs.getInt("delivery_id");
-                            } else {
-                                throw new IllegalArgumentException("Đơn đã có người giao hoặc đã hoàn tất. Hãy tải lại trang.");
-                            }
-                        }
-                    }
-                }
-                if ("Shipping".equals(orderStatus) && !hasFailed) {
-                    throw new IllegalArgumentException("Đơn đang giao không được phân công lại.");
-                }
-
-                if (unassignedId == 0) {
-                    String insert = """
-                        INSERT INTO deliveries(shop_id, order_id, shipper_id, delivery_status, note)
-                        VALUES (?, ?, ?, N'Assigned', N'Đã phân công; chờ shipper nhận đơn.')
-                        """;
-                    try (PreparedStatement ps = c.prepareStatement(insert)) {
-                        ps.setInt(1, shopId);
-                        ps.setInt(2, orderId);
-                        ps.setInt(3, shipperId);
-                        ps.executeUpdate();
+                    try(PreparedStatement ps=c.prepareStatement("UPDATE deliveries SET staff_id=?,status=N'assigned',note=N'Chờ shipper nhận',proof_image_url=NULL WHERE delivery_id=?")) {
+                        ps.setInt(1,shipperId);ps.setInt(2,deliveryId);ps.executeUpdate();
                     }
                 } else {
-                    String update = """
-                        UPDATE deliveries SET shipper_id = ?, delivery_status = N'Assigned',
-                            pickup_time = NULL, delivered_time = NULL,
-                            note = N'Đã phân công; chờ shipper nhận đơn.'
-                        WHERE delivery_id = ? AND shipper_id IS NULL
-                        """;
-                    try (PreparedStatement ps = c.prepareStatement(update)) {
-                        ps.setInt(1, shipperId);
-                        ps.setInt(2, unassignedId);
-                        if (ps.executeUpdate() != 1) throw new SQLException("Phân công đã thay đổi.");
+                    try(PreparedStatement ps=c.prepareStatement("INSERT INTO deliveries(order_id,staff_id,status,note) VALUES(?,?,N'assigned',N'Chờ shipper nhận')",Statement.RETURN_GENERATED_KEYS)) {
+                        ps.setInt(1,orderId);ps.setInt(2,shipperId);ps.executeUpdate();
+                        try(ResultSet rs=ps.getGeneratedKeys()) {if(!rs.next()) throw new SQLException("Không lấy được delivery_id."); deliveryId=rs.getInt(1);}
                     }
                 }
-                try (PreparedStatement ps = c.prepareStatement("UPDATE orders SET order_status = N'Confirmed' WHERE order_id = ?")) {
-                    ps.setInt(1, orderId);
-                    if (ps.executeUpdate() != 1) throw new SQLException("Đơn hàng đã thay đổi.");
+                try(PreparedStatement ps=c.prepareStatement("""
+                    INSERT INTO delivery_attempts(delivery_id,shipper_id,assigned_by,receiver_name,
+                        receiver_phone,shipping_address,pickup_address,note)
+                    VALUES(?,?,?,?,?,?,?,N'Chờ shipper nhận')
+                    """)) {
+                    ps.setInt(1,deliveryId);ps.setInt(2,shipperId);ps.setInt(3,ownerId);
+                    ps.setNString(4,receiver);ps.setNString(5,phone);ps.setNString(6,address);ps.setNString(7,pickup);ps.executeUpdate();
                 }
-                new NotificationDAO().insert(c, shipperId, "Bạn có đơn giao hàng mới",
-                        "Bạn được phân công đơn #" + orderId + ". Vào Giao hàng của tôi để xem địa chỉ và nhận hoặc từ chối đơn.");
+                try(PreparedStatement ps=c.prepareStatement("UPDATE orders SET status=N'preparing' WHERE order_id=?")) {
+                    ps.setInt(1,orderId);ps.executeUpdate();
+                }
+                try(PreparedStatement ps=c.prepareStatement("INSERT INTO order_status_history(order_id,status,changed_by) VALUES(?,N'preparing',?)")) {
+                    ps.setInt(1,orderId);ps.setInt(2,ownerId);ps.executeUpdate();
+                }
+                new NotificationDAO().insert(c,shipperId,"Đơn giao mới","Bạn được phân công đơn #"+orderId+". Hãy nhận hoặc từ chối đơn.");
                 c.commit();
-            } catch (SQLException | RuntimeException e) {
-                c.rollback();
-                throw e;
-            }
+            } catch(SQLException | RuntimeException e) {c.rollback();throw e;}
+        }
+    }
+
+    public static void requireActor(Connection c,int actorId,String role) throws SQLException {
+        try(PreparedStatement ps=c.prepareStatement("""
+            SELECT u.user_id FROM users u WITH (HOLDLOCK)
+            JOIN user_roles ur ON ur.user_id=u.user_id JOIN roles r ON r.role_id=ur.role_id
+            WHERE u.user_id=? AND u.status=N'active' AND r.role_name=?
+            """)) {
+            ps.setInt(1,actorId);ps.setNString(2,role);
+            try(ResultSet rs=ps.executeQuery()) { if(!rs.next()) throw new IllegalArgumentException("Tài khoản không có quyền thực hiện thao tác này."); }
+        }
+    }
+
+    public static void requireTeamMember(Connection c,int shopId,int shipperId) throws SQLException {
+        try(PreparedStatement ps=c.prepareStatement("""
+            SELECT u.user_id FROM shop_delivery_staff t WITH (HOLDLOCK)
+            JOIN users u WITH (HOLDLOCK) ON u.user_id=t.shipper_id
+            JOIN user_roles ur ON ur.user_id=u.user_id JOIN roles r ON r.role_id=ur.role_id
+            WHERE t.shop_id=? AND t.shipper_id=? AND t.status=N'Active'
+              AND u.status=N'active' AND r.role_name=N'DeliveryStaff'
+            """)) {
+            ps.setInt(1,shopId);ps.setInt(2,shipperId);
+            try(ResultSet rs=ps.executeQuery()) { if(!rs.next()) throw new IllegalArgumentException("Shipper phải đang hoạt động và thuộc đội của đúng shop."); }
         }
     }
 }
