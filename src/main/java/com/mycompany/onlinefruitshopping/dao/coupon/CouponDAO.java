@@ -14,11 +14,17 @@ import com.mycompany.onlinefruitshopping.utils.PromotionRules;
 
 /** Quản lý coupon của chủ shop. Không xóa lịch sử đã dùng. */
 public class CouponDAO {
+    private final com.mycompany.onlinefruitshopping.utils.ConnectionProvider connections;
+    public CouponDAO() { this(DBConnection::getConnection); }
+    public CouponDAO(com.mycompany.onlinefruitshopping.utils.ConnectionProvider connections) {
+        this.connections = java.util.Objects.requireNonNull(connections);
+    }
+
     private static final String FIELDS = """
         SELECT p.*, s.shop_name,
           (SELECT COUNT(*) FROM coupon_usages u JOIN orders o ON o.order_id = u.order_id
            WHERE u.coupon_id = p.coupon_id AND u.usage_status = 'Applied'
-             AND o.order_status <> N'Cancelled') AS used_count,
+             AND o.status <> N'cancelled') AS used_count,
           (SELECT COUNT(*) FROM coupon_usages u WHERE u.coupon_id = p.coupon_id) AS history_count
         FROM coupons p
         """;
@@ -33,7 +39,7 @@ public class CouponDAO {
 
     public List<Coupon> findAll(int ownerId) throws SQLException {
         List<Coupon> result = new ArrayList<>();
-        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(
+        try (Connection c = connections.open(); PreparedStatement ps = c.prepareStatement(
                 FIELDS + OWNER + " AND p.is_deleted = 0 ORDER BY p.coupon_id DESC")) {
             ps.setInt(1, ownerId);
             try (ResultSet rs = ps.executeQuery()) { while (rs.next()) result.add(map(rs)); }
@@ -42,7 +48,7 @@ public class CouponDAO {
     }
 
     public Coupon findById(int ownerId, int id) throws SQLException {
-        try (Connection c = DBConnection.getConnection()) { return findById(c, ownerId, id); }
+        try (Connection c = connections.open()) { return findById(c, ownerId, id); }
     }
 
     private Coupon findById(Connection c, int ownerId, int id) throws SQLException {
@@ -55,7 +61,7 @@ public class CouponDAO {
     public int save(int ownerId, Coupon p) throws SQLException {
         // CouponService đã chuẩn hóa mã và kiểm tra đầu vào.
         // Quota/lịch sử/quyền sở hữu vẫn được kiểm tra trong transaction.
-        try (Connection c = DBConnection.getConnection()) {
+        try (Connection c = connections.open()) {
             c.setAutoCommit(false);
             try {
                 lockShop(c, ownerId, p.getShopId());
@@ -113,7 +119,7 @@ public class CouponDAO {
     }
 
     public void changeState(int ownerId, int id, int version, boolean active, boolean deleted) throws SQLException {
-        try (Connection c = DBConnection.getConnection()) {
+        try (Connection c = connections.open()) {
             c.setAutoCommit(false);
             try {
                 Coupon before = requireOwned(c, ownerId, id, version);
@@ -178,7 +184,7 @@ public class CouponDAO {
         try (PreparedStatement ps = c.prepareStatement("""
                 SELECT COUNT(*) FROM coupon_usages u JOIN orders o ON o.order_id = u.order_id
                 WHERE u.coupon_id = ? AND u.customer_id = ? AND u.usage_status = 'Applied'
-                  AND o.order_status <> N'Cancelled'
+                  AND o.status <> N'cancelled'
                 """)) {
             ps.setInt(1, couponId); ps.setInt(2, customerId);
             try (ResultSet rs = ps.executeQuery()) { rs.next(); return rs.getInt(1); }
@@ -188,7 +194,7 @@ public class CouponDAO {
     public List<CouponUsage> findUsage(int ownerId, Integer couponId) throws SQLException {
         List<CouponUsage> list = new ArrayList<>();
         String sql = """
-            SELECT u.*, a.full_name, s.shop_name, o.order_status FROM coupon_usages u
+            SELECT u.*, a.full_name, s.shop_name, o.status AS order_status FROM coupon_usages u
             JOIN coupons p ON p.coupon_id = u.coupon_id
             JOIN shops s ON s.shop_id = u.shop_id
             JOIN users owner ON owner.user_id = s.owner_id
@@ -201,7 +207,7 @@ public class CouponDAO {
             """;
         if (couponId != null) sql += " AND u.coupon_id = ?";
         sql += " ORDER BY u.used_at DESC, u.usage_id DESC";
-        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+        try (Connection c = connections.open(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, ownerId); if (couponId != null) ps.setInt(2, couponId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
