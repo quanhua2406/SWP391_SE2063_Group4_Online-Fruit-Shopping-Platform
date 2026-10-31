@@ -41,5 +41,8 @@ public class CouponOrder {
     public BigDecimal getCouponSubtotal() { return couponSubtotal; }
     public void setCouponSubtotal(BigDecimal couponSubtotal) { this.couponSubtotal = couponSubtotal; }
 
-    public boolean isEditable() { return "Pending".equals(orderStatus) && "Unpaid".equals(paymentStatus); }
+    public boolean isEditable() {
+        return "pending_confirmation".equals(orderStatus)
+                && "pending".equals(paymentStatus);
+    }
 }
