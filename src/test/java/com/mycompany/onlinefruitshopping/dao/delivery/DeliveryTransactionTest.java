@@ -13,31 +13,17 @@ class DeliveryTransactionTest {
     private AssignmentDAO assignments;
 
     @BeforeEach void database() throws Exception {
-        url = "jdbc:h2:mem:transaction_" + UUID.randomUUID() + ";MODE=MSSQLServer;DB_CLOSE_DELAY=-1";
-        deliveries = new DeliveryDAO(() -> DriverManager.getConnection(url));
-        assignments = new AssignmentDAO(() -> DriverManager.getConnection(url));
-        execute("CREATE TABLE users(user_id INT PRIMARY KEY, full_name VARCHAR(80), status VARCHAR(20))",
-                "CREATE TABLE roles(role_id INT PRIMARY KEY, role_name VARCHAR(30))",
-                "CREATE TABLE user_roles(user_id INT, role_id INT)",
-                "CREATE TABLE shops(shop_id INT PRIMARY KEY, owner_id INT, status VARCHAR(20))",
-                "CREATE TABLE shop_delivery_staff(shop_id INT, shipper_id INT, status VARCHAR(20))",
-                "CREATE TABLE orders(order_id INT PRIMARY KEY, shop_id INT, user_id INT, order_status VARCHAR(30), payment_method VARCHAR(20), payment_status VARCHAR(20))",
-                "CREATE TABLE deliveries(delivery_id INT IDENTITY PRIMARY KEY, shop_id INT, order_id INT, shipper_id INT, delivery_status VARCHAR(30), note NVARCHAR(255), pickup_time TIMESTAMP, delivered_time TIMESTAMP)",
-                "CREATE TABLE notifications(notification_id INT IDENTITY PRIMARY KEY, user_id INT, title NVARCHAR(100), message NVARCHAR(255), is_read INT)",
-                "INSERT INTO users VALUES(10,'Owner','active'),(20,'Shipper','active'),(21,'Other shipper','active'),(30,'Customer','active'),(11,'Other owner','active')",
-                "INSERT INTO roles VALUES(1,'ShopOwner'),(2,'DeliveryStaff'),(3,'Customer')",
-                "INSERT INTO user_roles VALUES(10,1),(11,1),(20,2),(21,2),(30,3)",
-                "INSERT INTO shops VALUES(1,10,'active'),(2,11,'active')",
-                "INSERT INTO shop_delivery_staff VALUES(1,20,'Active'),(1,21,'Active')",
-                "INSERT INTO orders VALUES(100,1,30,'Shipping','COD','Unpaid'),(101,1,30,'Confirmed','COD','Unpaid'),(102,2,30,'Confirmed','COD','Unpaid')",
-                "INSERT INTO deliveries(shop_id,order_id,shipper_id,delivery_status) VALUES(1,100,20,'Delivering')");
+        var db = new com.mycompany.onlinefruitshopping.support.ModuleDatabase();
+        url = db.url;
+        deliveries = new DeliveryDAO(db::open);
+        assignments = new AssignmentDAO(db::open);
     }
 
     @Test void codCompletionCommitsAllEffectsAndRejectsReplay() throws Exception {
         deliveries.updateStatus(1,20,"delivered","",true);
-        assertEquals("Delivered", scalar("SELECT delivery_status FROM deliveries WHERE delivery_id=1"));
-        assertEquals("Completed/Paid", scalar("SELECT order_status + '/' + payment_status FROM orders WHERE order_id=100"));
-        assertEquals(1, count("SELECT COUNT(*) FROM deliveries WHERE delivered_time IS NOT NULL"));
+        assertEquals("Delivered", scalar("SELECT delivery_status FROM delivery_attempts WHERE attempt_id=1"));
+        assertEquals("delivered/paid", scalar("SELECT o.status + '/' + p.status FROM orders o JOIN payments p ON p.order_id=o.order_id WHERE o.order_id=100"));
+        assertEquals(1, count("SELECT COUNT(*) FROM delivery_attempts WHERE delivered_time IS NOT NULL"));
         assertEquals(3, count("SELECT COUNT(*) FROM notifications"));
         assertThrows(IllegalArgumentException.class, () -> deliveries.updateStatus(1,20,"delivered","",true));
         assertEquals(3, count("SELECT COUNT(*) FROM notifications"));
@@ -63,43 +49,85 @@ class DeliveryTransactionTest {
     }
 
     @Test void successfulAssignmentIsUniqueAndRetriedAssignmentHasNoSideEffects() throws Exception {
-        assignments.assign(10,101,20,"Kho A");
-        assertEquals(1,count("SELECT COUNT(*) FROM deliveries WHERE order_id=101 AND shipper_id=20"));
+        assignments.assign(10,101,20,"Shop pickup");
+        assertEquals(1,count("SELECT COUNT(*) FROM deliveries WHERE order_id=101 AND staff_id=20"));
         assertEquals(1,count("SELECT COUNT(*) FROM notifications"));
-        assertThrows(IllegalArgumentException.class, () -> assignments.assign(10,101,21,"Kho A"));
+        assertThrows(IllegalArgumentException.class, () -> assignments.assign(10,101,21,"Shop pickup"));
         assertEquals(1,count("SELECT COUNT(*) FROM deliveries WHERE order_id=101"));
         assertEquals(1,count("SELECT COUNT(*) FROM notifications"));
     }
 
     @Test void assignmentNotificationFailureRollsBackInsertedDelivery() throws Exception {
         execute("ALTER TABLE notifications ADD CONSTRAINT fail_shipper CHECK(user_id <> 20)");
-        assertThrows(SQLException.class, () -> assignments.assign(10,101,20,"Kho A"));
+        assertThrows(SQLException.class, () -> assignments.assign(10,101,20,"Shop pickup"));
         assertEquals(0,count("SELECT COUNT(*) FROM deliveries WHERE order_id=101"));
-        assertEquals("Confirmed",scalar("SELECT order_status FROM orders WHERE order_id=101"));
+        assertEquals("preparing",scalar("SELECT status FROM orders WHERE order_id=101"));
         assertEquals(0,count("SELECT COUNT(*) FROM notifications"));
     }
 
     @Test void assignmentRejectsAnotherShopAndInactiveMembership() throws Exception {
-        assertThrows(IllegalArgumentException.class, () -> assignments.assign(10,102,20,"Kho A"));
+        assertThrows(IllegalArgumentException.class, () -> assignments.assign(10,102,20,"Shop pickup"));
         execute("UPDATE shop_delivery_staff SET status='Inactive' WHERE shipper_id=20");
-        assertThrows(IllegalArgumentException.class, () -> assignments.assign(10,101,20,"Kho A"));
+        assertThrows(IllegalArgumentException.class, () -> assignments.assign(10,101,20,"Shop pickup"));
         assertEquals(1,count("SELECT COUNT(*) FROM deliveries"));
         assertEquals(0,count("SELECT COUNT(*) FROM notifications"));
     }
 
     @Test void acceptedAssignmentCannotThenBeRejected() throws Exception {
-        assignments.assign(10,101,20,"Kho A");
-        int id=count("SELECT delivery_id FROM deliveries WHERE order_id=101");
+        assignments.assign(10,101,20,"Shop pickup");
+        int id=count("SELECT MAX(attempt_id) FROM delivery_attempts");
         deliveries.updateStatus(id,20,"accept","",false);
         assertThrows(IllegalArgumentException.class, () -> deliveries.updateStatus(id,20,"reject","Cannot deliver",false));
-        assertEquals("Accepted",scalar("SELECT delivery_status FROM deliveries WHERE order_id=101"));
+        assertEquals("Accepted",scalar("SELECT a.delivery_status FROM delivery_attempts a JOIN deliveries d ON d.delivery_id=a.delivery_id WHERE d.order_id=101"));
         assertEquals(2,count("SELECT COUNT(*) FROM notifications"));
     }
 
+    @Test void rejectedAttemptClosesAndReassignmentKeepsOneBaseDelivery() throws Exception {
+        assignments.assign(10,101,20,"Shop pickup");
+        int old=count("SELECT MAX(attempt_id) FROM delivery_attempts");
+        deliveries.updateStatus(old,20,"reject","Vehicle broken",false);
+        assertEquals(1,count("SELECT COUNT(*) FROM deliveries WHERE order_id=101 AND staff_id IS NULL"));
+        assignments.assign(10,101,21,"New pickup");
+        assertEquals(1,count("SELECT COUNT(*) FROM deliveries WHERE order_id=101"));
+        assertEquals(2,count("SELECT COUNT(*) FROM delivery_attempts a JOIN deliveries d ON d.delivery_id=a.delivery_id WHERE d.order_id=101"));
+        assertThrows(IllegalArgumentException.class,()->deliveries.updateStatus(old,20,"accept","",false));
+    }
+    @Test void assignmentCapturesAddressAndAvailableListUsesCanonicalColumns() throws Exception {
+        assertEquals(1,assignments.findAvailableOrders(10).size());
+        assertEquals(2,assignments.findActiveStaff(10).size());
+        assignments.assign(10,101,20,"Shop pickup");
+        execute("UPDATE user_addresses SET address_line='Changed' WHERE address_id=1");
+        assertTrue(scalar("SELECT shipping_address FROM delivery_attempts WHERE attempt_id=2").contains("1 Test street"));
+        assertTrue(assignments.findAvailableOrders(10).isEmpty());
+    }
+    @Test void onlinePendingOrWrongAmountCannotComplete() throws Exception {
+        execute("UPDATE payments SET method='vnpay' WHERE order_id=100");
+        assertThrows(IllegalArgumentException.class,()->deliveries.updateStatus(1,20,"delivered","",true));
+        execute("UPDATE payments SET status='paid',amount=1 WHERE order_id=100");
+        assertThrows(IllegalArgumentException.class,()->deliveries.updateStatus(1,20,"delivered","",true));
+        assertEquals("Delivering",scalar("SELECT delivery_status FROM delivery_attempts WHERE attempt_id=1"));
+    }
+
+    @Test void pickupStartFailureAndRetrySynchronizeCanonicalStates() throws Exception {
+        assignments.assign(10,101,20,"Shop pickup");
+        int id=count("SELECT MAX(attempt_id) FROM delivery_attempts");
+        deliveries.updateStatus(id,20,"accept","",false);
+        deliveries.updateStatus(id,20,"pickup","",false);
+        assertEquals("shipping",scalar("SELECT status FROM orders WHERE order_id=101"));
+        assertEquals("picked_up",scalar("SELECT status FROM deliveries WHERE order_id=101"));
+        deliveries.updateStatus(id,20,"start","",false);
+        deliveries.updateStatus(id,20,"failed","Customer unavailable",false);
+        assertEquals("failed",scalar("SELECT status FROM orders WHERE order_id=101"));
+        assertEquals(1,count("SELECT COUNT(*) FROM delivery_attempts WHERE attempt_id="+id+" AND pickup_time IS NOT NULL AND closed_at IS NOT NULL"));
+        assignments.assign(10,101,21,"Retry pickup");
+        assertEquals("preparing",scalar("SELECT status FROM orders WHERE order_id=101"));
+        assertEquals(1,count("SELECT COUNT(*) FROM deliveries WHERE order_id=101"));
+    }
+
     private void assertInitialDelivery() throws Exception {
-        assertEquals("Delivering",scalar("SELECT delivery_status FROM deliveries WHERE delivery_id=1"));
-        assertEquals("Shipping/Unpaid",scalar("SELECT order_status + '/' + payment_status FROM orders WHERE order_id=100"));
-        assertEquals(0,count("SELECT COUNT(*) FROM deliveries WHERE delivered_time IS NOT NULL"));
+        assertEquals("Delivering",scalar("SELECT delivery_status FROM delivery_attempts WHERE attempt_id=1"));
+        assertEquals("shipping/pending",scalar("SELECT o.status + '/' + p.status FROM orders o JOIN payments p ON p.order_id=o.order_id WHERE o.order_id=100"));
+        assertEquals(0,count("SELECT COUNT(*) FROM delivery_attempts WHERE delivered_time IS NOT NULL"));
         assertEquals(0,count("SELECT COUNT(*) FROM notifications"));
     }
     private void execute(String... statements) throws SQLException {
