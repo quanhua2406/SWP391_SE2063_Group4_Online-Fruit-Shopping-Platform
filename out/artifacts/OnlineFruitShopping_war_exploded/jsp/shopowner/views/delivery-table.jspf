@@ -1,0 +1,22 @@
+<%@ page pageEncoding="UTF-8" %>
+<%@ include file="delivery-filters.jspf" %>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Bảng dữ liệu, cuộn ngang để xem thêm">
+<table class="data-table" id="delivery-results">
+    <thead><tr><th scope="col">Lần giao / Đơn</th><th scope="col">Cửa hàng</th><th scope="col">Người nhận</th><th scope="col">Nhân viên</th><th scope="col">Trạng thái</th><th scope="col">Thao tác</th></tr></thead>
+    <tbody>
+    <c:forEach var="d" items="${deliveries}">
+        <tr>
+            <td><strong>#${d.id}</strong><br><span class="muted">Đơn #${d.orderId}</span></td>
+            <td><c:out value="${d.shopName}"/></td>
+            <td><c:out value="${d.receiverName}"/><br><span class="muted"><c:out value="${d.receiverPhone}"/></span></td>
+            <td><c:out value="${d.shipperName}" default="Chưa phân công"/></td>
+            <td><span class="badge" data-status="<c:out value='${d.status}'/>"><c:out value="${d.statusLabel}"/></span></td>
+            <td><a class="button secondary" href="${ctx}/shopowner/delivery/detail?id=${d.id}">Chi tiết</a></td>
+        </tr>
+    </c:forEach>
+    <c:if test="${empty deliveries}">
+        <tr><td colspan="6" class="empty"><c:choose><c:when test="${deliveryFilter.active}">Không có lần giao nào phù hợp với bộ lọc.</c:when><c:otherwise>Chưa có giao hàng để hiển thị.</c:otherwise></c:choose></td></tr>
+    </c:if>
+    </tbody>
+</table>
+</div>

@@ -32,6 +32,10 @@ public class OrderItem {
         return quantity * unitPrice;
     }
 
+    public double getItemTotal() {
+        return getLineTotal();
+    }
+
     public int getOrderItemId() {
         return orderItemId;
     }

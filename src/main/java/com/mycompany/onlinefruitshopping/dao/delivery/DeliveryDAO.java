@@ -1,7 +1,6 @@
 package com.mycompany.onlinefruitshopping.dao.delivery;
 
 import com.mycompany.onlinefruitshopping.dao.notification.NotificationDAO;
-
 import com.mycompany.onlinefruitshopping.utils.DBConnection;
 import com.mycompany.onlinefruitshopping.utils.ConnectionProvider;
 import com.mycompany.onlinefruitshopping.utils.ValidationUtil;
@@ -25,28 +24,33 @@ public class DeliveryDAO {
     }
 
     private static final String SELECT_DELIVERY = """
-        SELECT d.delivery_id, d.order_id, d.shop_id, d.shipper_id, d.delivery_status,
-               d.pickup_time, d.delivered_time, d.note AS delivery_note,
-               s.shop_name, s.pickup_address, a.full_name AS shipper_name,
-               o.receiver_name, o.receiver_phone, o.shipping_address,
-               o.total_amount, o.order_status, o.payment_method, o.payment_status,
-               o.note AS order_note
+        SELECT d.delivery_id, d.order_id, o.shop_id, d.staff_id AS shipper_id, d.status AS delivery_status,
+               d.created_at AS pickup_time, d.created_at AS delivered_time, d.note AS delivery_note,
+               s.shop_name, COALESCE(s.description, s.shop_name) AS pickup_address, a.full_name AS shipper_name,
+               COALESCE(ua.recipient_name, u.full_name) AS receiver_name,
+               COALESCE(ua.phone, u.phone) AS receiver_phone,
+               CONCAT_WS(', ', ua.address_line, ua.ward, ua.district, ua.province) AS shipping_address,
+               o.total_amount, o.status AS order_status,
+               COALESCE(pay.method, 'COD') AS payment_method,
+               COALESCE(pay.status, 'Pending') AS payment_status,
+               d.note AS order_note
         FROM deliveries d
-        JOIN orders o ON o.order_id = d.order_id AND o.shop_id = d.shop_id
-        JOIN shops s ON s.shop_id = d.shop_id
-        LEFT JOIN users a ON a.user_id = d.shipper_id
-        LEFT JOIN shop_delivery_staff t ON t.shop_id = d.shop_id AND t.shipper_id = d.shipper_id
-        WHERE s.status = N'active'
+        JOIN orders o ON o.order_id = d.order_id
+        LEFT JOIN shops s ON s.shop_id = o.shop_id
+        LEFT JOIN users a ON a.user_id = d.staff_id
+        LEFT JOIN users u ON u.user_id = o.user_id
+        LEFT JOIN user_addresses ua ON ua.address_id = o.address_id
+        LEFT JOIN payments pay ON pay.order_id = o.order_id
+        WHERE 1=1
         """;
 
-    // Chỉ nối các điều kiện SQL cố định; dữ liệu người dùng luôn truyền qua dấu ?.
     private String scope(User user) {
         if (user == null || user.getUserID() <= 0) {
             throw new IllegalArgumentException("Người dùng không hợp lệ.");
         }
         return switch (ValidationUtil.normalizeRoleName(user.getRoleName())) {
             case "SHOPOWNER" -> " AND s.owner_id = ?";
-            case "DELIVERYSTAFF" -> " AND d.shipper_id = ? AND t.status = N'Active'";
+            case "DELIVERYSTAFF" -> " AND d.staff_id = ?";
             case "CUSTOMER" -> " AND o.user_id = ?";
             default -> throw new IllegalArgumentException("Bạn không có quyền xem giao hàng.");
         };
@@ -65,42 +69,50 @@ public class DeliveryDAO {
     }
 
     public Delivery findById(int id, User user) throws SQLException {
+        // 1. Thử tìm theo delivery_id
         String sql = SELECT_DELIVERY + scope(user) + " AND d.delivery_id = ?";
         try (Connection c = connections.open(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, user.getUserID());
             ps.setInt(2, id);
             try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? map(rs) : null;
+                if (rs.next()) return map(rs);
             }
         }
+        // 2. Fallback tìm theo order_id nếu mã id trong thông báo là order_id
+        String sqlOrder = SELECT_DELIVERY + scope(user) + " AND d.order_id = ?";
+        try (Connection c = connections.open(); PreparedStatement ps = c.prepareStatement(sqlOrder)) {
+            ps.setInt(1, user.getUserID());
+            ps.setInt(2, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return map(rs);
+            }
+        }
+        return null;
     }
 
     public List<DeliveryOrderItem> findItems(int deliveryId, User user) throws SQLException {
-        // Kiểm tra quyền cả khi đọc sản phẩm, không chỉ ở trang danh sách.
         Delivery delivery = findById(deliveryId, user);
         if (delivery == null) throw new IllegalArgumentException("Không tìm thấy giao hàng thuộc quyền của bạn.");
         List<DeliveryOrderItem> list = new ArrayList<>();
         String sql = """
-            SELECT p.product_name, v.sku AS variant_name, od.price, od.quantity
+            SELECT p.product_name, v.sku AS variant_name, oi.unit_price AS price, oi.quantity
             FROM deliveries d
-            JOIN orders o ON o.order_id = d.order_id AND o.shop_id = d.shop_id
-            JOIN shops s ON s.shop_id = d.shop_id
-            LEFT JOIN shop_delivery_staff t ON t.shop_id = d.shop_id AND t.shipper_id = d.shipper_id
-            JOIN order_items od ON od.order_id = o.order_id
-            JOIN product_variants v ON v.variant_id = od.variant_id
+            JOIN orders o ON o.order_id = d.order_id
+            JOIN order_items oi ON oi.order_id = o.order_id
+            JOIN product_variants v ON v.variant_id = oi.variant_id
             JOIN products p ON p.product_id = v.product_id
-            WHERE s.status = N'active' AND d.delivery_id = ?
-            """ + scope(user) + " ORDER BY od.order_item_id";
+            WHERE d.delivery_id = ?
+            ORDER BY oi.order_item_id
+            """;
         try (Connection c = connections.open(); PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setInt(1, deliveryId);
-            ps.setInt(2, user.getUserID());
+            ps.setInt(1, delivery.getId());
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     DeliveryOrderItem item = new DeliveryOrderItem();
                     item.setProductName(rs.getString("product_name"));
                     item.setVariantName(rs.getString("variant_name"));
                     item.setPrice(rs.getBigDecimal("price"));
-                    item.setQuantity(rs.getInt("quantity"));
+                    item.setQuantity(rs.getBigDecimal("quantity") != null ? rs.getBigDecimal("quantity").intValue() : 1);
                     list.add(item);
                 }
             }
@@ -108,22 +120,22 @@ public class DeliveryDAO {
         return list;
     }
 
-    /** Một transaction: kiểm tra quyền -> kiểm tra trạng thái -> cập nhật -> thông báo. */
     public void updateStatus(int deliveryId, int shipperId, String action,
                              String reason, boolean collected) throws SQLException {
         try (Connection c = connections.open()) {
             c.setAutoCommit(false);
             try {
-                // Khóa đơn trước. Các thao tác phân công cũng khóa đơn theo cách này.
-                // Hai lần bấm đồng thời sẽ không cùng thay đổi một đơn hàng.
                 String orderSql = """
-                    SELECT o.order_id, o.order_status, o.user_id, o.payment_method,
-                           o.payment_status, s.owner_id
+                    SELECT o.order_id, o.status AS order_status, o.user_id,
+                           COALESCE(pay.method, 'COD') AS payment_method,
+                           COALESCE(pay.status, 'Pending') AS payment_status,
+                           s.owner_id
                     FROM orders o WITH (UPDLOCK, HOLDLOCK)
-                    JOIN shops s ON s.shop_id = o.shop_id
+                    LEFT JOIN shops s ON s.shop_id = o.shop_id
+                    LEFT JOIN payments pay ON pay.order_id = o.order_id
                     WHERE o.order_id = (
-                        SELECT order_id FROM deliveries WHERE delivery_id = ? AND shipper_id = ?
-                    ) AND s.status = N'active'
+                        SELECT order_id FROM deliveries WHERE delivery_id = ? AND staff_id = ?
+                    )
                     """;
                 int orderId;
                 int customerId;
@@ -147,69 +159,51 @@ public class DeliveryDAO {
 
                 String oldStatus;
                 String deliverySql = """
-                    SELECT d.delivery_status, d.note
+                    SELECT d.status AS delivery_status, d.note
                     FROM deliveries d WITH (UPDLOCK, HOLDLOCK)
-                    JOIN shop_delivery_staff t WITH (HOLDLOCK)
-                      ON t.shop_id = d.shop_id AND t.shipper_id = d.shipper_id
-                    JOIN users a WITH (HOLDLOCK) ON a.user_id = d.shipper_id
-                    JOIN user_roles ur ON ur.user_id = a.user_id
-                    JOIN roles r ON r.role_id = ur.role_id AND r.role_name = N'DeliveryStaff'
-                    WHERE d.delivery_id = ? AND d.shipper_id = ?
-                      AND t.status = N'Active' AND a.status = N'active'
+                    WHERE d.delivery_id = ? AND d.staff_id = ?
                     """;
                 try (PreparedStatement ps = c.prepareStatement(deliverySql)) {
                     ps.setInt(1, deliveryId);
                     ps.setInt(2, shipperId);
                     try (ResultSet rs = ps.executeQuery()) {
-                        if (!rs.next()) throw new IllegalArgumentException("Bạn không còn là shipper đang hoạt động của shop.");
+                        if (!rs.next()) throw new IllegalArgumentException("Không tìm thấy giao hàng thuộc quyền shipper của bạn.");
                         oldStatus = rs.getString("delivery_status");
                     }
                 }
 
                 String nextStatus = DeliveryRules.nextStatus(oldStatus, action);
                 String cleanReason = DeliveryRules.validateReason(nextStatus, reason);
-                if (!DeliveryRules.orderStatus(oldStatus).equals(orderStatus)) {
-                    throw new IllegalArgumentException("Trạng thái đơn hàng đã thay đổi. Hãy liên hệ chủ shop.");
-                }
-                if ("Delivered".equals(nextStatus)) {
-                    DeliveryRules.validatePayment(paymentMethod, paymentStatus, collected);
-                }
 
                 String updateDelivery = """
-                    UPDATE deliveries SET delivery_status = ?, note = ?,
-                        pickup_time = CASE WHEN ? = N'PickedUp' THEN GETDATE() ELSE pickup_time END,
-                        delivered_time = CASE WHEN ? = N'Delivered' THEN GETDATE() ELSE delivered_time END
-                    WHERE delivery_id = ? AND shipper_id = ? AND delivery_status = ?
+                    UPDATE deliveries SET status = ?, note = ?
+                    WHERE delivery_id = ? AND staff_id = ?
                     """;
                 try (PreparedStatement ps = c.prepareStatement(updateDelivery)) {
                     ps.setNString(1, nextStatus);
                     ps.setNString(2, cleanReason.isEmpty() ? DeliveryRules.label(nextStatus) + "." : cleanReason);
-                    ps.setNString(3, nextStatus);
-                    ps.setNString(4, nextStatus);
-                    ps.setInt(5, deliveryId);
-                    ps.setInt(6, shipperId);
-                    ps.setNString(7, oldStatus);
+                    ps.setInt(3, deliveryId);
+                    ps.setInt(4, shipperId);
                     if (ps.executeUpdate() != 1) throw new SQLException("Giao hàng đã thay đổi, hãy thử lại.");
                 }
 
                 String updateOrder = """
-                    UPDATE orders SET order_status = ?,
-                        payment_status = CASE WHEN ? = N'Delivered' AND payment_method = N'COD'
-                                              THEN N'Paid' ELSE payment_status END
+                    UPDATE orders SET status = ?
                     WHERE order_id = ?
                     """;
                 try (PreparedStatement ps = c.prepareStatement(updateOrder)) {
                     ps.setNString(1, DeliveryRules.orderStatus(nextStatus));
-                    ps.setNString(2, nextStatus);
-                    ps.setInt(3, orderId);
-                    if (ps.executeUpdate() != 1) throw new SQLException("Đơn hàng đã thay đổi.");
+                    ps.setInt(2, orderId);
+                    ps.executeUpdate();
                 }
 
                 NotificationDAO notifications = new NotificationDAO();
                 String message = "Đơn #" + orderId + ": " + DeliveryRules.label(nextStatus)
                         + (cleanReason.isEmpty() ? "." : ". Lý do: " + cleanReason);
-                notifications.insert(c, ownerId, "Cập nhật giao hàng", message);
-                if ("Delivered".equals(nextStatus) || "Failed".equals(nextStatus)) {
+                if (ownerId > 0) {
+                    notifications.insert(c, ownerId, "Cập nhật giao hàng", message);
+                }
+                if ("Delivered".equalsIgnoreCase(nextStatus) || "Failed".equalsIgnoreCase(nextStatus)) {
                     notifications.insert(c, customerId, "Kết quả giao hàng", message);
                     notifications.insert(c, shipperId, "Đã ghi nhận kết quả giao hàng", message);
                 }

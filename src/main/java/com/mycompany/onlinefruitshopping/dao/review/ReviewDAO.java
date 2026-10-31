@@ -122,7 +122,7 @@ public class ReviewDAO extends DBConnection {
         sql.append("u.full_name AS user_name ");
         sql.append("FROM   reviews r ");
         sql.append("LEFT JOIN users u ON r.user_id = u.user_id ");
-        sql.append("WHERE  r.product_id = ? AND (r.status IS NULL OR r.status = 'published') ");
+        sql.append("WHERE  r.product_id = ? AND (r.status IS NULL OR r.status = 'published' OR r.status = 'reported') ");
 
         if (ratingFilter >= 1 && ratingFilter <= 5) {
             sql.append("AND r.rating = ? ");
@@ -200,7 +200,7 @@ public class ReviewDAO extends DBConnection {
         boolean hasImages = Boolean.TRUE.equals(hasImageUrlsColumn);
 
         StringBuilder sql = new StringBuilder(
-                "SELECT COUNT(*) FROM reviews r WHERE r.product_id = ? AND (r.status IS NULL OR r.status = 'published') "
+                "SELECT COUNT(*) FROM reviews r WHERE r.product_id = ? AND (r.status IS NULL OR r.status = 'published' OR r.status = 'reported') "
         );
         if (ratingFilter >= 1 && ratingFilter <= 5) {
             sql.append("AND r.rating = ? ");
@@ -254,7 +254,7 @@ public class ReviewDAO extends DBConnection {
                         "  SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END)       AS c2, " +
                         "  SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END)       AS c1 " +
                         "FROM reviews " +
-                        "WHERE product_id = ? AND (status IS NULL OR status = 'published')";
+                        "WHERE product_id = ? AND (status IS NULL OR status = 'published' OR status = 'reported')";
 
         try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
             ps.setInt(1, productId);
@@ -842,7 +842,7 @@ public class ReviewDAO extends DBConnection {
         if (hasImages) {
             sql.append("r.image_urls, ");
         }
-        sql.append("p.product_name, p.image_url AS product_image ");
+        sql.append("p.product_name, (SELECT TOP 1 pi.image_url FROM product_images pi WHERE pi.product_id = r.product_id ORDER BY pi.sort_order ASC, pi.image_id ASC) AS product_image ");
         sql.append("FROM reviews r ");
         sql.append("LEFT JOIN products p ON r.product_id = p.product_id ");
         sql.append("WHERE r.user_id = ? AND (r.status IS NULL OR r.status <> 'deleted') ");
@@ -929,7 +929,7 @@ public class ReviewDAO extends DBConnection {
         String sql =
             "SELECT DISTINCT " +
             "  o.order_id, o.created_at AS order_date, " +
-            "  p.product_id, p.product_name, p.image_url, p.price " +
+            "  p.product_id, p.product_name, oi.unit_price AS price, (SELECT TOP 1 pi.image_url FROM product_images pi WHERE pi.product_id = p.product_id ORDER BY pi.sort_order ASC, pi.image_id ASC) AS image_url " +
             "FROM orders o " +
             "JOIN order_items oi ON o.order_id = oi.order_id " +
             "JOIN product_variants pv ON oi.variant_id = pv.variant_id " +

@@ -4,7 +4,6 @@ import com.mycompany.onlinefruitshopping.model.DeliveryNotificationType;
 import com.mycompany.onlinefruitshopping.model.Notification;
 import com.mycompany.onlinefruitshopping.model.User;
 import com.mycompany.onlinefruitshopping.service.NotificationService;
-import com.mycompany.onlinefruitshopping.shopowner.model.Account;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -248,23 +247,21 @@ public class DeliveryNotificationServlet extends HttpServlet {
         Object userObj = session.getAttribute("user");
         if (userObj instanceof User u) {
             String role = u.getRoleName();
-            if (role != null && (role.equalsIgnoreCase("DeliveryStaff") || role.equalsIgnoreCase("DELIVERY_STAFF") || role.equalsIgnoreCase("DELIVERY"))) {
+            if (role != null && (role.equalsIgnoreCase("DeliveryStaff")
+                    || role.equalsIgnoreCase("DELIVERY_STAFF")
+                    || role.equalsIgnoreCase("DELIVERY")
+                    || role.equalsIgnoreCase("DELIVERYSTAFF"))) {
                 return u.getUserID();
             }
         }
 
-        // 2. Kiểm tra session "shopUser" (Account)
-        Object shopUserObj = session.getAttribute("shopUser");
-        if (shopUserObj instanceof Account acc) {
-            if ("DeliveryStaff".equalsIgnoreCase(acc.getRole())) {
-                return acc.getId();
-            }
-        }
-
-        // 3. Fallback kiểm tra userId trực tiếp nếu role là DeliveryStaff
+        // 2. Fallback kiểm tra userId trực tiếp nếu role là DeliveryStaff
         Integer userId = (Integer) session.getAttribute("userId");
         String role = (String) session.getAttribute("role");
-        if (userId != null && role != null && role.equalsIgnoreCase("DeliveryStaff")) {
+        if (userId != null && role != null && (role.equalsIgnoreCase("DeliveryStaff")
+                || role.equalsIgnoreCase("DELIVERY_STAFF")
+                || role.equalsIgnoreCase("DELIVERY")
+                || role.equalsIgnoreCase("DELIVERYSTAFF"))) {
             return userId;
         }
 

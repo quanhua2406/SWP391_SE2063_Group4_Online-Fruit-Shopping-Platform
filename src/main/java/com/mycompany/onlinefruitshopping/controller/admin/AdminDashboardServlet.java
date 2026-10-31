@@ -32,7 +32,8 @@ public class AdminDashboardServlet extends HttpServlet {
         HttpSession session = request.getSession(false);
         if (session != null) {
             Object userObj = session.getAttribute("user");
-            if (userObj instanceof User u) {
+            if (userObj instanceof User) {
+                User u = (User) userObj;
                 int unread = notificationService.getUnreadCount(u.getUserID());
                 session.setAttribute("adminUnreadCount", unread);
             }

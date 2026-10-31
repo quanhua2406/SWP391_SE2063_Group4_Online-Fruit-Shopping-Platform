@@ -71,7 +71,17 @@
         <a href="${ctx}/shopowner/delivery/list" class="${fn:startsWith(currentPath, '/shopowner/delivery/') ? 'is-active' : ''}">Theo dõi giao hàng</a>
         <a href="${ctx}/shopowner/customer/coupons" class="${fn:startsWith(currentPath, '/shopowner/customer/') ? 'is-active' : ''}" ${fn:startsWith(currentPath, '/shopowner/customer/') ? 'aria-current="page"' : ''}><svg class="icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="${ctx}/assets/icons.svg#cart"/></svg> Đơn hàng &amp; mã giảm giá</a>
     </c:if>
-    <a href="${ctx}/shopowner/notifications" class="${currentPath == '/shopowner/notifications' ? 'is-active' : ''}" ${currentPath == '/shopowner/notifications' ? 'aria-current="page"' : ''}><svg class="icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="${ctx}/assets/icons.svg#bell"/></svg> Thông báo</a>
+    <c:choose>
+        <c:when test="${requestScope.currentRole == 'DELIVERYSTAFF'}">
+            <a href="${ctx}/delivery/notifications" class="${fn:startsWith(currentPath, '/delivery/notifications') ? 'is-active' : ''}" ${fn:startsWith(currentPath, '/delivery/notifications') ? 'aria-current="page"' : ''}><svg class="icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="${ctx}/assets/icons.svg#bell"/></svg> Thông báo <c:if test="${not empty sessionScope.deliveryUnreadCount and sessionScope.deliveryUnreadCount > 0}"><span class="badge">${sessionScope.deliveryUnreadCount}</span></c:if></a>
+        </c:when>
+        <c:when test="${requestScope.currentRole == 'SHOPOWNER'}">
+            <a href="${ctx}/store-owner/notifications" class="${fn:startsWith(currentPath, '/store-owner/notifications') or currentPath == '/shopowner/notifications' ? 'is-active' : ''}" ${fn:startsWith(currentPath, '/store-owner/notifications') ? 'aria-current="page"' : ''}><svg class="icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="${ctx}/assets/icons.svg#bell"/></svg> Thông báo <c:if test="${not empty sessionScope.storeOwnerUnreadCount and sessionScope.storeOwnerUnreadCount > 0}"><span class="badge">${sessionScope.storeOwnerUnreadCount}</span></c:if></a>
+        </c:when>
+        <c:otherwise>
+            <a href="${ctx}/notifications" class="${currentPath == '/notifications' ? 'is-active' : ''}" ${currentPath == '/notifications' ? 'aria-current="page"' : ''}><svg class="icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="${ctx}/assets/icons.svg#bell"/></svg> Thông báo</a>
+        </c:otherwise>
+    </c:choose>
 </nav>
 <main class="product-management-container container" id="main-content">
     <c:if test="${not empty sessionScope.success}">

@@ -296,7 +296,7 @@ public class ReviewReportDAO {
             String revSql = "SELECT r.review_id, r.user_id, r.product_id, r.order_id, r.rating, r.comment, r.status, r.created_at, "
                     + (hasReviewImages ? "r.image_urls, " : "")
                     + "u.full_name AS reviewer_name, "
-                    + "p.product_name, p.packaging_type, p.price, p.image_url AS product_image, s.shop_name "
+                    + "p.product_name, (SELECT TOP 1 pv.packaging_type FROM product_variants pv WHERE pv.product_id = p.product_id ORDER BY pv.variant_id ASC) AS packaging_type, (SELECT TOP 1 pv.price FROM product_variants pv WHERE pv.product_id = p.product_id ORDER BY pv.variant_id ASC) AS price, (SELECT TOP 1 pi.image_url FROM product_images pi WHERE pi.product_id = p.product_id ORDER BY pi.sort_order ASC, pi.image_id ASC) AS product_image, s.shop_name "
                     + "FROM reviews r "
                     + "LEFT JOIN users u ON u.user_id = r.user_id "
                     + "LEFT JOIN products p ON p.product_id = r.product_id "

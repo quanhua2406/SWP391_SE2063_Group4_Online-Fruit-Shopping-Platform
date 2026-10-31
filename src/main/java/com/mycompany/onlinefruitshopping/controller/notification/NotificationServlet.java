@@ -106,6 +106,9 @@ public class NotificationServlet extends HttpServlet {
         // Lấy dữ liệu qua Service
         List<Notification> notificationList = notificationService.getNotifications(
                 userId, tab, isReadCondition, page, pageSize);
+        for (Notification n : notificationList) {
+            n.setActionUrl(notificationService.resolveTargetUrl(n, request.getContextPath()));
+        }
         int unreadCount = notificationService.getUnreadCount(userId);
         Map<String, Integer> unreadPerGroup = notificationService.getUnreadCountPerGroup(userId);
 
@@ -220,3 +223,4 @@ public class NotificationServlet extends HttpServlet {
         return userId;
     }
 }
+

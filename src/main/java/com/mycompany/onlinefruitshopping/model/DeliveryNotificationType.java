@@ -48,6 +48,9 @@ public enum DeliveryNotificationType {
                 return type;
             }
         }
+        String lower = code.toLowerCase();
+        if (lower.contains("assign")) return NEW_DELIVERY_ASSIGNMENT;
+        if (lower.contains("status") || lower.contains("deliver")) return DELIVERY_STATUS_UPDATE;
         return null;
     }
 }

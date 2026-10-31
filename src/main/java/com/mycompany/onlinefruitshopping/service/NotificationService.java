@@ -117,18 +117,55 @@ public class NotificationService {
 
         String refType = n.getReferenceType() != null ? n.getReferenceType().toLowerCase() : "";
         String refId = n.getReferenceId() != null ? n.getReferenceId().trim() : "";
+        String type = n.getType() != null ? n.getType().toLowerCase() : "";
 
-        return switch (refType) {
-            case "order", "delivery", "payment" -> {
-                if (!refId.isEmpty()) {
-                    yield contextPath + "/customer/dashboard?tab=orders&orderId=" + refId;
-                }
-                yield contextPath + "/customer/dashboard";
+        // Trích xuất order ID nếu refId chưa có sẵn (ví dụ thông báo từ hệ thống ghi "đơn #9", "đơn hàng #1")
+        if (refId.isEmpty()) {
+            refId = extractOrderId(n.getTitle(), n.getContent());
+        }
+
+        // 1. Nhóm đơn hàng / giao hàng / thanh toán / hoàn tiền -> chuyển sang chi tiết đơn hàng
+        if ("order".equals(refType) || "delivery".equals(refType) || "payment".equals(refType) || "refund".equals(refType)
+                || type.contains("order") || type.contains("delivery") || type.contains("payment") || type.contains("refund")) {
+            if (!refId.isEmpty()) {
+                return contextPath + "/orders/detail?id=" + refId;
             }
-            case "subscription" -> contextPath + "/my-subscriptions";
-            case "promotion" -> contextPath + "/home";
-            default -> contextPath + "/notifications";
-        };
+            return contextPath + "/orders";
+        }
+
+        // 2. Gói định kỳ (Subscription)
+        if ("subscription".equals(refType) || type.contains("subscription")) {
+            return contextPath + "/my-subscriptions";
+        }
+
+        // 3. Khuyến mãi & ưu đãi (Promotion)
+        if ("promotion".equals(refType) || type.contains("promotion")) {
+            return contextPath + "/home";
+        }
+
+        // 4. Fallback: Nếu có mã đơn hàng thì chuyển đến chi tiết đơn hàng
+        if (!refId.isEmpty()) {
+            return contextPath + "/orders/detail?id=" + refId;
+        }
+
+        return contextPath + "/orders";
+    }
+
+    private String extractOrderId(String title, String content) {
+        String combined = (title != null ? title : "") + " " + (content != null ? content : "");
+        // Tìm dạng #123 hoặc đơn hàng #123 hoặc đơn #123
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("(?:đơn\\s*hàng|đơn|order)?\\s*#\\s*(\\d+)", java.util.regex.Pattern.CASE_INSENSITIVE);
+        java.util.regex.Matcher matcher = pattern.matcher(combined);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        // Fallback tìm số sau từ "đơn hàng " hoặc "đơn "
+        java.util.regex.Pattern pattern2 = java.util.regex.Pattern.compile("(?:đơn\\s*hàng|đơn)\\s+(\\d+)", java.util.regex.Pattern.CASE_INSENSITIVE);
+        java.util.regex.Matcher matcher2 = pattern2.matcher(combined);
+        if (matcher2.find()) {
+            return matcher2.group(1);
+        }
+        return "";
     }
 
     // =========================================================================
@@ -263,6 +300,9 @@ public class NotificationService {
             return contextPath + "/delivery/notifications";
         }
         String refId = n.getReferenceId() != null ? n.getReferenceId().trim() : "";
+        if (refId.isEmpty()) {
+            refId = extractOrderId(n.getTitle(), n.getContent());
+        }
         if (!refId.isEmpty()) {
             return contextPath + "/shopowner/delivery/detail?id=" + refId;
         }

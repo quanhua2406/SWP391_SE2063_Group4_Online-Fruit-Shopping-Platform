@@ -195,28 +195,28 @@ public class NotificationDAO {
 
                     String group = switch (type) {
                         // Customer groups
-                        case "order_confirmation" -> "order";
-                        case "delivery_status" -> "delivery";
-                        case "payment_success", "payment_failed" -> "payment";
+                        case "order_confirmation", "new_order", "order_cancelled" -> "order";
+                        case "delivery_status", "delivery_status_update", "order_delivered", "delivery_assigned" -> "delivery";
+                        case "payment_success", "payment_failed", "payment_received", "refund_update", "refund_request" -> "payment";
                         case "promotion" -> "promotion";
-                        case "subscription" -> "subscription";
+                        case "subscription", "subscription_reminder" -> "subscription";
                         // Shop Owner groups
-                        case "new_order" -> "new_order";
-                        case "payment_received" -> "payment";
-                        case "low_stock" -> "low_stock";
+                        case "low_stock", "critical_low_stock" -> "low_stock";
                         // Admin & Shared
-                        case "reported_review" -> "reported_review";
-                        case "critical_low_stock" -> "critical_low_stock";
-                        case "refund_request" -> "refund";
-                        case "order_cancelled" -> "cancelled";
+                        case "reported_review", "review_reported" -> "reported_review";
                         case "new_shop_registration" -> "new_shop";
                         case "system_alert" -> "system_alert";
-                        // Delivery Staff
-                        case "new_delivery_assignment", "assignment" -> "new_delivery_assignment";
-                        case "delivery_status_update", "status" -> "delivery_status_update";
                         default -> type;
                     };
                     counts.put(group, counts.getOrDefault(group, 0) + cnt);
+
+                    // Mappings riêng cho tab Delivery Staff
+                    if ("delivery_assigned".equalsIgnoreCase(type) || "assignment".equalsIgnoreCase(type)) {
+                        counts.put("new_delivery_assignment", counts.getOrDefault("new_delivery_assignment", 0) + cnt);
+                    }
+                    if ("order_delivered".equalsIgnoreCase(type) || "delivery_status".equalsIgnoreCase(type)) {
+                        counts.put("delivery_status_update", counts.getOrDefault("delivery_status_update", 0) + cnt);
+                    }
                 }
             }
         } catch (SQLException e) {
@@ -304,11 +304,11 @@ public class NotificationDAO {
         if (groupFilter != null && !groupFilter.isBlank() && !groupFilter.equalsIgnoreCase("all")) {
             switch (groupFilter.toLowerCase()) {
                 // Customer filters
-                case "order" -> sql.append(" AND type = 'order_confirmation' ");
-                case "delivery" -> sql.append(" AND (type = 'delivery_status' OR type = 'delivery_status_update') ");
-                case "payment" -> sql.append(" AND (type = 'payment_success' OR type = 'payment_failed' OR type = 'payment_received') ");
-                case "promotion" -> sql.append(" AND type = 'promotion' ");
-                case "subscription" -> sql.append(" AND type = 'subscription' ");
+                case "order" -> sql.append(" AND (type IN ('order_confirmation', 'new_order', 'order_cancelled', 'order_status', 'order') OR (reference_type = 'order' AND type NOT IN ('order_delivered', 'delivery_assigned', 'delivery_status', 'delivery_status_update'))) ");
+                case "delivery" -> sql.append(" AND (reference_type = 'delivery' OR type IN ('delivery_status', 'delivery_status_update', 'order_delivered', 'delivery_assigned') OR type LIKE '%delivery%' OR type LIKE '%deliver%') ");
+                case "payment" -> sql.append(" AND (reference_type = 'payment' OR type IN ('payment_success', 'payment_failed', 'payment_received', 'refund_update', 'refund_request') OR type LIKE '%payment%' OR type LIKE '%refund%') ");
+                case "promotion" -> sql.append(" AND (type = 'promotion' OR type LIKE '%promotion%' OR type LIKE '%coupon%') ");
+                case "subscription" -> sql.append(" AND (reference_type = 'subscription' OR type IN ('subscription', 'subscription_reminder') OR type LIKE '%subscription%') ");
                 // Shop Owner filters
                 case "new_order" -> sql.append(" AND type = 'new_order' ");
                 case "low_stock" -> sql.append(" AND (type = 'low_stock' OR type = 'critical_low_stock') ");
@@ -320,8 +320,8 @@ public class NotificationDAO {
                 case "new_shop", "new_shop_registration" -> sql.append(" AND type = 'new_shop_registration' ");
                 case "system_alert" -> sql.append(" AND type = 'system_alert' ");
                 // Delivery Staff filters
-                case "assignment", "new_delivery_assignment" -> sql.append(" AND type = 'new_delivery_assignment' ");
-                case "status", "delivery_status_update" -> sql.append(" AND type = 'delivery_status_update' ");
+                case "assignment", "new_delivery_assignment" -> sql.append(" AND (type = 'new_delivery_assignment' OR type = 'delivery_assigned') ");
+                case "status", "delivery_status_update" -> sql.append(" AND (type = 'delivery_status_update' OR type = 'order_delivered' OR type = 'delivery_status') ");
                 default -> {
                     sql.append(" AND type = ? ");
                     params.add(groupFilter);
