@@ -1,5 +1,4 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
 <!DOCTYPE html>
 <html>
@@ -13,35 +12,8 @@
 
 <body>
 
-<header class="navbar">
-
-    <div class="logo">
-        🍊 FreshFruit
-    </div>
-
-    <div class="nav-actions">
-        <a href="${pageContext.request.contextPath}/home">
-            🏠 Home
-        </a>
-
-        <a href="${pageContext.request.contextPath}/cart" class="cart-link">
-            🛒 Cart
-        </a>
-
-        <a href="${pageContext.request.contextPath}/notifications">
-            🔔 Notifications
-            <c:if test="${not empty sessionScope.unreadNotificationCount and sessionScope.unreadNotificationCount > 0}">
-                <span class="bell-badge">${sessionScope.unreadNotificationCount}</span>
-            </c:if>
-        </a>
-
-        <a href="${pageContext.request.contextPath}/logout"
-           class="logout">
-            Logout
-        </a>
-    </div>
-
-</header>
+<!-- Header Navigation (Reusable Component) -->
+<jsp:include page="/includes/header.jsp" />
 
 <section class="dashboard">
 
@@ -52,15 +24,6 @@
     </p>
 
     <div class="dashboard-grid">
-
-        <div class="dashboard-card">
-            <div class="dashboard-icon">🔔</div>
-            <h3>Notifications</h3>
-            <p>Track your order updates, delivery status, and promotional deals.</p>
-            <a href="${pageContext.request.contextPath}/notifications">
-                View Notifications
-            </a>
-        </div>
 
         <div class="dashboard-card">
             <div class="dashboard-icon">🍎</div>
@@ -75,14 +38,14 @@
             <div class="dashboard-icon">🛒</div>
             <h3>My Cart</h3>
             <p>View and manage the fruits in your shopping cart.</p>
-            <a href="#">View Cart</a>
+            <a href="${pageContext.request.contextPath}/cart">View Cart</a>
         </div>
 
         <div class="dashboard-card">
             <div class="dashboard-icon">📦</div>
             <h3>My Orders</h3>
             <p>View your order history and current orders.</p>
-            <a href="#">My Orders</a>
+            <a href="${pageContext.request.contextPath}/orders">My Orders</a>
         </div>
 
         <div class="dashboard-card">
@@ -99,16 +62,19 @@
             <a href="${pageContext.request.contextPath}/my-subscriptions" style="color: #2e7d32; font-weight: 700;">Gói Của Tôi →</a>
         </div>
 
-        <div class="dashboard-card" style="border: 2px solid #f59e0b;">
+        <div class="dashboard-card">
             <div class="dashboard-icon">⭐</div>
             <h3>My Reviews</h3>
-            <p>Review the fruits you have purchased and manage your reviews.</p>
-            <a href="${pageContext.request.contextPath}/customer/reviews" style="color: #d97706; font-weight: 700;">My Reviews →</a>
+            <p>Review the fruits you have purchased.</p>
+            <a href="#">My Reviews</a>
         </div>
 
     </div>
 
 </section>
+
+<!-- Footer (Reusable Component) -->
+<jsp:include page="/includes/footer.jsp" />
 
 </body>
 </html>

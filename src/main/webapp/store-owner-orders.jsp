@@ -454,6 +454,14 @@
                                             </button>
                                         </form>
                                     </c:if>
+
+                                    <!-- Nút Phân công Shipper (Task 12: Assign Delivery Staff) -->
+                                    <c:if test="${o.status == 'preparing' || o.status == 'shipping'}">
+                                        <button type="button" class="btn-action" style="background:#e0e7ff; color:#3730a3; border:1px solid #c7d2fe;"
+                                                onclick="openAssignShipperModal(${o.orderId});">
+                                            Gán Shipper
+                                        </button>
+                                    </c:if>
                                 </div>
                             </td>
                         </tr>
@@ -581,6 +589,41 @@
     </div>
 </div>
 
+<!-- MODAL PHÂN CÔNG SHIPPER (TASK 12) -->
+<div class="modal-overlay" id="assignShipperModal" style="display: none;">
+    <div class="modal-card" style="max-width: 480px;">
+        <div class="modal-header">
+            <h3 class="modal-title">Phân Công Nhân Viên Vận Chuyển</h3>
+            <span class="modal-close" style="cursor: pointer;" onclick="closeAssignShipperModal()">&times;</span>
+        </div>
+
+        <form action="${pageContext.request.contextPath}/store-owner/orders" method="POST">
+            <input type="hidden" name="action" value="assign-shipper">
+            <input type="hidden" name="orderId" id="assignOrderId" value="">
+
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Chọn Nhân Viên Giao Hàng (*)</label>
+                <select name="staffId" class="search-input" style="width: 100%; box-sizing: border-box;" required>
+                    <c:forEach var="shipper" items="${availableShippers}">
+                        <option value="${shipper.userID}">${shipper.fullName} - SĐT: ${shipper.phone}</option>
+                    </c:forEach>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Ghi chú cho Shipper (Tùy chọn)</label>
+                <input type="text" name="shipperNote" class="search-input" style="width: 100%; box-sizing: border-box;" 
+                       placeholder="Ví dụ: Hoa quả tươi dễ dập, giao trong buổi sáng...">
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn-action btn-detail" onclick="closeAssignShipperModal()">Đóng</button>
+                <button type="submit" class="btn-action btn-confirm" style="background:#10b981; color:#fff; padding: 8px 16px;">Xác Nhận Phân Công</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
     function openRejectModal(orderId) {
         document.getElementById('rejectOrderId').value = orderId;
@@ -590,6 +633,15 @@
 
     function closeRejectModal() {
         document.getElementById('rejectModal').style.display = 'none';
+    }
+
+    function openAssignShipperModal(orderId) {
+        document.getElementById('assignOrderId').value = orderId;
+        document.getElementById('assignShipperModal').style.display = 'flex';
+    }
+
+    function closeAssignShipperModal() {
+        document.getElementById('assignShipperModal').style.display = 'none';
     }
 </script>
 

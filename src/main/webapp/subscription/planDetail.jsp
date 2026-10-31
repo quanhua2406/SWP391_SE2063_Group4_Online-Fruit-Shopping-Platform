@@ -7,30 +7,13 @@
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>${plan.name} | Chi tiết gói Combo FreshFruit</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css"/>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/quanht/style.css"/>
 </head>
 <body class="customer-plans-page">
 
-<!-- Global Navigation Bar -->
-<header class="cust-navbar">
-    <a href="${pageContext.request.contextPath}/home" class="brand">
-        <span>FreshFruit</span>
-    </a>
-    <nav class="nav-links">
-        <a href="${pageContext.request.contextPath}/subscriptions" class="nav-link">← Danh sách gói</a>
-        <c:choose>
-            <c:when test="${not empty sessionScope.user}">
-                <a href="${pageContext.request.contextPath}/my-subscriptions" class="nav-link">Gói của tôi</a>
-                <span style="font-size:0.9rem; font-weight:700; color:var(--primary-900);">
-                    ${sessionScope.user.fullName}
-                </span>
-            </c:when>
-            <c:otherwise>
-                <a href="${pageContext.request.contextPath}/login" class="btn-nav-primary">Đăng nhập</a>
-            </c:otherwise>
-        </c:choose>
-    </nav>
-</header>
+<!-- Global Navigation Bar (Reusable Component) -->
+<jsp:include page="/includes/header.jsp" />
 
 <div class="customer-container" style="max-width:960px;">
 
@@ -167,6 +150,9 @@
     </div>
 
 </div>
+
+<!-- Footer (Reusable Component) -->
+<jsp:include page="/includes/footer.jsp" />
 
 </body>
 </html>

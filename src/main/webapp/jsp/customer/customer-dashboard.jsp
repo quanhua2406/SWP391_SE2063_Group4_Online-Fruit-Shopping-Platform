@@ -335,7 +335,8 @@
                 View and manage the fruits in your shopping cart.
             </p>
 
-            <a class="card-button" href="#">
+            <a class="card-button"
+               href="${pageContext.request.contextPath}/cart">
                 View Cart
             </a>
 
@@ -369,7 +370,8 @@
                 Check the current status of your delivery.
             </p>
 
-            <a class="card-button" href="#">
+            <a class="card-button"
+               href="${pageContext.request.contextPath}/shopowner/delivery/list">
                 Track Order
             </a>
 

@@ -42,6 +42,20 @@ public class ProductDAO {
         return 1;
     }
 
+    public int getShopIdByProductId(int productId) throws SQLException {
+        String sql = "SELECT shop_id FROM products WHERE product_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, productId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("shop_id");
+                }
+            }
+        }
+        return 1;
+    }
+
     // =========================================================
     // SEARCH & FILTER PRODUCTS
     // =========================================================

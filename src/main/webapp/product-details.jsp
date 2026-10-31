@@ -555,49 +555,8 @@
 </head>
 <body>
 
-<!-- Header -->
-<header class="navbar">
-    <a href="${pageContext.request.contextPath}/home" class="logo">FreshFruit</a>
-
-    <div class="search-box-wrapper" style="flex: 1; max-width: 520px; position: relative;">
-        <form action="${pageContext.request.contextPath}/products" method="get" class="search-box">
-            <input type="text" name="keyword" placeholder="Tìm kiếm trái cây..." autocomplete="off">
-            <button type="submit" aria-label="Tìm kiếm">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-            </button>
-        </form>
-    </div>
-
-    <div class="nav-actions">
-        <a href="${pageContext.request.contextPath}/products" style="color: #16a34a; font-weight: 700;">Khám Phá Trái Cây</a>
-        <a href="${pageContext.request.contextPath}/subscriptions">Gói Định Kỳ</a>
-
-        <c:choose>
-            <c:when test="${not empty sessionScope.user}">
-                <a href="${pageContext.request.contextPath}/cart" title="Giỏ hàng" style="display: inline-flex; align-items: center; gap: 6px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="9" cy="21" r="1"></circle>
-                        <circle cx="20" cy="21" r="1"></circle>
-                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                    </svg>
-                    Giỏ hàng
-                    <span id="navCartBadge" style="background: #ef4444; color: #fff; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 9999px; ${sessionScope.cartCount > 0 ? '' : 'display:none;'}">
-                        ${sessionScope.cartCount}
-                    </span>
-                </a>
-                <a href="${pageContext.request.contextPath}/profile">Tài khoản</a>
-                <a href="${pageContext.request.contextPath}/logout" class="logout">Đăng xuất</a>
-            </c:when>
-            <c:otherwise>
-                <a href="${pageContext.request.contextPath}/login">Đăng nhập</a>
-                <a href="${pageContext.request.contextPath}/register">Đăng ký</a>
-            </c:otherwise>
-        </c:choose>
-    </div>
-</header>
+<!-- Header Component Reusable -->
+<jsp:include page="/includes/header.jsp" />
 
 <main class="detail-wrapper">
     <!-- Breadcrumb -->
@@ -1505,6 +1464,8 @@
         if (modal) modal.style.display = 'none';
     }
 </script>
+
+<jsp:include page="/includes/footer.jsp" />
 
 </body>
 </html>
