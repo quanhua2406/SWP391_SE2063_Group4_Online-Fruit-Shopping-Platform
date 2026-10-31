@@ -6,6 +6,7 @@ package com.mycompany.onlinefruitshopping.dao.review;
  */
 import com.mycompany.onlinefruitshopping.utils.DBConnection;
 import com.mycompany.onlinefruitshopping.model.Review;
+import com.mycompany.onlinefruitshopping.model.PendingReviewItem;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -23,16 +24,21 @@ public class ReviewDAO extends DBConnection {
     private static volatile Boolean hasTitleColumn = null;
     private static volatile Boolean hasImageUrlsColumn = null;
     Connection connection;
-    {
-        try {
-            connection = DBConnection.getConnection();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     public ReviewDAO() {
         super();
+        try {
+            this.connection = DBConnection.getConnection();
+        } catch (SQLException e) {
+            LOG.log(Level.WARNING, "Failed to initialize ReviewDAO connection initially", e);
+        }
+    }
+
+    private synchronized Connection getValidConnection() throws SQLException {
+        if (connection == null || connection.isClosed()) {
+            connection = DBConnection.getConnection();
+        }
+        return connection;
     }
 
     /**
@@ -53,7 +59,7 @@ public class ReviewDAO extends DBConnection {
             return;
         }
         String checkSql = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'reviews'";
-        try (PreparedStatement ps = connection.prepareStatement(checkSql);
+        try (PreparedStatement ps = getValidConnection().prepareStatement(checkSql);
              ResultSet rs = ps.executeQuery()) {
             boolean foundCreatedAt = false;
             boolean foundCreateAt = false;
@@ -116,7 +122,7 @@ public class ReviewDAO extends DBConnection {
         sql.append("u.full_name AS user_name ");
         sql.append("FROM   reviews r ");
         sql.append("LEFT JOIN users u ON r.user_id = u.user_id ");
-        sql.append("WHERE  r.product_id = ? ");
+        sql.append("WHERE  r.product_id = ? AND (r.status IS NULL OR r.status = 'published') ");
 
         if (ratingFilter >= 1 && ratingFilter <= 5) {
             sql.append("AND r.rating = ? ");
@@ -132,7 +138,7 @@ public class ReviewDAO extends DBConnection {
         sql.append("ORDER BY r.").append(dateCol).append(" DESC ");
         sql.append("OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
 
-        try (PreparedStatement ps = connection.prepareStatement(sql.toString())) {
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql.toString())) {
             int idx = 1;
             ps.setInt(idx++, productId);
             if (ratingFilter >= 1 && ratingFilter <= 5) {
@@ -194,7 +200,7 @@ public class ReviewDAO extends DBConnection {
         boolean hasImages = Boolean.TRUE.equals(hasImageUrlsColumn);
 
         StringBuilder sql = new StringBuilder(
-                "SELECT COUNT(*) FROM reviews r WHERE r.product_id = ? "
+                "SELECT COUNT(*) FROM reviews r WHERE r.product_id = ? AND (r.status IS NULL OR r.status = 'published') "
         );
         if (ratingFilter >= 1 && ratingFilter <= 5) {
             sql.append("AND r.rating = ? ");
@@ -206,7 +212,7 @@ public class ReviewDAO extends DBConnection {
             }
         }
 
-        try (PreparedStatement ps = connection.prepareStatement(sql.toString())) {
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql.toString())) {
             ps.setInt(1, productId);
             if (ratingFilter >= 1 && ratingFilter <= 5) {
                 ps.setInt(2, ratingFilter);
@@ -248,9 +254,9 @@ public class ReviewDAO extends DBConnection {
                         "  SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END)       AS c2, " +
                         "  SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END)       AS c1 " +
                         "FROM reviews " +
-                        "WHERE product_id = ?";
+                        "WHERE product_id = ? AND (status IS NULL OR status = 'published')";
 
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
             ps.setInt(1, productId);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
@@ -280,7 +286,7 @@ public class ReviewDAO extends DBConnection {
         String sql =
                 "SELECT TOP 1 1 FROM reviews " +
                         "WHERE user_id = ? AND order_id = ? AND product_id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
             ps.setInt(1, userId);
             ps.setInt(2, orderId);
             ps.setInt(3, productId);
@@ -304,7 +310,7 @@ public class ReviewDAO extends DBConnection {
         String sql =
                 "SELECT TOP 1 1 FROM orders " +
                         "WHERE order_id = ? AND user_id = ? AND LOWER(status) = 'delivered'";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
             ps.setInt(1, orderId);
             ps.setInt(2, userId);
             ResultSet rs = ps.executeQuery();
@@ -332,7 +338,7 @@ public class ReviewDAO extends DBConnection {
                         "  ) " +
                         "ORDER BY o.order_id DESC";
 
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
             ps.setInt(1, userId);
             ps.setInt(2, productId);
             ps.setInt(3, productId);
@@ -354,7 +360,7 @@ public class ReviewDAO extends DBConnection {
                         "  ) " +
                         "ORDER BY o.order_id DESC";
 
-        try (PreparedStatement ps = connection.prepareStatement(fallbackSql)) {
+        try (PreparedStatement ps = getValidConnection().prepareStatement(fallbackSql)) {
             ps.setInt(1, userId);
             ps.setInt(2, productId);
             ResultSet rs = ps.executeQuery();
@@ -408,7 +414,7 @@ public class ReviewDAO extends DBConnection {
 
         String sql = "INSERT INTO reviews (" + cols.toString() + ") OUTPUT INSERTED.review_id VALUES (" + vals.toString() + ")";
 
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
             int idx = 1;
             ps.setInt(idx++, review.getUser_id());
             ps.setInt(idx++, review.getProduct_id());
@@ -466,7 +472,7 @@ public class ReviewDAO extends DBConnection {
         sql.append("LEFT JOIN products p ON r.product_id = p.product_id ");
         sql.append("WHERE  r.review_id = ?");
 
-        try (PreparedStatement ps = connection.prepareStatement(sql.toString())) {
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql.toString())) {
             ps.setInt(1, reviewId);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
@@ -523,7 +529,7 @@ public class ReviewDAO extends DBConnection {
         }
         String sql = "UPDATE reviews SET " + setClause.toString() + " WHERE review_id = ? AND user_id = ?";
 
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
             int idx = 1;
             ps.setInt(idx++, review.getRating());
 
@@ -561,7 +567,7 @@ public class ReviewDAO extends DBConnection {
      */
     public boolean deleteReview(int reviewId, int userId) {
         String sql = "DELETE FROM reviews WHERE review_id = ? AND user_id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
             ps.setInt(1, reviewId);
             ps.setInt(2, userId);
             int rows = ps.executeUpdate();
@@ -581,7 +587,7 @@ public class ReviewDAO extends DBConnection {
      */
     public String getProductNameById(int productId) {
         String sql = "SELECT product_name FROM products WHERE product_id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
             ps.setInt(1, productId);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
@@ -722,13 +728,74 @@ public class ReviewDAO extends DBConnection {
                     rev.setDeletedAt(rs.getTimestamp("deleted_at"));
                     rev.setUserName(rs.getString("user_name"));
                     rev.setProductName(rs.getString("product_name"));
+                    rev.setReportCount(rs.getInt("report_count"));
                     list.add(rev);
                 }
             }
+            populateEvidenceForAdmin(conn, list);
         } catch (SQLException e) {
             LOG.log(Level.SEVERE, "getReviewsForAdmin error", e);
         }
         return list;
+    }
+
+    private void populateEvidenceForAdmin(Connection conn, List<Review> list) {
+        if (list == null || list.isEmpty()) return;
+        boolean hasEvidenceCol = false;
+        try {
+            DatabaseMetaData meta = conn.getMetaData();
+            try (ResultSet rs = meta.getColumns(null, null, "review_reports", "evidence_urls")) {
+                hasEvidenceCol = rs.next();
+            }
+        } catch (SQLException ignored) {}
+
+        for (Review r : list) {
+            if (r.getReportCount() <= 0) continue;
+            List<String> urls = new ArrayList<>();
+            if (hasEvidenceCol) {
+                String sql = "SELECT evidence_urls, note FROM review_reports WHERE review_id = ?";
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    ps.setInt(1, r.getReview_id());
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            String u = rs.getString("evidence_urls");
+                            if (u != null && !u.isBlank()) {
+                                urls.add(u);
+                            } else {
+                                String note = rs.getString("note");
+                                if (note != null && note.contains("[Bằng chứng: ")) {
+                                    int start = note.indexOf("[Bằng chứng: ") + 13;
+                                    int end = note.indexOf("]", start);
+                                    if (end > start) urls.add(note.substring(start, end).trim());
+                                }
+                            }
+                        }
+                    }
+                } catch (SQLException e) {
+                    LOG.log(Level.WARNING, "Error reading evidence_urls", e);
+                }
+            } else {
+                String sql = "SELECT note FROM review_reports WHERE review_id = ?";
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    ps.setInt(1, r.getReview_id());
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            String note = rs.getString("note");
+                            if (note != null && note.contains("[Bằng chứng: ")) {
+                                int start = note.indexOf("[Bằng chứng: ") + 13;
+                                int end = note.indexOf("]", start);
+                                if (end > start) urls.add(note.substring(start, end).trim());
+                            }
+                        }
+                    }
+                } catch (SQLException e) {
+                    LOG.log(Level.WARNING, "Error reading fallback evidence note", e);
+                }
+            }
+            if (!urls.isEmpty()) {
+                r.setEvidenceUrls(String.join(",", urls));
+            }
+        }
     }
 
     /**
@@ -750,6 +817,155 @@ public class ReviewDAO extends DBConnection {
             LOG.log(Level.SEVERE, "countReviewsForAdmin error", e);
             return 0;
         }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // CUSTOMER MY REVIEWS METHODS
+    // ═══════════════════════════════════════════════════════════════════
+
+    /**
+     * Lấy danh sách đánh giá do một khách hàng cụ thể viết (phân trang).
+     */
+    public List<Review> getReviewsByUserId(int userId, int page, int pageSize) {
+        List<Review> list = new ArrayList<>();
+        checkColumns();
+        String dateCol = (dateColumnName != null) ? dateColumnName : "created_at";
+        boolean hasTitle = Boolean.TRUE.equals(hasTitleColumn);
+        boolean hasImages = Boolean.TRUE.equals(hasImageUrlsColumn);
+
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT r.review_id, r.user_id, r.product_id, r.order_id, ");
+        if (hasTitle) {
+            sql.append("r.title, ");
+        }
+        sql.append("r.rating, r.comment, r.status, r.").append(dateCol).append(" AS review_date, ");
+        if (hasImages) {
+            sql.append("r.image_urls, ");
+        }
+        sql.append("p.product_name, p.image_url AS product_image ");
+        sql.append("FROM reviews r ");
+        sql.append("LEFT JOIN products p ON r.product_id = p.product_id ");
+        sql.append("WHERE r.user_id = ? AND (r.status IS NULL OR r.status <> 'deleted') ");
+        sql.append("ORDER BY r.").append(dateCol).append(" DESC ");
+        sql.append("OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql.toString())) {
+            int offset = Math.max(0, (page - 1) * pageSize);
+            ps.setInt(1, userId);
+            ps.setInt(2, offset);
+            ps.setInt(3, pageSize);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Review r = new Review();
+                    r.setReview_id(rs.getInt("review_id"));
+                    r.setUser_id(rs.getInt("user_id"));
+                    r.setProduct_id(rs.getInt("product_id"));
+                    r.setOrder_id(rs.getInt("order_id"));
+                    if (hasTitle) {
+                        r.setTitle(rs.getString("title"));
+                    }
+                    r.setRating(rs.getInt("rating"));
+                    r.setComment(rs.getString("comment"));
+                    r.setStatus(rs.getString("status"));
+
+                    Timestamp ts = rs.getTimestamp("review_date");
+                    if (ts != null) {
+                        r.setCreated_at(new java.util.Date(ts.getTime()));
+                    }
+
+                    if (hasImages) {
+                        r.setImageUrls(rs.getString("image_urls"));
+                    }
+
+                    r.setProductName(rs.getString("product_name"));
+                    String pImg = rs.getString("product_image");
+                    if (pImg == null || pImg.isBlank()) {
+                        pImg = getProductImageById(r.getProduct_id());
+                    }
+                    r.setProductImage(pImg);
+
+                    // Tính khả năng sửa (trong vòng 7 ngày)
+                    if (r.getCreated_at() != null) {
+                        long diffMs = System.currentTimeMillis() - r.getCreated_at().getTime();
+                        long diffDays = diffMs / (1000L * 60 * 60 * 24);
+                        r.setEditable(diffDays <= 7);
+                        r.setRemainingDays(Math.max(0, 7 - diffDays));
+                    } else {
+                        r.setEditable(true);
+                        r.setRemainingDays(7);
+                    }
+
+                    list.add(r);
+                }
+            }
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "getReviewsByUserId error", ex);
+        }
+        return list;
+    }
+
+    /**
+     * Đếm tổng số đánh giá khách hàng đã viết.
+     */
+    public int countReviewsByUserId(int userId) {
+        String sql = "SELECT COUNT(*) FROM reviews WHERE user_id = ? AND (status IS NULL OR status <> 'deleted')";
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "countReviewsByUserId error", ex);
+        }
+        return 0;
+    }
+
+    /**
+     * Lấy danh sách sản phẩm từ các đơn hàng đã giao thành công của user mà chưa được đánh giá.
+     */
+    public List<PendingReviewItem> getPendingReviewsByUserId(int userId) {
+        List<PendingReviewItem> list = new ArrayList<>();
+        String sql =
+            "SELECT DISTINCT " +
+            "  o.order_id, o.created_at AS order_date, " +
+            "  p.product_id, p.product_name, p.image_url, p.price " +
+            "FROM orders o " +
+            "JOIN order_items oi ON o.order_id = oi.order_id " +
+            "JOIN product_variants pv ON oi.variant_id = pv.variant_id " +
+            "JOIN products p ON pv.product_id = p.product_id " +
+            "WHERE o.user_id = ? AND LOWER(o.status) = 'delivered' " +
+            "  AND NOT EXISTS ( " +
+            "      SELECT 1 FROM reviews r " +
+            "      WHERE r.order_id = o.order_id AND r.product_id = p.product_id " +
+            "  ) " +
+            "ORDER BY o.order_id DESC";
+
+        try (PreparedStatement ps = getValidConnection().prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    PendingReviewItem item = new PendingReviewItem();
+                    item.setOrderId(rs.getInt("order_id"));
+                    Timestamp ts = rs.getTimestamp("order_date");
+                    if (ts != null) {
+                        item.setOrderDate(new java.util.Date(ts.getTime()));
+                    }
+                    item.setProductId(rs.getInt("product_id"));
+                    item.setProductName(rs.getString("product_name"));
+                    String img = rs.getString("image_url");
+                    if (img == null || img.isBlank()) {
+                        img = getProductImageById(item.getProductId());
+                    }
+                    item.setProductImage(img);
+                    item.setPrice(rs.getDouble("price"));
+                    list.add(item);
+                }
+            }
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "getPendingReviewsByUserId error", ex);
+        }
+        return list;
     }
 }
 

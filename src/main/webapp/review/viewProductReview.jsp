@@ -98,11 +98,13 @@
 <div class="breadcrumb-bar">
     <div class="container">
         <ol class="breadcrumb-list">
-            <li><a href="${pageContext.request.contextPath}/home.jsp"><i class="fa-solid fa-house"></i> Trang chủ</a></li>
+            <li><a href="${pageContext.request.contextPath}/home"><i class="fa-solid fa-house"></i> Trang chủ</a></li>
             <li><span class="bc-sep"><i class="fa-solid fa-chevron-right"></i></span></li>
-            <li><a href="${pageContext.request.contextPath}/fruit.jsp#features">Trái cây</a></li>
+            <li><a href="${pageContext.request.contextPath}/products">Trái cây</a></li>
             <li><span class="bc-sep"><i class="fa-solid fa-chevron-right"></i></span></li>
-            <li class="active"><%= productName %></li>
+            <li><a href="${pageContext.request.contextPath}/product?id=<%= productId %>"><%= productName %></a></li>
+            <li><span class="bc-sep"><i class="fa-solid fa-chevron-right"></i></span></li>
+            <li class="active">Đánh giá</li>
         </ol>
     </div>
 </div>
@@ -116,23 +118,32 @@
             <div class="review-main-col">
 
                 <%-- ===== THÔNG TIN SẢN PHẨM ĐANG XEM ĐÁNH GIÁ ===== --%>
-                <div class="page-card" style="margin-bottom: 20px; display: flex; align-items: center; gap: 20px; padding: 16px 24px;">
-                    <% if (productImage != null && !productImage.isEmpty()) { %>
-                        <img src="<%= productImage.startsWith("http") ? productImage : (request.getContextPath() + "/" + productImage) %>"
-                             alt="<%= productName %>"
-                             style="width: 70px; height: 70px; object-fit: cover; border-radius: 12px; border: 1px solid #e2e8f0;"
-                             onerror="this.src='https://images.unsplash.com/photo-1557800636-894a64c1696f?auto=format&fit=crop&w=200&q=80'">
-                    <% } else { %>
-                        <img src="https://images.unsplash.com/photo-1557800636-894a64c1696f?auto=format&fit=crop&w=200&q=80"
-                             alt="<%= productName %>"
-                             style="width: 70px; height: 70px; object-fit: cover; border-radius: 12px; border: 1px solid #e2e8f0;">
-                    <% } %>
-                    <div>
-                        <h2 style="font-size: 1.25rem; font-weight: 700; color: #1e293b; margin: 0 0 6px 0;"><%= productName %></h2>
-                        <div style="font-size: 0.9rem; color: #64748b;">
-                            <i class="fa-solid fa-circle-check" style="color: #10b981; margin-right: 4px;"></i> Sản phẩm chính hãng • Nông sản sạch từ nông trại
+                <div class="page-card" style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 16px 24px;">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <% if (productImage != null && !productImage.isEmpty()) { %>
+                            <img src="<%= productImage.startsWith("http") ? productImage : (request.getContextPath() + "/" + productImage) %>"
+                                 alt="<%= productName %>"
+                                 style="width: 70px; height: 70px; object-fit: cover; border-radius: 12px; border: 1px solid #e2e8f0;"
+                                 onerror="this.src='https://images.unsplash.com/photo-1557800636-894a64c1696f?auto=format&fit=crop&w=200&q=80'">
+                        <% } else { %>
+                            <img src="https://images.unsplash.com/photo-1557800636-894a64c1696f?auto=format&fit=crop&w=200&q=80"
+                                 alt="<%= productName %>"
+                                 style="width: 70px; height: 70px; object-fit: cover; border-radius: 12px; border: 1px solid #e2e8f0;">
+                        <% } %>
+                        <div>
+                            <h2 style="font-size: 1.25rem; font-weight: 700; color: #1e293b; margin: 0 0 6px 0;">
+                                <a href="${pageContext.request.contextPath}/product?id=<%= productId %>" style="color: inherit; text-decoration: none;">
+                                    <%= productName %>
+                                </a>
+                            </h2>
+                            <div style="font-size: 0.9rem; color: #64748b;">
+                                <i class="fa-solid fa-circle-check" style="color: #10b981; margin-right: 4px;"></i> Sản phẩm chính hãng • Nông sản sạch từ nông trại
+                            </div>
                         </div>
                     </div>
+                    <a href="${pageContext.request.contextPath}/product?id=<%= productId %>" class="review-filter-btn" style="white-space: nowrap;">
+                        <i class="fa-solid fa-arrow-left"></i> Xem chi tiết sản phẩm
+                    </a>
                 </div>
 
                 <%-- ===== RATING SUMMARY CHART ===== --%>

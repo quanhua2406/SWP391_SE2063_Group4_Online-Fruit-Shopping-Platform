@@ -5,19 +5,19 @@ import java.io.Serializable;
 public class SubscriptionPlanItem implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    // ── Trường DB ───────────────────────────────────────────────────────
-    private int    itemId;
-    private int    planId;
-    private int    variantId;
-    private int    quantity;
+    // Database fields
+    private int itemId;
+    private int planId;
+    private int variantId;
+    private int quantity;
 
-    // ── Trường phụ – JOIN với product_variants / products ───────────────
+    // JOIN fields (product_variants / products)
     private String productName;
-    private String variantName;   // tên biến thể (vd: "500g", "1kg")
+    private String variantName;
     private String imageUrl;
-    private double unitPrice;     // giá đơn vị của variant
+    private double unitPrice;
 
-    // ── Constructors ─────────────────────────────────────────────────────
+    // Constructors
     public SubscriptionPlanItem() {}
 
     public SubscriptionPlanItem(int planId, int variantId, int quantity) {
@@ -26,7 +26,7 @@ public class SubscriptionPlanItem implements Serializable {
         this.quantity  = quantity;
     }
 
-    // ── Getters & Setters ─────────────────────────────────────────────────
+    // Getters & Setters
     public int getItemId()                        { return itemId; }
     public void setItemId(int itemId)             { this.itemId = itemId; }
 
@@ -54,4 +54,3 @@ public class SubscriptionPlanItem implements Serializable {
     public String getUnit()                       { return variantName != null ? variantName : ""; }
     public void setUnit(String unit)              { this.variantName = unit; }
 }
-

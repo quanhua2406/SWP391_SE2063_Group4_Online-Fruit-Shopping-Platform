@@ -1,5 +1,5 @@
-
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -67,6 +67,17 @@
 
         .nav-actions .logout:hover {
             color: #b71c1c;
+        }
+
+        .bell-badge {
+            background: #d32f2f;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 10px;
+            line-height: 1;
+            margin-left: 4px;
         }
 
         /* =========================
@@ -243,8 +254,15 @@
             🏠 Home
         </a>
 
-        <a href="#">
+        <a href="${pageContext.request.contextPath}/cart">
             🛒 Cart
+        </a>
+
+        <a href="${pageContext.request.contextPath}/notifications">
+            🔔 Notifications
+            <c:if test="${not empty sessionScope.unreadNotificationCount and sessionScope.unreadNotificationCount > 0}">
+                <span class="bell-badge">${sessionScope.unreadNotificationCount}</span>
+            </c:if>
         </a>
 
         <a href="${pageContext.request.contextPath}/logout"
@@ -269,6 +287,24 @@
     </p>
 
     <div class="dashboard-grid">
+
+        <!-- Notifications Card -->
+        <div class="dashboard-card">
+
+            <div class="dashboard-icon">🔔</div>
+
+            <h3>Notifications</h3>
+
+            <p>
+                Track your order updates, delivery status, and promotional deals.
+            </p>
+
+            <a class="card-button"
+               href="${pageContext.request.contextPath}/notifications">
+                View Notifications
+            </a>
+
+        </div>
 
         <!-- Browse Fruits -->
         <div class="dashboard-card">
@@ -339,21 +375,28 @@
 
         </div>
 
-        <!-- My Reviews -->
-        <div class="dashboard-card">
-
-            <div class="dashboard-icon">⭐</div>
-
-            <h3>My Reviews</h3>
-
+        <!-- Gói Định Kỳ -->
+        <div class="dashboard-card" style="border: 2px solid #4caf50;">
+            <div class="dashboard-icon">🎁</div>
+            <h3>Gói Định Kỳ</h3>
             <p>
-                Review the fruits you have purchased.
+                Theo dõi lịch nhận trái cây định kỳ, tạm dừng hoặc đổi ngày giao hàng.
             </p>
-
-            <a class="card-button" href="#">
-                My Reviews
+            <a class="card-button" href="${pageContext.request.contextPath}/my-subscriptions" style="background: #2e7d32;">
+                Gói Của Tôi →
             </a>
+        </div>
 
+        <!-- My Reviews -->
+        <div class="dashboard-card" style="border: 2px solid #f59e0b;">
+            <div class="dashboard-icon">⭐</div>
+            <h3>My Reviews</h3>
+            <p>
+                Quản lý các nhận xét đã gửi và đánh giá các sản phẩm đã mua.
+            </p>
+            <a class="card-button" href="${pageContext.request.contextPath}/customer/reviews" style="background: #f59e0b;">
+                My Reviews →
+            </a>
         </div>
 
     </div>

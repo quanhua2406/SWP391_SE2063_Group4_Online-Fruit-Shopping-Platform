@@ -57,6 +57,8 @@
 
     <link rel="stylesheet"
           href="<%= contextPath %>/css/style.css">
+    <link rel="stylesheet"
+          href="<%= contextPath %>/css/quanht/shop-owner-notification.css">
 </head>
 
 <body>
@@ -75,8 +77,14 @@
             🏠 Home
         </a>
 
-        <a href="<%= contextPath %>/shopowner/shop/deliveries" style="color: #16a34a; font-weight: 700;">Giao h&#224;ng &amp; M&#7843; gi&#7843;m gi&#225;</a>
+        <a href="<%= contextPath %>/store-owner/notifications" class="nav-bell-link">
+            🔔 Notifications
+            <% if (session.getAttribute("shopOwnerUnreadCount") != null && ((Integer) session.getAttribute("shopOwnerUnreadCount")) > 0) { %>
+                <span class="nav-bell-badge"><%= session.getAttribute("shopOwnerUnreadCount") %></span>
+            <% } %>
+        </a>
 
+        <a href="<%= contextPath %>/shopowner/shop/deliveries" style="color: #16a34a; font-weight: 700;">Giao hàng &amp; Mã giảm giá</a>
 
         <a href="<%= contextPath %>/logout"
            class="logout">
@@ -199,6 +207,25 @@
                 <a href="${pageContext.request.contextPath}/shopowner/shop/deliveries">
                     Mở quản lý giao hàng
                 </a>
+            </div>
+
+            <!-- NOTIFICATIONS & ALERTS -->
+
+            <div class="dashboard-card">
+
+                <div class="dashboard-icon">🔔</div>
+
+                <h3>Notifications &amp; Alerts</h3>
+
+                <p>
+                    Check new orders, payment updates, low stock warnings,
+                    and refund requests in real-time.
+                </p>
+
+                <a href="<%= contextPath %>/store-owner/notifications">
+                    View Notifications
+                </a>
+
             </div>
 
             <!-- PRODUCT MANAGEMENT -->

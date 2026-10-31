@@ -1,4 +1,5 @@
-﻿<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -70,6 +71,23 @@
 
         .nav-actions .logout:hover {
             color: #b71c1c;
+        }
+
+        .nav-bell-link {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-bell-badge {
+            background: #d32f2f;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 10px;
+            line-height: 1;
         }
 
         /* ==================== DASHBOARD ==================== */
@@ -242,6 +260,13 @@
 
             <a href="${pageContext.request.contextPath}/home">
                 🏠 Home
+            </a>
+
+            <a href="${pageContext.request.contextPath}/admin/notifications" class="nav-bell-link">
+                🔔 Notifications
+                <c:if test="${not empty sessionScope.adminUnreadCount and sessionScope.adminUnreadCount > 0}">
+                    <span class="nav-bell-badge">${sessionScope.adminUnreadCount}</span>
+                </c:if>
             </a>
 
             <a href="${pageContext.request.contextPath}/logout"
@@ -445,6 +470,29 @@
 
             </div>
 
+            <!-- INAPPROPRIATE REVIEW MANAGEMENT -->
+
+            <div class="dashboard-card">
+
+                <div class="dashboard-icon">🛡️</div>
+
+                <h3>Inappropriate Review Management</h3>
+
+                <p>
+                    Moderate reported reviews, inspect attached evidence,
+                    hide or delete inappropriate customer feedback.
+                </p>
+
+                <a class="action-btn"
+                   href="${pageContext.request.contextPath}/admin/reviews?status=reported">
+                    Moderate Reviews
+                    <c:if test="${not empty reportedReviewsCount && reportedReviewsCount > 0}">
+                        (${reportedReviewsCount})
+                    </c:if>
+                </a>
+
+            </div>
+
             <!-- PAYMENT MANAGEMENT -->
 
             <div class="dashboard-card">
@@ -497,6 +545,26 @@
 
                 <a class="action-btn" href="#">
                     View Reports
+                </a>
+
+            </div>
+
+            <!-- NOTIFICATIONS & SYSTEM ALERTS -->
+
+            <div class="dashboard-card">
+
+                <div class="dashboard-icon">🔔</div>
+
+                <h3>Notifications &amp; Alerts</h3>
+
+                <p>
+                    Review reported reviews, critical low stock alerts,
+                    refund requests, and system issues.
+                </p>
+
+                <a class="action-btn"
+                   href="${pageContext.request.contextPath}/admin/notifications">
+                    View Notifications
                 </a>
 
             </div>

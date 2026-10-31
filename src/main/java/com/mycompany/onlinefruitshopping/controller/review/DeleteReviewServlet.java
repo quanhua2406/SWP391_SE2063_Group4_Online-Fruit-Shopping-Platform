@@ -45,12 +45,18 @@ public class DeleteReviewServlet extends HttpServlet {
             return;
         }
 
-        // 2. Đọc tham số
-        int reviewId  = parseIntSafe(request.getParameter("review_id"), 0);
-        int productId = parseIntSafe(request.getParameter("product_id"), 0);
+        // 2. Đọc tham số (hỗ trợ cả review_id/reviewId/id, product_id/productId/id)
+        String rIdStr = request.getParameter("review_id");
+        if (rIdStr == null || rIdStr.isBlank()) rIdStr = request.getParameter("reviewId");
+        if (rIdStr == null || rIdStr.isBlank()) rIdStr = request.getParameter("id");
+        int reviewId = parseIntSafe(rIdStr, 0);
+
+        String pIdStr = request.getParameter("product_id");
+        if (pIdStr == null || pIdStr.isBlank()) pIdStr = request.getParameter("productId");
+        int productId = parseIntSafe(pIdStr, 0);
 
         if (reviewId <= 0) {
-            response.sendRedirect(request.getContextPath() + "/home");
+            response.sendRedirect(request.getContextPath() + "/products");
             return;
         }
 
@@ -58,13 +64,24 @@ public class DeleteReviewServlet extends HttpServlet {
         String webappRoot = getServletContext().getRealPath("");
         boolean success = reviewService.deleteReview(reviewId, userId, webappRoot);
 
-        // 4. Chuyển hướng về trang danh sách đánh giá kèm thông báo
-        if (success) {
-            response.sendRedirect(request.getContextPath()
-                    + "/ViewReviewServlet?productId=" + productId + "&reviewDeleted=1");
+        // 4. Chuyển hướng
+        String redirect = request.getParameter("redirect");
+        if (redirect != null && !redirect.isBlank()) {
+            String target = redirect + (redirect.contains("?") ? "&" : "?") + (success ? "reviewDeleted=1" : "deleteError=1");
+            response.sendRedirect(request.getContextPath() + target);
+            return;
+        }
+
+        if (productId > 0) {
+            if (success) {
+                response.sendRedirect(request.getContextPath()
+                        + "/product?id=" + productId + "&reviewDeleted=1#tab-reviews");
+            } else {
+                response.sendRedirect(request.getContextPath()
+                        + "/product?id=" + productId + "&deleteError=1#tab-reviews");
+            }
         } else {
-            response.sendRedirect(request.getContextPath()
-                    + "/ViewReviewServlet?productId=" + productId + "&authError=1");
+            response.sendRedirect(request.getContextPath() + "/products");
         }
     }
 

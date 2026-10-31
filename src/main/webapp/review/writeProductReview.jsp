@@ -70,8 +70,8 @@
             <li><a href="${pageContext.request.contextPath}/home"><i class="fa-solid fa-house"></i> Trang chủ</a></li>
             <li><span class="bc-sep"><i class="fa-solid fa-chevron-right"></i></span></li>
             <li>
-                <a href="${pageContext.request.contextPath}/ViewReviewServlet?productId=<%= productId %>">
-                    Đánh giá: <%= productName %>
+                <a href="${pageContext.request.contextPath}/product?id=<%= productId %>#tab-reviews">
+                    <%= productName %>
                 </a>
             </li>
             <li><span class="bc-sep"><i class="fa-solid fa-chevron-right"></i></span></li>
@@ -140,6 +140,13 @@
 
                     <%-- Hidden fields --%>
                     <input type="hidden" name="product_id" value="<%= productId %>">
+                    <%
+                        String redir = (String) request.getAttribute("redirect");
+                        if (redir == null || redir.isBlank()) redir = request.getParameter("redirect");
+                        if (redir != null && !redir.isBlank()) {
+                    %>
+                    <input type="hidden" name="redirect" value="<%= redir %>">
+                    <% } %>
                     <% if (orderId > 0) { %>
                     <input type="hidden" name="order_id"   value="<%= orderId %>">
                     <% } else { %>
@@ -238,7 +245,8 @@
                         <button type="submit" id="submitBtn" class="btn-submit-review">
                             <i class="fa-solid fa-paper-plane"></i> Gửi đánh giá
                         </button>
-                        <a href="${pageContext.request.contextPath}/ViewReviewServlet?productId=<%= productId %>"
+                        <% String cancelUrl = (redir != null && !redir.isBlank()) ? (request.getContextPath() + redir) : (request.getContextPath() + "/product?id=" + productId + "#tab-reviews"); %>
+                        <a href="<%= cancelUrl %>"
                            class="btn-cancel-review">
                             <i class="fa-solid fa-xmark"></i> Hủy
                         </a>

@@ -1,4 +1,5 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
 <!DOCTYPE html>
 <html>
@@ -23,8 +24,15 @@
             🏠 Home
         </a>
 
-        <a href="#" class="cart-link">
+        <a href="${pageContext.request.contextPath}/cart" class="cart-link">
             🛒 Cart
+        </a>
+
+        <a href="${pageContext.request.contextPath}/notifications">
+            🔔 Notifications
+            <c:if test="${not empty sessionScope.unreadNotificationCount and sessionScope.unreadNotificationCount > 0}">
+                <span class="bell-badge">${sessionScope.unreadNotificationCount}</span>
+            </c:if>
         </a>
 
         <a href="${pageContext.request.contextPath}/logout"
@@ -44,6 +52,15 @@
     </p>
 
     <div class="dashboard-grid">
+
+        <div class="dashboard-card">
+            <div class="dashboard-icon">🔔</div>
+            <h3>Notifications</h3>
+            <p>Track your order updates, delivery status, and promotional deals.</p>
+            <a href="${pageContext.request.contextPath}/notifications">
+                View Notifications
+            </a>
+        </div>
 
         <div class="dashboard-card">
             <div class="dashboard-icon">🍎</div>
@@ -82,11 +99,11 @@
             <a href="${pageContext.request.contextPath}/my-subscriptions" style="color: #2e7d32; font-weight: 700;">Gói Của Tôi →</a>
         </div>
 
-        <div class="dashboard-card">
+        <div class="dashboard-card" style="border: 2px solid #f59e0b;">
             <div class="dashboard-icon">⭐</div>
             <h3>My Reviews</h3>
-            <p>Review the fruits you have purchased.</p>
-            <a href="#">My Reviews</a>
+            <p>Review the fruits you have purchased and manage your reviews.</p>
+            <a href="${pageContext.request.contextPath}/customer/reviews" style="color: #d97706; font-weight: 700;">My Reviews →</a>
         </div>
 
     </div>

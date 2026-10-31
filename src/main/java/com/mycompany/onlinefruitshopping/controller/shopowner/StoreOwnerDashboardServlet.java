@@ -1,6 +1,7 @@
 package com.mycompany.onlinefruitshopping.controller.shopowner;
 
 import com.mycompany.onlinefruitshopping.model.User;
+import com.mycompany.onlinefruitshopping.service.NotificationService;
 import com.mycompany.onlinefruitshopping.service.shop.ShopService;
 
 import jakarta.servlet.ServletException;
@@ -21,6 +22,7 @@ import java.sql.SQLException;
 public class StoreOwnerDashboardServlet extends HttpServlet {
 
     private final ShopService shopService = new ShopService();
+    private final NotificationService notificationService = new NotificationService();
 
     @Override
     protected void doGet(HttpServletRequest request,
@@ -43,6 +45,11 @@ public class StoreOwnerDashboardServlet extends HttpServlet {
             );
             return;
         }
+
+        // Đếm thông báo chưa đọc của Shop Owner
+        int unreadCount = notificationService.getUnreadCount(user.getUserID());
+        session.setAttribute("shopOwnerUnreadCount", unreadCount);
+        request.setAttribute("shopOwnerUnreadCount", unreadCount);
 
         ShopService.Dashboard dashboard;
 

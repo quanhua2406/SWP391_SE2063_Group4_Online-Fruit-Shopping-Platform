@@ -1,13 +1,17 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Delivery Personal Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delivery Personal Dashboard - FreshFruit</title>
 
     <link rel="stylesheet"
           href="${pageContext.request.contextPath}/css/style.css">
+    <link rel="stylesheet"
+          href="${pageContext.request.contextPath}/css/quanht/delivery-notification.css">
 </head>
 
 <body>
@@ -18,19 +22,28 @@
         🍊 FreshFruit
     </div>
 
-    <div class="nav-actions">
+    <nav class="nav-actions">
         <a href="${pageContext.request.contextPath}/home">
             🏠 Home
         </a>
 
-        <a href="${pageContext.request.contextPath}/shopowner/delivery/list" style="color: #16a34a; font-weight: 700;">Danh s&#225;ch giao h&#224;ng</a>
+        <a href="${pageContext.request.contextPath}/shopowner/delivery/list">
+            Danh sách giao hàng
+        </a>
 
+        <!-- Bell Notification Icon with Unread Badge -->
+        <a href="${pageContext.request.contextPath}/delivery/notifications" class="delivery-bell-link">
+            🔔 Thông báo
+            <c:if test="${not empty sessionScope.deliveryUnreadCount and sessionScope.deliveryUnreadCount > 0}">
+                <span class="delivery-bell-badge">${sessionScope.deliveryUnreadCount}</span>
+            </c:if>
+        </a>
 
         <a href="${pageContext.request.contextPath}/logout"
            class="logout">
             Logout
         </a>
-    </div>
+    </nav>
 
 </header>
 
@@ -43,6 +56,14 @@
     </p>
 
     <div class="dashboard-grid">
+
+        <!-- NOTIFICATIONS CARD -->
+        <div class="dashboard-card">
+            <div class="dashboard-icon">🔔</div>
+            <h3>Notifications &amp; Alerts</h3>
+            <p>Check newly assigned deliveries and real-time status updates.</p>
+            <a href="${pageContext.request.contextPath}/delivery/notifications">View Notifications</a>
+        </div>
 
         <div class="dashboard-card">
             <div class="dashboard-icon">📦</div>

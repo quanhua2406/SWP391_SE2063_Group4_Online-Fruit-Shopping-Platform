@@ -220,6 +220,7 @@ public class AuthorizationFilter implements Filter {
         }
 
         if (path.startsWith("/store-owner/")
+                || path.startsWith("/shop-owner/")
                 || path.startsWith("/jsp/shopowner/")) {
 
             return "SHOPOWNER";

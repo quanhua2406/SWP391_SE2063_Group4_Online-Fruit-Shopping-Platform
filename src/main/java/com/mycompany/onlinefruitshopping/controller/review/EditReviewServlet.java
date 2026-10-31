@@ -90,25 +90,30 @@ public class EditReviewServlet extends HttpServlet {
             return;
         }
 
-        // 2. Đọc tham số reviewId
-        int reviewId = parseIntSafe(request.getParameter("reviewId"), 0);
+        // 2. Đọc tham số reviewId (hỗ trợ reviewId, review_id, id)
+        String rIdStr = request.getParameter("reviewId");
+        if (rIdStr == null || rIdStr.isBlank()) rIdStr = request.getParameter("review_id");
+        if (rIdStr == null || rIdStr.isBlank()) rIdStr = request.getParameter("id");
+        int reviewId = parseIntSafe(rIdStr, 0);
 
         // 3. Gọi Service kiểm tra quyền tác giả và thời hạn 7 ngày
         ReviewService.EditPermissionResult result = reviewService.checkAndGetReviewForEdit(reviewId, userId);
         if (!result.isSuccess) {
             if ("AUTH_ERROR".equals(result.errorMessage) && result.review != null) {
                 response.sendRedirect(request.getContextPath()
-                        + "/ViewReviewServlet?productId=" + result.review.getProduct_id() + "&authError=1");
+                        + "/product?id=" + result.review.getProduct_id() + "&authError=1#tab-reviews");
             } else if ("EXPIRED".equals(result.errorMessage) && result.review != null) {
                 response.sendRedirect(request.getContextPath()
-                        + "/ViewReviewServlet?productId=" + result.review.getProduct_id() + "&expired=1");
+                        + "/product?id=" + result.review.getProduct_id() + "&expired=1#tab-reviews");
             } else {
-                response.sendRedirect(request.getContextPath() + "/home");
+                response.sendRedirect(request.getContextPath() + "/products");
             }
             return;
         }
 
         // 4. Chuyển tiếp sang view editProductReview.jsp với dữ liệu đã chuẩn bị từ Service
+        String redirect = request.getParameter("redirect");
+        request.setAttribute("redirect", redirect);
         request.setAttribute("review", result.review);
         request.getRequestDispatcher("/review/editProductReview.jsp").forward(request, response);
     }
@@ -137,8 +142,11 @@ public class EditReviewServlet extends HttpServlet {
             return;
         }
 
-        // 2. Đọc các tham số cơ bản
-        int reviewId  = parseIntSafe(request.getParameter("review_id"), 0);
+        // 2. Đọc các tham số cơ bản (hỗ trợ cả review_id, reviewId, id)
+        String rIdStr = request.getParameter("review_id");
+        if (rIdStr == null || rIdStr.isBlank()) rIdStr = request.getParameter("reviewId");
+        if (rIdStr == null || rIdStr.isBlank()) rIdStr = request.getParameter("id");
+        int reviewId  = parseIntSafe(rIdStr, 0);
         int rating    = parseIntSafe(request.getParameter("rating"), 0);
         String title  = request.getParameter("title");
         String comment= request.getParameter("comment");
@@ -148,9 +156,9 @@ public class EditReviewServlet extends HttpServlet {
         if (!perm.isSuccess) {
             if ("EXPIRED".equals(perm.errorMessage) && perm.review != null) {
                 response.sendRedirect(request.getContextPath()
-                        + "/ViewReviewServlet?productId=" + perm.review.getProduct_id() + "&expired=1");
+                        + "/product?id=" + perm.review.getProduct_id() + "&expired=1#tab-reviews");
             } else {
-                response.sendRedirect(request.getContextPath() + "/home");
+                response.sendRedirect(request.getContextPath() + "/products");
             }
             return;
         }
@@ -223,8 +231,13 @@ public class EditReviewServlet extends HttpServlet {
         boolean success = reviewService.updateReview(originalReview, userId);
 
         if (success) {
+            String redirect = request.getParameter("redirect");
+            if (redirect != null && !redirect.isBlank()) {
+                response.sendRedirect(request.getContextPath() + redirect + (redirect.contains("?") ? "&" : "?") + "reviewUpdated=1");
+                return;
+            }
             response.sendRedirect(request.getContextPath()
-                    + "/ViewReviewServlet?productId=" + originalReview.getProduct_id() + "&reviewUpdated=1");
+                    + "/product?id=" + originalReview.getProduct_id() + "&reviewUpdated=1#tab-reviews");
         } else {
             request.setAttribute("review", originalReview);
             request.setAttribute("errorMsg", "Không thể cập nhật đánh giá. Vui lòng thử lại sau.");

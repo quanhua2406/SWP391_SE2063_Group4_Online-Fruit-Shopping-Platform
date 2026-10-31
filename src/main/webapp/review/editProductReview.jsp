@@ -39,11 +39,11 @@
 <div class="breadcrumb-bar">
     <div class="container">
         <ol class="breadcrumb-list">
-            <li><a href="${pageContext.request.contextPath}/home.jsp"><i class="fa-solid fa-house"></i> Trang chủ</a></li>
+            <li><a href="${pageContext.request.contextPath}/home"><i class="fa-solid fa-house"></i> Trang chủ</a></li>
             <li><span class="bc-sep"><i class="fa-solid fa-chevron-right"></i></span></li>
             <li>
-                <a href="${pageContext.request.contextPath}/ViewReviewServlet?productId=<%= review.getProduct_id() %>">
-                    Đánh giá sản phẩm
+                <a href="${pageContext.request.contextPath}/product?id=<%= review.getProduct_id() %>#tab-reviews">
+                    <%= review.getProductName() != null ? review.getProductName() : "Sản phẩm" %>
                 </a>
             </li>
             <li><span class="bc-sep"><i class="fa-solid fa-chevron-right"></i></span></li>
@@ -114,6 +114,13 @@
                     <%-- Hidden ID params --%>
                     <input type="hidden" name="review_id"  value="<%= review.getReview_id() %>">
                     <input type="hidden" name="product_id" value="<%= review.getProduct_id() %>">
+                    <%
+                        String redir = (String) request.getAttribute("redirect");
+                        if (redir == null || redir.isBlank()) redir = request.getParameter("redirect");
+                        if (redir != null && !redir.isBlank()) {
+                    %>
+                    <input type="hidden" name="redirect" value="<%= redir %>">
+                    <% } %>
 
                     <%-- ===== 1. SỐ SAO ĐÁNH GIÁ (PRE-FILL) ===== --%>
                     <div class="star-rating-section">
@@ -267,7 +274,8 @@
                         <button type="submit" id="saveChangesBtn" class="btn-save-changes">
                             <i class="fa-solid fa-floppy-disk"></i> Lưu thay đổi
                         </button>
-                        <a href="${pageContext.request.contextPath}/ViewReviewServlet?productId=<%= review.getProduct_id() %>"
+                        <% String cancelUrl = (redir != null && !redir.isBlank()) ? (request.getContextPath() + redir) : (request.getContextPath() + "/product?id=" + review.getProduct_id() + "#tab-reviews"); %>
+                        <a href="<%= cancelUrl %>"
                            class="btn-cancel-edit">
                             <i class="fa-solid fa-arrow-left"></i> Hủy
                         </a>

@@ -62,12 +62,17 @@ public class ReviewServlet extends HttpServlet {
         if (productIdStr == null || productIdStr.isBlank()) {
             productIdStr = request.getParameter("product_id");
         }
+        if (productIdStr == null || productIdStr.isBlank()) {
+            productIdStr = request.getParameter("id");
+        }
         int productId = parseIntSafe(productIdStr, 0);
         if (productId <= 0) {
-            response.sendRedirect(request.getContextPath() + "/home");
+            response.sendRedirect(request.getContextPath() + "/products");
             return;
         }
         request.setAttribute("productId", productId);
+        String redirect = request.getParameter("redirect");
+        request.setAttribute("redirect", redirect);
         request.getRequestDispatcher("/review/writeProductReview.jsp").forward(request, response);
     }
 
@@ -96,8 +101,15 @@ public class ReviewServlet extends HttpServlet {
         }
 
         // ---- BƯỚC 2: Đọc tham số HTTP --------------------------------
-        int productId = parseIntSafe(request.getParameter("product_id"), 0);
-        int orderId   = parseIntSafe(request.getParameter("order_id"),   0);
+        String pidStr = request.getParameter("product_id");
+        if (pidStr == null || pidStr.isBlank()) pidStr = request.getParameter("productId");
+        if (pidStr == null || pidStr.isBlank()) pidStr = request.getParameter("id");
+        int productId = parseIntSafe(pidStr, 0);
+
+        String oidStr = request.getParameter("order_id");
+        if (oidStr == null || oidStr.isBlank()) oidStr = request.getParameter("orderId");
+        int orderId   = parseIntSafe(oidStr, 0);
+
         int rating    = parseIntSafe(request.getParameter("rating"),     0);
         String comment= request.getParameter("comment");
 
@@ -145,9 +157,14 @@ public class ReviewServlet extends HttpServlet {
             return;
         }
 
-        // ---- BƯỚC 7: Điều hướng thông báo thành công ------------------
+        // ---- BƯỚC 7: Điều hướng thông báo thành công ----
+        String redirect = request.getParameter("redirect");
+        if (redirect != null && !redirect.isBlank()) {
+            response.sendRedirect(request.getContextPath() + redirect + (redirect.contains("?") ? "&" : "?") + "reviewSent=1");
+            return;
+        }
         response.sendRedirect(request.getContextPath()
-                + "/ViewReviewServlet?productId=" + productId + "&reviewSent=1");
+                + "/product?id=" + productId + "&reviewSent=1#tab-reviews");
     }
 
     private int parseIntSafe(String s, int defaultVal) {

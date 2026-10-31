@@ -16,6 +16,7 @@ public class ReviewReport implements Serializable {
     private int       reporterId;      // user_id của người báo cáo
     private String    reason;          // spam | inappropriate_language | fake_review | other
     private String    note;            // ghi chú thêm (có thể null)
+    private String    evidenceUrls;    // CSV các URL ảnh bằng chứng (có thể null)
     private Timestamp createdAt;
 
     // ── Trường phụ – dùng khi JOIN để hiển thị ────────────────────────────
@@ -39,6 +40,14 @@ public class ReviewReport implements Serializable {
         this.note       = note;
     }
 
+    public ReviewReport(int reviewId, int reporterId, String reason, String note, String evidenceUrls) {
+        this.reviewId     = reviewId;
+        this.reporterId   = reporterId;
+        this.reason       = reason;
+        this.note         = note;
+        this.evidenceUrls = evidenceUrls;
+    }
+
     // ── Getters & Setters ─────────────────────────────────────────────────
     public int getReportId()              { return reportId; }
     public void setReportId(int reportId) { this.reportId = reportId; }
@@ -54,6 +63,9 @@ public class ReviewReport implements Serializable {
 
     public String getNote()                     { return note; }
     public void setNote(String note)            { this.note = note; }
+
+    public String getEvidenceUrls()                       { return evidenceUrls; }
+    public void setEvidenceUrls(String evidenceUrls)      { this.evidenceUrls = evidenceUrls; }
 
     public Timestamp getCreatedAt()             { return createdAt; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }

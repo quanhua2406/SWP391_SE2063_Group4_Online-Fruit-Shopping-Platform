@@ -44,7 +44,10 @@ public class ViewReviewServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
 
         // ---- 1. Đọc và chuẩn hóa tham số HTTP -------------------------
-        int productId = parseIntSafe(request.getParameter("productId"), 0);
+        String pidParam = request.getParameter("productId");
+        if (pidParam == null || pidParam.isBlank()) pidParam = request.getParameter("product_id");
+        if (pidParam == null || pidParam.isBlank()) pidParam = request.getParameter("id");
+        int productId = parseIntSafe(pidParam, 0);
         int filter    = parseIntSafe(request.getParameter("filter"),    0);
         int page      = parseIntSafe(request.getParameter("page"),      1);
 
@@ -56,7 +59,7 @@ public class ViewReviewServlet extends HttpServlet {
         boolean deleteError   = "1".equals(request.getParameter("deleteError"));
 
         if (productId <= 0) {
-            response.sendRedirect(request.getContextPath() + "/home");
+            response.sendRedirect(request.getContextPath() + "/products");
             return;
         }
 
