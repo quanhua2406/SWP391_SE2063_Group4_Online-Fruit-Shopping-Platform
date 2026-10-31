@@ -99,7 +99,9 @@ public class DeliveryList {
         if (query.isEmpty()) {
             return true;
         }
-        String text = "#" + delivery.getId() + " #" + delivery.getOrderId() + " "
+        String text = "#" + delivery.getAttemptId()
+                + " #" + delivery.getId()
+                + " #" + delivery.getOrderId() + " "
                 + clean(delivery.getReceiverName()) + " " + clean(delivery.getReceiverPhone()) + " "
                 + clean(delivery.getShippingAddress());
         if (normalize(text).contains(query)) {

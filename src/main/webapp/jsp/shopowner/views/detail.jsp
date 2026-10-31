@@ -4,7 +4,7 @@
     <c:when test="${requestScope.currentRole == 'SHOPOWNER'}"><a href="${ctx}/shopowner/shop/deliveries">← Quản lý giao hàng</a></c:when>
     <c:otherwise><a href="${ctx}/shopowner/delivery/list">← Giao hàng của tôi</a></c:otherwise>
 </c:choose>
-<h1>Lần giao #${delivery.id} <span class="badge" data-status="<c:out value='${delivery.status}'/>"><c:out value="${delivery.statusLabel}"/></span></h1>
+<h1>Lần giao #${delivery.attemptId} <span class="badge" data-status="<c:out value='${delivery.status}'/>"><c:out value="${delivery.statusLabel}"/></span></h1>
 <p class="muted">Đơn hàng #${delivery.orderId} · <c:out value="${delivery.shopName}"/></p>
 <div class="grid">
     <section class="card">
@@ -39,12 +39,12 @@
             <p>Kiểm tra địa chỉ và sản phẩm trước khi nhận đơn.</p>
             <form action="${ctx}/shopowner/delivery/update" method="post" class="action-form">
                 <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
-                <input type="hidden" name="id" value="${delivery.id}">
+                <input type="hidden" name="id" value="${delivery.attemptId}">
                 <button name="action" value="accept" type="submit">Nhận đơn</button>
             </form>
             <form action="${ctx}/shopowner/delivery/update" method="post" class="stack narrow">
                 <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
-                <input type="hidden" name="id" value="${delivery.id}">
+                <input type="hidden" name="id" value="${delivery.attemptId}">
                 <label for="rejectReason">Lý do từ chối</label>
                 <textarea id="rejectReason" name="reason" required maxlength="255" rows="2" placeholder="Ví dụ: Không thể nhận đơn trong ca này"></textarea>
                 <button class="danger" name="action" value="reject" type="submit">Từ chối đơn</button>
@@ -54,7 +54,7 @@
             <p>Đến cửa hàng nhận đủ hàng rồi xác nhận bên dưới.</p>
             <form action="${ctx}/shopowner/delivery/update" method="post">
                 <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
-                <input type="hidden" name="id" value="${delivery.id}">
+                <input type="hidden" name="id" value="${delivery.attemptId}">
                 <button name="action" value="pickup" type="submit">Đã lấy hàng tại shop</button>
             </form>
         </c:when>
@@ -62,14 +62,14 @@
             <p>Bắt đầu di chuyển đến địa chỉ người nhận.</p>
             <form action="${ctx}/shopowner/delivery/update" method="post">
                 <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
-                <input type="hidden" name="id" value="${delivery.id}">
+                <input type="hidden" name="id" value="${delivery.attemptId}">
                 <button name="action" value="start" type="submit">Bắt đầu giao hàng</button>
             </form>
         </c:when>
         <c:when test="${delivery.status == 'Delivering'}">
             <form action="${ctx}/shopowner/delivery/update" method="post" class="stack narrow action-form">
                 <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
-                <input type="hidden" name="id" value="${delivery.id}">
+                <input type="hidden" name="id" value="${delivery.attemptId}">
                 <c:if test="${delivery.paymentMethod == 'COD' and delivery.paymentStatus != 'Paid'}">
                     <label class="check"><input type="checkbox" name="collected" value="yes" required> Tôi đã thu đủ <fmt:formatNumber value="${delivery.totalAmount}" maxFractionDigits="0"/> đ tiền COD.</label>
                 </c:if>
@@ -77,7 +77,7 @@
             </form>
             <form action="${ctx}/shopowner/delivery/update" method="post" class="stack narrow">
                 <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
-                <input type="hidden" name="id" value="${delivery.id}">
+                <input type="hidden" name="id" value="${delivery.attemptId}">
                 <label for="failedReason">Lý do giao thất bại</label>
                 <textarea id="failedReason" name="reason" required maxlength="255" rows="2" placeholder="Ví dụ: Gọi nhiều lần nhưng không liên lạc được với khách"></textarea>
                 <button class="danger" name="action" value="failed" type="submit">Giao thất bại</button>
