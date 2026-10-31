@@ -35,7 +35,7 @@ class DeliveryReadServiceTest {
     @Test void customerCannotAssignDeliveriesOrEnumerateStaff() {
         DeliveryService service = new DeliveryService();
         User customer = ServletHarness.user(42, "Customer");
-        assertThrows(IllegalArgumentException.class, () -> service.assign(customer, 1, 201));
+        assertThrows(IllegalArgumentException.class, () -> service.assign(customer, 1, 201, "Kho A"));
         assertThrows(IllegalArgumentException.class, () -> service.findAvailableOrders(customer));
         assertThrows(IllegalArgumentException.class, () -> service.findActiveStaff(customer));
     }

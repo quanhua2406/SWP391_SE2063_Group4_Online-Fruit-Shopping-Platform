@@ -54,16 +54,22 @@ public class DeliveryService {
         return assignmentDAO.findActiveStaff(owner.getUserID());
     }
 
-    public void assign(User owner, int orderId, int shipperId) throws SQLException {
-        assign(owner, orderId, shipperId, null);
-    }
-
-    public void assign(User owner, int orderId, int shipperId, String pickupAddress) throws SQLException {
+    public void assign(
+            User owner,
+            int orderId,
+            int shipperId,
+            String pickupAddress
+    ) throws SQLException {
         ServiceChecks.requireRole(owner, "ShopOwner");
         ServiceChecks.positiveId(orderId);
         ServiceChecks.positiveId(shipperId);
-        // DAO kiểm tra lại shop/shipper, khóa đơn và tạo thông báo trong cùng transaction.
-        assignmentDAO.assign(owner.getUserID(), orderId, shipperId, pickupAddress);
+
+        assignmentDAO.assign(
+                owner.getUserID(),
+                orderId,
+                shipperId,
+                pickupAddress
+        );
     }
 
     public void updateStatus(int deliveryId, User shipper, String action,
