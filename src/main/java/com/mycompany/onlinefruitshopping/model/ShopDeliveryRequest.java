@@ -13,6 +13,9 @@ public class ShopDeliveryRequest {
     private String reviewNote;
     private Timestamp requestedAt;
     private Timestamp reviewedAt;
+    private String shipperEmail;
+    private String shipperPhone;
+    private String accountStatus;
 
     public int getRequestId() { return requestId; }
     public void setRequestId(int requestId) { this.requestId = requestId; }
@@ -32,4 +35,10 @@ public class ShopDeliveryRequest {
     public void setRequestedAt(Timestamp requestedAt) { this.requestedAt = requestedAt; }
     public Timestamp getReviewedAt() { return reviewedAt; }
     public void setReviewedAt(Timestamp reviewedAt) { this.reviewedAt = reviewedAt; }
+    public String getShipperEmail() { return shipperEmail; }
+    public void setShipperEmail(String shipperEmail) { this.shipperEmail = shipperEmail; }
+    public String getShipperPhone() { return shipperPhone; }
+    public void setShipperPhone(String shipperPhone) { this.shipperPhone = shipperPhone; }
+    public String getAccountStatus() { return accountStatus; }
+    public void setAccountStatus(String accountStatus) { this.accountStatus = accountStatus; }
 }
