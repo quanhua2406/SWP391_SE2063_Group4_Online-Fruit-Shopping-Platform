@@ -102,6 +102,38 @@ public class CouponApplicationDAO {
         }
     }
 
+    /** Called by OrderDAO before committing order + payment + cart updates. */
+    public CouponQuote applyDuringCheckout(Connection c, int customerId, int orderId, String code) throws SQLException {
+        CouponOrder order=lockOrder(c,customerId,orderId);
+        requireEditable(order);
+        requirePendingPayment(c,orderId);
+        if(order.getVoucherId()!=null || order.getCouponId()!=null)
+            throw new IllegalArgumentException("Đơn đã có mã giảm giá.");
+        BigDecimal subtotal=readSubtotal(c,orderId);
+        if(subtotal.compareTo(order.getTotalAmount())>0)
+            throw new IllegalArgumentException("Tổng tiền đơn không khớp tiền hàng.");
+        CouponDAO dao=new CouponDAO();
+        Coupon coupon=dao.findForUse(c,order.getShopId(),CouponRules.normalizeCode(code));
+        CouponRules.validateUse(coupon,subtotal,dao.countForCustomer(c,coupon.getId(),customerId),PromotionRules.now());
+        BigDecimal discount=CouponRules.discount(coupon,subtotal);
+        if(discount.signum()==0) throw new IllegalArgumentException("Mã không tạo được giá trị giảm hợp lệ.");
+        BigDecimal finalAmount=order.getTotalAmount().subtract(discount);
+        updateTotal(c,customerId,orderId,order.getTotalAmount(),finalAmount);
+        try(PreparedStatement ps=c.prepareStatement("""
+            INSERT INTO coupon_usages(coupon_id,shop_id,order_id,customer_id,code_snapshot,
+                subtotal,discount_amount,final_amount,used_at,usage_status)
+            VALUES(?,?,?,?,?,?,?,?,?,'Applied')
+            """)) {
+            ps.setInt(1,coupon.getId());ps.setInt(2,order.getShopId());ps.setInt(3,orderId);
+            ps.setInt(4,customerId);ps.setString(5,coupon.getCode());ps.setBigDecimal(6,order.getTotalAmount());
+            ps.setBigDecimal(7,discount);ps.setBigDecimal(8,finalAmount);
+            ps.setTimestamp(9,Timestamp.valueOf(PromotionRules.now()));ps.executeUpdate();
+        }
+        CouponQuote quote=new CouponQuote();quote.setCode(coupon.getCode());
+        quote.setSubtotal(order.getTotalAmount());quote.setDiscountAmount(discount);quote.setFinalAmount(finalAmount);
+        return quote;
+    }
+
     public void remove(int customerId, int orderId) throws SQLException {
         try (Connection c = connections.open()) {
             prepareWrite(c);

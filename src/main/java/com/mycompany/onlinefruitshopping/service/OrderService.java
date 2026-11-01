@@ -11,6 +11,10 @@ import com.mycompany.onlinefruitshopping.model.Order;
 import com.mycompany.onlinefruitshopping.model.OrderItem;
 import com.mycompany.onlinefruitshopping.model.User;
 import com.mycompany.onlinefruitshopping.model.Voucher;
+import com.mycompany.onlinefruitshopping.model.Coupon;
+import com.mycompany.onlinefruitshopping.model.CouponQuote;
+import com.mycompany.onlinefruitshopping.dao.coupon.CouponCheckoutDAO;
+import java.math.BigDecimal;
 
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -141,64 +145,53 @@ public class OrderService {
         return cartDAO.getCartItemsByUserId(userId);
     }
 
-    public Map<String, Object> calculateOrderSummary(List<CartItem> items, String deliveryMethod, String voucherCode) throws SQLException {
-        double subtotal = 0;
-        int totalItems = 0;
-        for (CartItem item : items) {
-            subtotal += item.getItemTotal();
-            totalItems += (int) item.getQuantity();
+    /** Cart checkout supports exactly one shop, because a coupon is always scoped to its shop. */
+    public int getCartShopId(List<CartItem> items) throws SQLException {
+        if(items==null || items.isEmpty()) throw new IllegalArgumentException("Giỏ hàng đang trống.");
+        int shopId=0;
+        for(CartItem item:items) {
+            int productShopId=productDAO.getShopIdByProductId(item.getProductId());
+            if(productShopId<=0) throw new IllegalArgumentException("Không xác định được cửa hàng của sản phẩm trong giỏ.");
+            if(shopId!=0 && productShopId!=shopId)
+                throw new IllegalArgumentException("Giỏ có sản phẩm của nhiều shop. Vui lòng thanh toán từng cửa hàng để sử dụng mã giảm giá đúng shop.");
+            shopId=productShopId;
         }
+        return shopId;
+    }
 
-        // Tính phí vận chuyển (Delivery Method)
-        // Standard: 25.000 ₫ (Miễn phí nếu subtotal >= 500.000 ₫)
-        // Express: +30.000 ₫
-        double baseShippingFee = subtotal >= 500000 ? 0 : 25000;
-        double expressSurcharge = "express".equalsIgnoreCase(deliveryMethod) ? 30000 : 0;
-        double shippingFee = baseShippingFee + expressSurcharge;
+    public List<Coupon> getCheckoutCoupons(int customerId,List<CartItem> items) throws SQLException {
+        BigDecimal subtotal=BigDecimal.ZERO;
+        for(CartItem item:items) subtotal=subtotal.add(BigDecimal.valueOf(item.getItemTotal()));
+        return new CouponCheckoutDAO().availableForShop(getCartShopId(items),customerId,subtotal);
+    }
 
-        // Áp dụng voucher
-        double discount = 0;
-        Voucher appliedVoucher = null;
-        String voucherMessage = null;
-
-        if (voucherCode != null && !voucherCode.isBlank()) {
-            appliedVoucher = voucherDAO.getVoucherByCode(voucherCode.trim());
-            if (appliedVoucher != null && appliedVoucher.isValid()) {
-                discount = appliedVoucher.calculateDiscount(subtotal);
-                voucherMessage = "Áp dụng mã '" + appliedVoucher.getCode() + "' thành công!";
-            } else {
-                voucherMessage = "Mã khuyến mãi không hợp lệ hoặc đã hết hạn.";
-            }
+    public Map<String, Object> calculateOrderSummary(int customerId,List<CartItem> items,
+                                                      String deliveryMethod,String couponCode) throws SQLException {
+        double subtotal=0;
+        int totalItems=0;
+        for(CartItem item:items) { subtotal+=item.getItemTotal(); totalItems+=(int)item.getQuantity(); }
+        int shopId=getCartShopId(items);
+        double baseShippingFee=subtotal>=500000?0:25000;
+        double expressSurcharge="express".equalsIgnoreCase(deliveryMethod)?30000:0;
+        double shippingFee=baseShippingFee+expressSurcharge;
+        double discount=0;
+        String couponMessage="Chưa áp dụng mã giảm giá.";
+        String appliedCode=null;
+        if(couponCode!=null && !couponCode.isBlank()) {
+            CouponQuote quote=new CouponCheckoutDAO().preview(customerId,shopId,couponCode,
+                    BigDecimal.valueOf(subtotal));
+            discount=quote.getDiscountAmount().doubleValue();
+            appliedCode=quote.getCode();
+            couponMessage="Áp dụng mã '"+appliedCode+"' thành công (sẽ xác nhận lại khi đặt hàng).";
         }
-
-        double totalAmount = subtotal + shippingFee - discount;
-        if (totalAmount < 0) totalAmount = 0;
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("subtotal", subtotal);
-        result.put("totalItems", totalItems);
-        result.put("shippingFee", shippingFee);
-        result.put("baseShippingFee", baseShippingFee);
-        result.put("expressSurcharge", expressSurcharge);
-        result.put("discount", discount);
-        result.put("voucher", appliedVoucher);
-        result.put("voucherMessage", voucherMessage);
-        result.put("totalAmount", totalAmount);
-        result.put("deliveryMethod", deliveryMethod != null ? deliveryMethod : "standard");
+        Map<String,Object> result=new HashMap<>();
+        result.put("subtotal",subtotal); result.put("totalItems",totalItems);
+        result.put("shippingFee",shippingFee); result.put("baseShippingFee",baseShippingFee);
+        result.put("expressSurcharge",expressSurcharge); result.put("discount",discount);
+        result.put("couponCode",appliedCode);result.put("couponMessage",couponMessage);
+        result.put("totalAmount",Math.max(0,subtotal+shippingFee-discount));
+        result.put("deliveryMethod",deliveryMethod!=null?deliveryMethod:"standard");
         return result;
-    }
-
-    public Voucher validateAndGetVoucher(String code, double subtotal) throws SQLException {
-        if (code == null || code.isBlank()) return null;
-        Voucher voucher = voucherDAO.getVoucherByCode(code.trim());
-        if (voucher != null && voucher.isValid()) {
-            return voucher;
-        }
-        return null;
-    }
-
-    public List<Voucher> getActiveVouchers() throws SQLException {
-        return voucherDAO.getActiveVouchers();
     }
 
     /**
@@ -206,7 +199,7 @@ public class OrderService {
      * Bao gồm kiểm tra giỏ hàng, xác thực địa chỉ, tính toán số tiền và trừ tồn kho.
      */
     public int placeOrder(int userId, int addressId, String deliveryMethod, String paymentMethod,
-                          String voucherCode, String note) throws SQLException {
+                          String couponCode, String note) throws SQLException {
         if (userId <= 0) {
             throw new IllegalArgumentException("Yêu cầu đăng nhập trước khi thanh toán.");
         }
@@ -230,27 +223,15 @@ public class OrderService {
             }
         }
 
-        // Lấy shop_id từ sản phẩm đầu tiên (trong nền tảng hoa quả, các sản phẩm liên kết với shop)
-        int shopId = 1; // Default shop
-        for (CartItem item : items) {
-            int itemShopId = productDAO.getShopIdByProductId(item.getProductId());
-            if (itemShopId > 0) {
-                shopId = itemShopId;
-                break;
-            }
-        }
-
-        // Tính toán các khoản tiền
-        Map<String, Object> summary = calculateOrderSummary(items, deliveryMethod, voucherCode);
-        double totalAmount = (double) summary.get("totalAmount");
-        double shippingFee = (double) summary.get("shippingFee");
-        double discount = (double) summary.get("discount");
-        Voucher voucher = (Voucher) summary.get("voucher");
-        Integer voucherId = voucher != null ? voucher.getVoucherId() : null;
-
-        // Tạo đơn hàng trong Transaction an toàn
-        return orderDAO.createOrder(userId, shopId, addressId, voucherId,
-                deliveryMethod, paymentMethod, totalAmount, shippingFee, discount, items, note);
+        int shopId=getCartShopId(items);
+        // Both preview and final coupon are shop-bound; final validation and usage
+        // happen inside OrderDAO's order creation transaction.
+        Map<String,Object> summary=calculateOrderSummary(userId,items,deliveryMethod,couponCode);
+        double shippingFee=(double)summary.get("shippingFee");
+        double subtotal=(double)summary.get("subtotal");
+        double undiscountedTotal=subtotal+shippingFee;
+        return orderDAO.createOrder(userId,shopId,addressId,null,
+                deliveryMethod,paymentMethod,undiscountedTotal,shippingFee,0,items,note,couponCode);
     }
 
     // =========================================================

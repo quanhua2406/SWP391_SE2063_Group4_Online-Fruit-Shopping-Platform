@@ -593,6 +593,9 @@
                     </h1>
                 </div>
 
+                <c:if test="${param.error == 'multiple_shops'}">
+                    <div class="cart-alert-box" role="alert">Giỏ có sản phẩm từ nhiều cửa hàng. Vui lòng thanh toán riêng theo từng shop để dùng mã giảm giá đúng cửa hàng.</div>
+                </c:if>
                 <%-- Hiển thị cảnh báo nếu có --%>
                 <c:if test="${not empty cartWarnings}">
                     <div class="cart-alert-box">

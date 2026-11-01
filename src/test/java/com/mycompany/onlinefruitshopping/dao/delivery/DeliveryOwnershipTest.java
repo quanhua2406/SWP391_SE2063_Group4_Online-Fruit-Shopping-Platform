@@ -55,11 +55,11 @@ class DeliveryOwnershipTest {
         assertNull(dao.findById(12, owner));
     }
 
-    @Test void shipperNeedsBothAssignmentAndActiveShopMembership() throws SQLException {
+    @Test void shipperCanReadOwnDeliveryHistoryAfterMembershipEnds() throws SQLException {
         User shipper = ServletHarness.user(201, "Delivery Staff");
-        assertEquals(List.of(3, 1), dao.findAll(shipper).stream().map(Delivery::getId).toList());
+        assertEquals(List.of(5, 3, 1), dao.findAll(shipper).stream().map(Delivery::getId).toList());
         assertNull(dao.findById(12, shipper));
-        assertNull(dao.findById(15, shipper));
+        assertNotNull(dao.findById(15, shipper));
     }
 
     @Test void itemsCannotBeFetchedByGuessingAnotherDeliveryId() throws SQLException {
@@ -69,7 +69,7 @@ class DeliveryOwnershipTest {
         assertEquals(0, new java.math.BigDecimal("25").compareTo(dao.findItems(11, customer).get(0).getSubtotal()));
     }
 
-    @Test void itemQueryRechecksAssignmentAfterInitialAccessCheck() throws SQLException {
+    @Test void shipperCanStillReadOwnAttemptItemsAfterLeavingTeam() throws SQLException {
         java.util.concurrent.atomic.AtomicInteger opens = new java.util.concurrent.atomic.AtomicInteger();
         DeliveryDAO changing = new DeliveryDAO(() -> {
             if (opens.incrementAndGet() == 2) {
@@ -79,7 +79,7 @@ class DeliveryOwnershipTest {
             }
             return DriverManager.getConnection(url);
         });
-        assertTrue(changing.findItems(11, ServletHarness.user(201, "DeliveryStaff")).isEmpty());
+        assertEquals(1, changing.findItems(11, ServletHarness.user(201, "DeliveryStaff")).size());
     }
 
     @Test void inactiveShopIsExcludedForEveryReader() throws SQLException {

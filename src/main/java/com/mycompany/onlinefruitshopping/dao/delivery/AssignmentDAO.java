@@ -55,14 +55,17 @@ public class AssignmentDAO {
     public List<Staff> findActiveStaff(int ownerId) throws SQLException {
         List<Staff> list = new ArrayList<>();
         String sql = """
-            SELECT a.user_id, a.full_name, t.shop_id
+            SELECT a.user_id, a.full_name, t.shop_id,
+                t.is_available,t.assignment_enabled,
+                (SELECT COUNT(*) FROM delivery_attempts da WHERE da.shipper_id=t.shipper_id AND da.closed_at IS NULL) AS open_delivery_count
             FROM shop_delivery_staff t
             JOIN shops s ON s.shop_id = t.shop_id
             JOIN users a ON a.user_id = t.shipper_id
             JOIN user_roles ur ON ur.user_id = a.user_id
             JOIN roles r ON r.role_id = ur.role_id AND r.role_name = N'DeliveryStaff'
             WHERE s.owner_id = ? AND s.status = N'active'
-              AND t.status = N'Active' AND a.status = N'active'
+              AND t.status = N'Active' AND t.leave_requested=0 AND t.is_available=1 AND t.assignment_enabled=1 AND a.status = N'active'
+              AND (SELECT COUNT(*) FROM delivery_attempts busy WHERE busy.shipper_id=t.shipper_id AND busy.closed_at IS NULL) < 3
             ORDER BY t.shop_id, a.full_name
             """;
         try (Connection c = connections.open(); PreparedStatement ps = c.prepareStatement(sql)) {
@@ -73,6 +76,10 @@ public class AssignmentDAO {
                     staff.setId(rs.getInt("user_id"));
                     staff.setShopId(rs.getInt("shop_id"));
                     staff.setFullName(rs.getString("full_name"));
+                    staff.setAvailable(rs.getBoolean("is_available"));
+                    staff.setAssignmentEnabled(rs.getBoolean("assignment_enabled"));
+                    staff.setOpenDeliveryCount(rs.getInt("open_delivery_count"));
+                    staff.setBusy(staff.getOpenDeliveryCount() >= 3);
                     list.add(staff);
                 }
             }
@@ -106,7 +113,22 @@ public class AssignmentDAO {
                         receiver=rs.getString("recipient_name");phone=rs.getString("phone");address=rs.getString("shipping_address");
                     }
                 }
-                requireActor(c,ownerId,"ShopOwner"); requireTeamMember(c,shopId,shipperId);
+                requireActor(c,ownerId,"ShopOwner");
+                // Khóa hàng users theo shipper để tuần tự hóa mọi thao tác phân công cùng shipper.
+                try(PreparedStatement lock=c.prepareStatement("SELECT user_id FROM users WITH (UPDLOCK,HOLDLOCK) WHERE user_id=? AND status=N'active'")) {
+                    lock.setInt(1,shipperId); try(ResultSet rs=lock.executeQuery()) { if(!rs.next()) throw new IllegalArgumentException("Tài khoản shipper không hoạt động."); }
+                }
+                requireAssignableTeamMember(c,shopId,shipperId);
+                // Mỗi shipper được giữ tối đa 3 attempt chưa đóng. Khóa users phía trên
+                // tuần tự hóa các lần phân công đồng thời cho cùng một shipper.
+                try(PreparedStatement busy=c.prepareStatement("SELECT COUNT(*) FROM delivery_attempts WITH (UPDLOCK,HOLDLOCK) WHERE shipper_id=? AND closed_at IS NULL")) {
+                    busy.setInt(1,shipperId);
+                    try(ResultSet rs=busy.executeQuery()) {
+                        rs.next();
+                        int openCount=rs.getInt(1);
+                        if(openCount >= 3) throw new IllegalArgumentException("Shipper đã đủ tải (3/3 đơn đang giao). Chọn shipper khác hoặc chờ shipper hoàn tất đơn.");
+                    }
+                }
                 if(state==null || !List.of("preparing","failed").contains(state))
                     throw new IllegalArgumentException("Chỉ phân công đơn đã xác nhận hoặc cần giao lại.");
                 if(receiver==null || receiver.isBlank() || phone==null || phone.isBlank() || address==null || address.isBlank())
@@ -150,7 +172,13 @@ public class AssignmentDAO {
                 }
                 new NotificationDAO().insert(c,shipperId,"Đơn giao mới","Bạn được phân công đơn #"+orderId+". Hãy nhận hoặc từ chối đơn.");
                 c.commit();
-            } catch(SQLException | RuntimeException e) {c.rollback();throw e;}
+            } catch(SQLException e) {
+                c.rollback();
+                if (e.getErrorCode()==2601 || e.getErrorCode()==2627) {
+                    throw new IllegalArgumentException("Shipper vừa được phân công đơn khác. Vui lòng tải lại danh sách shipper.",e);
+                }
+                throw e;
+            } catch(RuntimeException e) { c.rollback(); throw e; }
         }
     }
 
@@ -165,7 +193,22 @@ public class AssignmentDAO {
         }
     }
 
-    public static void requireTeamMember(Connection c,int shopId,int shipperId) throws SQLException {
+    public static void requireAssignableTeamMember(Connection c,int shopId,int shipperId) throws SQLException {
+        try(PreparedStatement ps=c.prepareStatement("""
+            SELECT u.user_id FROM shop_delivery_staff t WITH (UPDLOCK,HOLDLOCK)
+            JOIN users u WITH (HOLDLOCK) ON u.user_id=t.shipper_id
+            JOIN user_roles ur ON ur.user_id=u.user_id JOIN roles r ON r.role_id=ur.role_id
+            WHERE t.shop_id=? AND t.shipper_id=? AND t.status=N'Active'
+              AND t.leave_requested=0 AND t.is_available=1 AND t.assignment_enabled=1
+              AND u.status=N'active' AND r.role_name=N'DeliveryStaff'
+            """)) {
+            ps.setInt(1,shopId);ps.setInt(2,shipperId);
+            try(ResultSet rs=ps.executeQuery()) { if(!rs.next()) throw new IllegalArgumentException("Shipper không sẵn sàng nhận đơn hoặc không thuộc đội của shop."); }
+        }
+    }
+
+    /** Cho phép shipper đã gửi leave_requested hoàn tất attempt đang mở trước đó. */
+    public static void requireCurrentAttemptMember(Connection c,int shopId,int shipperId) throws SQLException {
         try(PreparedStatement ps=c.prepareStatement("""
             SELECT u.user_id FROM shop_delivery_staff t WITH (HOLDLOCK)
             JOIN users u WITH (HOLDLOCK) ON u.user_id=t.shipper_id
@@ -174,7 +217,12 @@ public class AssignmentDAO {
               AND u.status=N'active' AND r.role_name=N'DeliveryStaff'
             """)) {
             ps.setInt(1,shopId);ps.setInt(2,shipperId);
-            try(ResultSet rs=ps.executeQuery()) { if(!rs.next()) throw new IllegalArgumentException("Shipper phải đang hoạt động và thuộc đội của đúng shop."); }
+            try(ResultSet rs=ps.executeQuery()) { if(!rs.next()) throw new IllegalArgumentException("Không tìm thấy quyền xử lý lần giao hàng này."); }
         }
+    }
+
+    /** Giữ alias cũ cho các caller khác; chỉ dùng khi cần kiểm tra thành viên đang Active. */
+    public static void requireTeamMember(Connection c,int shopId,int shipperId) throws SQLException {
+        requireAssignableTeamMember(c,shopId,shipperId);
     }
 }
