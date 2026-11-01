@@ -25,6 +25,18 @@ public class DeliveryRules {
         }
     }
 
+    public static String canonicalOrderStatus(String deliveryStatus) {
+        return switch (deliveryStatus) {
+            case "Assigned", "Accepted", "Rejected" -> "preparing";
+            case "PickedUp", "Delivering" -> "shipping";
+            case "Delivered" -> "delivered";
+            case "Failed" -> "failed";
+            default -> throw new IllegalArgumentException(
+                    "Trạng thái giao hàng không hợp lệ."
+            );
+        };
+    }
+
     public static String label(String status) {
         if (status == null) return "Chưa có";
         switch (status) {
@@ -50,13 +62,26 @@ public class DeliveryRules {
         return text;
     }
 
-    public static void validatePayment(String method, String status, boolean collected) {
-        if ("Paid".equals(status)) return;
-        if (!"COD".equals(method)) {
-            throw new IllegalArgumentException("Đơn thanh toán online chưa được xác nhận Paid. Hãy liên hệ chủ shop.");
+    public static void validatePayment(
+            String method,
+            String status,
+            boolean collected
+    ) {
+        if ("paid".equalsIgnoreCase(status)) {
+            return;
         }
+
+        if (!"cod".equalsIgnoreCase(method)) {
+            throw new IllegalArgumentException(
+                    "Đơn thanh toán online chưa được xác nhận Paid. "
+                    + "Hãy liên hệ chủ shop."
+            );
+        }
+
         if (!collected) {
-            throw new IllegalArgumentException("Bạn cần xác nhận đã thu tiền COD trước khi hoàn tất.");
+            throw new IllegalArgumentException(
+                    "Bạn cần xác nhận đã thu tiền COD trước khi hoàn tất."
+            );
         }
     }
 }

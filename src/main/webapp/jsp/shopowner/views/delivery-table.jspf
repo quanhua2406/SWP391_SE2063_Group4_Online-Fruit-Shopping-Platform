@@ -6,12 +6,12 @@
     <tbody>
     <c:forEach var="d" items="${deliveries}">
         <tr>
-            <td><strong>#${d.id}</strong><br><span class="muted">Đơn #${d.orderId}</span></td>
+            <td><strong>#${d.attemptId}</strong><br><span class="muted">Đơn #${d.orderId}</span></td>
             <td><c:out value="${d.shopName}"/></td>
             <td><c:out value="${d.receiverName}"/><br><span class="muted"><c:out value="${d.receiverPhone}"/></span></td>
             <td><c:out value="${d.shipperName}" default="Chưa phân công"/></td>
             <td><span class="badge" data-status="<c:out value='${d.status}'/>"><c:out value="${d.statusLabel}"/></span></td>
-            <td><a class="button secondary" href="${ctx}/shopowner/delivery/detail?id=${d.id}">Chi tiết</a></td>
+            <td><a class="button secondary" href="${ctx}/shopowner/delivery/detail?id=${d.attemptId}">Chi tiết</a></td>
         </tr>
     </c:forEach>
     <c:if test="${empty deliveries}">

@@ -25,6 +25,13 @@
                     <form method="post" action="${ctx}/shopowner/shop/deliveries" class="inline-form">
                         <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
                         <input type="hidden" name="orderId" value="${o.id}">
+                        <input
+                            type="text"
+                            name="pickupAddress"
+                            maxlength="1000"
+                            required
+                            placeholder="Địa chỉ lấy hàng tại shop"
+                            aria-label="Địa chỉ lấy hàng">
                         <select name="shipperId" required aria-label="Nhân viên giao đơn ${o.id}">
                             <option value="">Chọn nhân viên</option>
                             <c:forEach var="s" items="${staff}">
