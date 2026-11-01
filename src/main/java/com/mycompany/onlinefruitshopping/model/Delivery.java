@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 
 public class Delivery {
 
+    private int attemptId;
     private int deliveryId;
     private int orderId;
     private int staffId;
@@ -137,5 +138,7 @@ public class Delivery {
     public void setPickupTime(java.sql.Timestamp pickupTime) { this.pickupTime = pickupTime; }
     public java.sql.Timestamp getDeliveredTime() { return deliveredTime; }
     public void setDeliveredTime(java.sql.Timestamp deliveredTime) { this.deliveredTime = deliveredTime; }
+    public int getAttemptId() { return attemptId; }
+    public void setAttemptId(int attemptId) { this.attemptId = attemptId; }
     public String getStatusLabel() { return com.mycompany.onlinefruitshopping.utils.DeliveryRules.label(status); }
 }

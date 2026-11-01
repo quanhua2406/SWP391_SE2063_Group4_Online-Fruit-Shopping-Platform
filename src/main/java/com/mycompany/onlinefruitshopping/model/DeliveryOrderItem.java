@@ -1,25 +1,51 @@
 package com.mycompany.onlinefruitshopping.model;
 
-/** Model chứa dữ liệu; getter để JSP đọc, setter để DAO gán giá trị. */
+import java.math.BigDecimal;
+
 public class DeliveryOrderItem {
+
     private String productName;
     private String variantName;
-    private java.math.BigDecimal price;
-    private int quantity;
+    private BigDecimal price;
+    private BigDecimal quantity;
 
-    public String getProductName() { return productName; }
-    public void setProductName(String productName) { this.productName = productName; }
+    public String getProductName() {
+        return productName;
+    }
 
-    public String getVariantName() { return variantName; }
-    public void setVariantName(String variantName) { this.variantName = variantName; }
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
 
-    public java.math.BigDecimal getPrice() { return price; }
-    public void setPrice(java.math.BigDecimal price) { this.price = price; }
+    public String getVariantName() {
+        return variantName;
+    }
 
-    public int getQuantity() { return quantity; }
-    public void setQuantity(int quantity) { this.quantity = quantity; }
+    public void setVariantName(String variantName) {
+        this.variantName = variantName;
+    }
 
-    public java.math.BigDecimal getSubtotal() {
-        return price.multiply(java.math.BigDecimal.valueOf(quantity));
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+
+    public BigDecimal getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(BigDecimal quantity) {
+        this.quantity = quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = BigDecimal.valueOf(quantity);
+    }
+
+    public BigDecimal getSubtotal() {
+        return price.multiply(quantity);
     }
 }

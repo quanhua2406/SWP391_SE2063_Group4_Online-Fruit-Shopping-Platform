@@ -40,7 +40,7 @@ public final class CouponRules {
     public static void money(BigDecimal amount, boolean allowZero) {
         if (amount == null || amount.signum() < 0 || (!allowZero && amount.signum() == 0)
                 || amount.stripTrailingZeros().scale() > 0
-                || amount.compareTo(new BigDecimal("999999999999999999")) > 0)
+                || amount.compareTo(new BigDecimal("9999999999999999")) > 0)
             throw new IllegalArgumentException("Số tiền phải là số nguyên đồng hợp lệ" + (allowZero ? "." : " và lớn hơn 0."));
     }
 

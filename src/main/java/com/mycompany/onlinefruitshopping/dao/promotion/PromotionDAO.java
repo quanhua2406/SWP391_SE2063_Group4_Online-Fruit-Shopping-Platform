@@ -14,6 +14,12 @@ import com.mycompany.onlinefruitshopping.utils.PromotionRules;
 
 /** Mọi thao tác đều kiểm tra ownerId lấy từ session, không tin ownerId trên form. */
 public class PromotionDAO {
+    private final com.mycompany.onlinefruitshopping.utils.ConnectionProvider connections;
+    public PromotionDAO() { this(DBConnection::getConnection); }
+    public PromotionDAO(com.mycompany.onlinefruitshopping.utils.ConnectionProvider connections) {
+        this.connections = java.util.Objects.requireNonNull(connections);
+    }
+
     private static final String OWNED_PROMOTIONS = """
         SELECT p.*, s.shop_name,
                (SELECT COUNT(*) FROM promotion_products pp
@@ -38,7 +44,7 @@ public class PromotionDAO {
               AND a.status = N'active'
             ORDER BY s.shop_id
             """;
-        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+        try (Connection c = connections.open(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, ownerId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -56,7 +62,7 @@ public class PromotionDAO {
     public List<PromotionProduct> findProducts(int ownerId) throws SQLException {
         List<PromotionProduct> list = new ArrayList<>();
         String sql = """
-            SELECT pr.product_id, pr.product_name, pr.status
+            SELECT pr.product_id, pr.product_name, pr.status, pr.hidden_by_admin
             FROM products pr
             JOIN shops s ON s.shop_id = pr.shop_id
             JOIN users a ON a.user_id = s.owner_id
@@ -65,14 +71,14 @@ public class PromotionDAO {
             WHERE s.owner_id = ? AND s.status = N'active' AND a.status = N'active'
             ORDER BY pr.product_name, pr.product_id
             """;
-        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+        try (Connection c = connections.open(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, ownerId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     PromotionProduct p = new PromotionProduct();
                     p.setId(rs.getInt("product_id"));
                     p.setName(rs.getString("product_name"));
-                    p.setActive("published".equals(rs.getString("status")));
+                    p.setActive("published".equals(rs.getString("status")) && !rs.getBoolean("hidden_by_admin"));
                     list.add(p);
                 }
             }
@@ -82,7 +88,7 @@ public class PromotionDAO {
 
     public List<Promotion> findAll(int ownerId) throws SQLException {
         List<Promotion> list = new ArrayList<>();
-        try (Connection c = DBConnection.getConnection();
+        try (Connection c = connections.open();
              PreparedStatement ps = c.prepareStatement(OWNED_PROMOTIONS + " ORDER BY p.promotion_id DESC")) {
             ps.setInt(1, ownerId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -93,7 +99,7 @@ public class PromotionDAO {
     }
 
     public Promotion findById(int ownerId, int id) throws SQLException {
-        try (Connection c = DBConnection.getConnection()) {
+        try (Connection c = connections.open()) {
             return findById(c, ownerId, id);
         }
     }
@@ -122,7 +128,7 @@ public class PromotionDAO {
     public int save(int ownerId, Promotion p) throws SQLException {
         // CampaignPromotionService đã kiểm tra đầu vào và loại sản phẩm trùng.
         // Các kiểm tra phụ thuộc dữ liệu hiện tại vẫn thực hiện sau khi khóa bên dưới.
-        try (Connection c = DBConnection.getConnection()) {
+        try (Connection c = connections.open()) {
             c.setAutoCommit(false);
             try {
                 lockShop(c, ownerId, p.getShopId());
@@ -205,7 +211,7 @@ public class PromotionDAO {
 
     private void changeState(int ownerId, int id, int version, boolean active, boolean deleted)
             throws SQLException {
-        try (Connection c = DBConnection.getConnection()) {
+        try (Connection c = connections.open()) {
             c.setAutoCommit(false);
             try {
                 Promotion p = requireOwned(c, ownerId, id, version);
@@ -270,7 +276,7 @@ public class PromotionDAO {
         // đang bán và đã có biến thể.
         String sql = """
             SELECT product_id FROM products WITH (HOLDLOCK)
-            WHERE product_id = ? AND shop_id = ? AND status = N'published'
+            WHERE product_id = ? AND shop_id = ? AND status = N'published' AND ISNULL(hidden_by_admin,0)=0
               AND EXISTS (SELECT 1 FROM product_variants v WHERE v.product_id = products.product_id)
             """;
         try (PreparedStatement ps = c.prepareStatement(sql)) {
@@ -313,11 +319,11 @@ public class PromotionDAO {
     public List<PromotionPrice> previewPrices(int ownerId, int id) throws SQLException {
         List<PromotionPrice> list = new ArrayList<>();
         // Đọc lại chương trình qua kiểm tra chủ sở hữu, không nhận mức giảm từ URL.
-        try (Connection c = DBConnection.getConnection()) {
+        try (Connection c = connections.open()) {
             Promotion p = findById(c, ownerId, id);
             if (p == null) throw new IllegalArgumentException("Không tìm thấy chương trình thuộc cửa hàng của bạn.");
             String sql = """
-                SELECT pr.product_name, pr.status, v.sku AS variant_name, v.price
+                SELECT pr.product_name, pr.status, pr.hidden_by_admin, v.sku AS variant_name, v.price
                 FROM promotion_products pp JOIN products pr ON pr.product_id = pp.product_id
                 JOIN product_variants v ON v.product_id = pr.product_id
                 WHERE pp.promotion_id = ? ORDER BY pr.product_name, v.variant_id
@@ -329,7 +335,7 @@ public class PromotionDAO {
                         PromotionPrice row = new PromotionPrice();
                         row.setProductName(rs.getString("product_name"));
                         row.setVariantName(rs.getString("variant_name"));
-                        row.setProductActive("published".equals(rs.getString("status")));
+                        row.setProductActive("published".equals(rs.getString("status")) && !rs.getBoolean("hidden_by_admin"));
                         row.setOriginalPrice(rs.getBigDecimal("price"));
                         row.setFinalPrice(PromotionRules.priceAfterDiscount(row.getOriginalPrice(),
                                 p.getDiscountType(), p.getDiscountValue()));
