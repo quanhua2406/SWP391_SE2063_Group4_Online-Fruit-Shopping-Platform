@@ -4,11 +4,14 @@ import com.mycompany.onlinefruitshopping.service.common.ServiceChecks;
 
 import com.mycompany.onlinefruitshopping.dao.delivery.AssignmentDAO;
 import com.mycompany.onlinefruitshopping.dao.delivery.DeliveryDAO;
+import com.mycompany.onlinefruitshopping.dao.delivery.ShipperTeamDAO;
 import com.mycompany.onlinefruitshopping.model.User;
 import com.mycompany.onlinefruitshopping.model.Delivery;
 import com.mycompany.onlinefruitshopping.model.DeliveryOrderItem;
 import com.mycompany.onlinefruitshopping.model.OrderOption;
 import com.mycompany.onlinefruitshopping.model.Staff;
+import com.mycompany.onlinefruitshopping.model.ShopDeliveryRequest;
+import com.mycompany.onlinefruitshopping.model.ShopOption;
 import com.mycompany.onlinefruitshopping.utils.DeliveryRules;
 import java.sql.SQLException;
 import java.util.List;
@@ -17,6 +20,7 @@ import java.util.List;
 public class DeliveryService {
     private final DeliveryDAO deliveryDAO;
     private final AssignmentDAO assignmentDAO;
+    private final ShipperTeamDAO shipperTeamDAO = new ShipperTeamDAO();
 
     public DeliveryService() {
         this(new DeliveryDAO(), new AssignmentDAO());
@@ -54,22 +58,92 @@ public class DeliveryService {
         return assignmentDAO.findActiveStaff(owner.getUserID());
     }
 
-    public void assign(
-            User owner,
-            int orderId,
-            int shipperId,
-            String pickupAddress
-    ) throws SQLException {
-        ServiceChecks.requireRole(owner, "ShopOwner");
-        ServiceChecks.positiveId(orderId);
-        ServiceChecks.positiveId(shipperId);
+    public void assign(User owner,int orderId,int shipperId,String pickupAddress) throws SQLException {
+        ServiceChecks.requireRole(owner,"ShopOwner");
+        ServiceChecks.positiveId(orderId); ServiceChecks.positiveId(shipperId);
+        assignmentDAO.assign(owner.getUserID(),orderId,shipperId,pickupAddress);
+    }
 
-        assignmentDAO.assign(
-                owner.getUserID(),
-                orderId,
-                shipperId,
-                pickupAddress
-        );
+
+
+
+    // Shipper team membership
+    public List<ShopOption> findActiveShops(User shipper) throws SQLException {
+        ServiceChecks.requireRole(shipper, "DeliveryStaff");
+        return shipperTeamDAO.findActiveShops();
+    }
+
+    public Staff getMyMembership(User shipper) throws SQLException {
+        ServiceChecks.requireRole(shipper, "DeliveryStaff");
+        return shipperTeamDAO.getMyMembership(shipper.getUserID());
+    }
+
+    public List<ShopDeliveryRequest> getMyRequests(User shipper) throws SQLException {
+        ServiceChecks.requireRole(shipper, "DeliveryStaff");
+        return shipperTeamDAO.getMyRequests(shipper.getUserID());
+    }
+
+    public void applyToShop(User shipper, int shopId) throws SQLException {
+        ServiceChecks.requireRole(shipper, "DeliveryStaff");
+        ServiceChecks.positiveId(shopId);
+        shipperTeamDAO.applyToShop(shipper.getUserID(), shopId);
+    }
+
+    public void withdrawRequest(User shipper, int requestId) throws SQLException {
+        ServiceChecks.requireRole(shipper, "DeliveryStaff");
+        ServiceChecks.positiveId(requestId);
+        shipperTeamDAO.withdrawRequest(shipper.getUserID(), requestId);
+    }
+
+    public void setAvailability(User shipper, boolean available) throws SQLException {
+        ServiceChecks.requireRole(shipper, "DeliveryStaff");
+        shipperTeamDAO.setAvailability(shipper.getUserID(), available);
+    }
+
+    public void requestLeave(User shipper) throws SQLException {
+        ServiceChecks.requireRole(shipper, "DeliveryStaff");
+        shipperTeamDAO.requestLeave(shipper.getUserID());
+    }
+
+    // Shop owner manages public pickup address; only members of the ShopOwner role.
+    public ShopOption getOwnerShop(User owner) throws SQLException {
+        ServiceChecks.requireRole(owner,"ShopOwner");
+        return shipperTeamDAO.findOwnerShop(owner.getUserID());
+    }
+
+    public void updateShopPickupAddress(User owner,int shopId,String address) throws SQLException {
+        ServiceChecks.requireRole(owner,"ShopOwner");
+        ServiceChecks.positiveId(shopId);
+        shipperTeamDAO.updatePickupAddress(owner.getUserID(),shopId,address);
+    }
+
+    // Shop owner team management
+    public List<ShopDeliveryRequest> getTeamRequests(User owner) throws SQLException {
+        ServiceChecks.requireRole(owner, "ShopOwner");
+        return shipperTeamDAO.getRequests(owner.getUserID());
+    }
+
+    public List<Staff> getTeamMembers(User owner) throws SQLException {
+        ServiceChecks.requireRole(owner, "ShopOwner");
+        return shipperTeamDAO.getTeamMembers(owner.getUserID());
+    }
+
+    public void reviewTeamRequest(User owner,int requestId,boolean approved,String reason) throws SQLException {
+        ServiceChecks.requireRole(owner, "ShopOwner");
+        ServiceChecks.positiveId(requestId);
+        shipperTeamDAO.reviewRequest(owner.getUserID(),requestId,approved,reason);
+    }
+
+    public void setTeamAssignmentEnabled(User owner,int shipperId,boolean enabled) throws SQLException {
+        ServiceChecks.requireRole(owner, "ShopOwner");
+        ServiceChecks.positiveId(shipperId);
+        shipperTeamDAO.setAssignmentEnabled(owner.getUserID(),shipperId,enabled);
+    }
+
+    public void terminateTeamMember(User owner,int shipperId) throws SQLException {
+        ServiceChecks.requireRole(owner, "ShopOwner");
+        ServiceChecks.positiveId(shipperId);
+        shipperTeamDAO.terminateMember(owner.getUserID(),shipperId);
     }
 
     public void updateStatus(int deliveryId, User shipper, String action,

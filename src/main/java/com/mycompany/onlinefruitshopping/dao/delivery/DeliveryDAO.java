@@ -49,7 +49,7 @@ public class DeliveryDAO {
         }
         return switch (ValidationUtil.normalizeRoleName(user.getRoleName())) {
             case "SHOPOWNER" -> " AND s.owner_id = ?";
-            case "DELIVERYSTAFF" -> " AND da.shipper_id = ? AND t.status = N'Active'";
+            case "DELIVERYSTAFF" -> " AND da.shipper_id = ?";
             case "CUSTOMER" -> " AND o.user_id = ?";
             default -> throw new IllegalArgumentException("Bạn không có quyền xem giao hàng.");
         };
@@ -133,7 +133,7 @@ public class DeliveryDAO {
                         orderId=rs.getInt(1);shopId=rs.getInt(2);customerId=rs.getInt(3);orderStatus=rs.getString(4);ownerId=rs.getInt(5);
                     }
                 }
-                AssignmentDAO.requireTeamMember(c,shopId,shipperId);
+                AssignmentDAO.requireCurrentAttemptMember(c,shopId,shipperId);
                 int deliveryId,version; String oldStatus,baseStatus;
                 try(PreparedStatement ps=c.prepareStatement("""
                     SELECT a.delivery_id,a.delivery_status,a.version,d.status
@@ -206,6 +206,9 @@ public class DeliveryDAO {
                 NotificationDAO notifications=new NotificationDAO();
                 String message="Đơn #"+orderId+": "+note;
                 notifications.insert(c,ownerId,"Cập nhật giao hàng",message);
+                if (terminal) {
+                    ShipperTeamDAO.finalizeLeaveIfNoOpenAttempt(c, shipperId);
+                }
                 if("Delivered".equals(next)||"Failed".equals(next)) {
                     notifications.insert(c,customerId,"Kết quả giao hàng",message);
                     notifications.insert(c,shipperId,"Đã ghi nhận kết quả giao hàng",message);
