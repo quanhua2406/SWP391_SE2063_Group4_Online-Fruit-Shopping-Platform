@@ -598,8 +598,8 @@
                             <div class="option-left">
                                 <input type="radio" name="paymentMethod" value="vnpay" class="address-radio">
                                 <div>
-                                    <div class="option-title">Thanh Toán Trực Tuyến VNPay / Thẻ ATM / QR Code</div>
-                                    <div class="option-desc">Quét mã VietQR hoặc thanh toán qua cổng điện tử bảo mật</div>
+                                    <div class="option-title">Thanh Toán VNPay</div>
+                                    <div class="option-desc">Thanh toán an toàn qua cổng VNPay (Quét mã VietQR, Thẻ ATM nội địa, Internet Banking)</div>
                                 </div>
                             </div>
                             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

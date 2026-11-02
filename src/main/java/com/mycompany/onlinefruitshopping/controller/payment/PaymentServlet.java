@@ -14,6 +14,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 
 /**
@@ -71,7 +73,7 @@ public class PaymentServlet extends HttpServlet {
     }
 
     /**
-     * Màn hình chuẩn bị thanh toán qua cổng VNPay / QR Code (Tasks 1 & 2).
+     * Màn hình chuẩn bị và chuyển hướng thanh toán trực tiếp qua cổng VNPay Sandbox (Tasks 1 & 2).
      */
     private void handlePaymentProcess(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, ServletException, IOException {
@@ -87,23 +89,55 @@ public class PaymentServlet extends HttpServlet {
 
         int orderId;
         try {
-            orderId = Integer.parseInt(orderIdStr);
+            orderId = Integer.parseInt(orderIdStr.trim());
+            if (orderId <= 0) throw new NumberFormatException();
         } catch (NumberFormatException e) {
             response.sendRedirect(request.getContextPath() + "/orders");
             return;
         }
 
         // Lấy chi tiết đơn hàng
-        int checkUserId = "admin".equalsIgnoreCase(user.getRoleName()) || "store_owner".equalsIgnoreCase(user.getRoleName()) ? 0 : user.getUserID();
-        Order order = orderService.getOrderDetail(orderId, checkUserId);
+        Order order = orderService.getCustomerOrderDetail(orderId, user.getUserID());
         if (order == null) {
-            response.sendRedirect(request.getContextPath() + "/orders?error=not_found");
+            order = orderService.getOrderById(orderId);
+        }
+        if (order == null) {
+            response.sendRedirect(request.getContextPath() + "/orders?error="
+                    + URLEncoder.encode("Đơn hàng không tồn tại.", StandardCharsets.UTF_8));
             return;
         }
 
-        // Nếu đơn hàng đã được thanh toán rồi, chuyển luôn sang trang xác nhận thành công
+        // Validation quyền sở hữu đơn hàng (chỉ khách hàng tạo đơn hoặc Admin mới được thanh toán)
+        if (order.getUserId() != user.getUserID() && !"admin".equalsIgnoreCase(user.getRoleName())) {
+            response.sendRedirect(request.getContextPath() + "/orders?error="
+                    + URLEncoder.encode("Bạn không có quyền thực hiện thanh toán cho đơn hàng này.", StandardCharsets.UTF_8));
+            return;
+        }
+
+        // Validation trạng thái đơn: Không được thanh toán đơn đã bị hủy
+        if ("cancelled".equalsIgnoreCase(order.getStatus())) {
+            response.sendRedirect(request.getContextPath() + "/orders/detail?id=" + orderId + "&error="
+                    + URLEncoder.encode("Đơn hàng này đã bị hủy, không thể tiếp tục thanh toán.", StandardCharsets.UTF_8));
+            return;
+        }
+
+        // Validation trạng thái thanh toán: Đã thanh toán thì chuyển sang trang thành công
         if ("paid".equalsIgnoreCase(order.getPaymentStatus())) {
             response.sendRedirect(request.getContextPath() + "/payment/success?orderId=" + orderId);
+            return;
+        }
+
+        // Validation trạng thái đơn đã giao
+        if ("delivered".equalsIgnoreCase(order.getStatus())) {
+            response.sendRedirect(request.getContextPath() + "/orders/detail?id=" + orderId + "&msg="
+                    + URLEncoder.encode("Đơn hàng đã hoàn tất giao hàng.", StandardCharsets.UTF_8));
+            return;
+        }
+
+        // Validation số tiền thanh toán
+        if (order.getTotalAmount() <= 0) {
+            response.sendRedirect(request.getContextPath() + "/orders/detail?id=" + orderId + "&error="
+                    + URLEncoder.encode("Số tiền thanh toán đơn hàng không hợp lệ.", StandardCharsets.UTF_8));
             return;
         }
 
@@ -129,19 +163,19 @@ public class PaymentServlet extends HttpServlet {
 
         String vnpayUrl = paymentService.processPayment(orderId, "vnpay", returnUrl, clientIp);
 
-        request.setAttribute("order", order);
-        request.setAttribute("payment", payment);
-        request.setAttribute("vnpayUrl", vnpayUrl);
-        request.setAttribute("bankAccountName", "CONG TY CP HOA QUA SACH ONLINE FRUIT");
-        request.setAttribute("bankAccountNumber", "999888666888");
-        request.setAttribute("bankName", "MB Bank (Ngan hang Quan Doi)");
-        request.setAttribute("qrContent", "DH" + orderId);
+        if (vnpayUrl == null || vnpayUrl.isBlank()) {
+            response.sendRedirect(request.getContextPath() + "/orders/detail?id=" + orderId + "&error="
+                    + URLEncoder.encode("Không thể kết nối đến cổng VNPay Sandbox. Vui lòng thử lại sau.", StandardCharsets.UTF_8));
+            return;
+        }
 
-        request.getRequestDispatcher("/jsp/payment/payment-gateway.jsp").forward(request, response);
+        // Chuyển hướng trực tiếp thẳng sang cổng VNPay Sandbox để thanh toán
+        response.sendRedirect(vnpayUrl);
     }
 
     /**
      * Nhận callback phản hồi từ cổng thanh toán VNPay (Task 3).
+     * Khi khách hàng hoàn tất hoặc quay lại / hủy giao dịch từ VNPay Sandbox.
      */
     private void handleVNPayReturn(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, IOException {
@@ -163,20 +197,65 @@ public class PaymentServlet extends HttpServlet {
             } catch (NumberFormatException ignored) {}
         }
 
-        boolean isValidChecksum = VNPayConfig.verifyCallback(request.getParameterMap());
+        if (orderId <= 0) {
+            response.sendRedirect(request.getContextPath() + "/orders?error="
+                    + URLEncoder.encode("Mã đơn hàng phản hồi từ VNPay không hợp lệ.", StandardCharsets.UTF_8));
+            return;
+        }
 
-        if (isValidChecksum && "00".equals(vnpResponseCode)) {
+        Order order = orderService.getOrderById(orderId);
+        if (order == null) {
+            response.sendRedirect(request.getContextPath() + "/orders?error=not_found");
+            return;
+        }
+
+        // 1. Kiểm tra chữ ký bảo mật Checksum HMAC-SHA512
+        boolean isValidChecksum = VNPayConfig.verifyCallback(request.getParameterMap());
+        if (!isValidChecksum) {
+            response.sendRedirect(request.getContextPath() + "/orders/detail?id=" + orderId + "&error="
+                    + URLEncoder.encode("Chữ ký bảo mật VNPay không hợp lệ (Sai mã băm Checksum).", StandardCharsets.UTF_8));
+            return;
+        }
+
+        // 2. Kiểm tra tính toàn vẹn số tiền thanh toán (Amount Tampering Validation)
+        if (vnpAmountStr != null && !vnpAmountStr.isBlank()) {
+            try {
+                long vnpAmount = Long.parseLong(vnpAmountStr) / 100;
+                long expectedAmount = Math.round(order.getTotalAmount());
+                if (vnpAmount != expectedAmount) {
+                    paymentService.verifyPaymentCallback(orderId, "04", vnpTxnRef);
+                    response.sendRedirect(request.getContextPath() + "/orders/detail?id=" + orderId + "&error="
+                            + URLEncoder.encode("Số tiền thanh toán phản hồi từ VNPay không khớp với giá trị đơn hàng.", StandardCharsets.UTF_8));
+                    return;
+                }
+            } catch (NumberFormatException ignored) {}
+        }
+
+        // 3. Xử lý kết quả giao dịch
+        if ("00".equals(vnpResponseCode)) {
             // Xác thực hợp lệ và thanh toán thành công
             paymentService.verifyPaymentCallback(orderId, "00", vnpTransactionNo != null ? vnpTransactionNo : vnpTxnRef);
             response.sendRedirect(request.getContextPath() + "/payment/success?orderId=" + orderId
                     + "&txnRef=" + (vnpTransactionNo != null ? vnpTransactionNo : vnpTxnRef)
                     + "&bankCode=" + (vnpBankCode != null ? vnpBankCode : "VNPAY"));
         } else {
-            // Thất bại hoặc bị hủy giao dịch
-            if (orderId > 0) {
-                paymentService.verifyPaymentCallback(orderId, vnpResponseCode != null ? vnpResponseCode : "99", vnpTxnRef);
+            // Khách hàng hủy giao dịch trên VNPay Sandbox (code 24) hoặc giao dịch thất bại
+            // Cập nhật trạng thái thanh toán sang failed
+            paymentService.verifyPaymentCallback(orderId, vnpResponseCode != null ? vnpResponseCode : "24", vnpTxnRef);
+
+            // Tự động hủy đơn hàng và ghi nhận lịch sử trạng thái nếu đơn đang trong tiến trình chờ
+            if ("pending_confirmation".equalsIgnoreCase(order.getStatus()) || "preparing".equalsIgnoreCase(order.getStatus())) {
+                try {
+                    String cancelReason = "24".equals(vnpResponseCode)
+                            ? "Khách hàng hủy thanh toán trên cổng VNPay Sandbox"
+                            : "Giao dịch VNPay không thành công (Mã lỗi: " + vnpResponseCode + ")";
+                    orderService.cancelCustomerOrder(orderId, order.getUserId(), cancelReason);
+                } catch (Exception ignored) {}
             }
-            response.sendRedirect(request.getContextPath() + "/orders/detail?id=" + orderId + "&error=payment_failed");
+
+            String msg = "Giao dịch thanh toán trên VNPay đã kết thúc. Đơn hàng #" + orderId + " đã được tự động hủy thành công.";
+            response.sendRedirect(request.getContextPath() + "/orders/detail?id=" + orderId + "&msg="
+                    + URLEncoder.encode(msg, StandardCharsets.UTF_8));
         }
     }
 
@@ -259,8 +338,10 @@ public class PaymentServlet extends HttpServlet {
             return;
         }
 
-        int checkUserId = "admin".equalsIgnoreCase(user.getRoleName()) || "store_owner".equalsIgnoreCase(user.getRoleName()) ? 0 : user.getUserID();
-        Order order = orderService.getOrderDetail(orderId, checkUserId);
+        Order order = orderService.getCustomerOrderDetail(orderId, user.getUserID());
+        if (order == null) {
+            order = orderService.getOrderById(orderId);
+        }
         Payment payment = paymentService.getPaymentByOrderId(orderId);
 
         request.setAttribute("order", order);

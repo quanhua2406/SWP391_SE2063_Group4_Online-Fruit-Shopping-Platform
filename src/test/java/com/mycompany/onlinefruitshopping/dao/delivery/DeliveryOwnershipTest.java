@@ -19,22 +19,24 @@ class DeliveryOwnershipTest {
         url = "jdbc:h2:mem:delivery_" + UUID.randomUUID() + ";MODE=MSSQLServer;DB_CLOSE_DELAY=-1";
         dao = new DeliveryDAO(() -> DriverManager.getConnection(url));
         try (Connection connection = DriverManager.getConnection(url); Statement sql = connection.createStatement()) {
-            sql.execute("CREATE TABLE users(user_id INT PRIMARY KEY, full_name VARCHAR(100))");
-            sql.execute("CREATE TABLE shops(shop_id INT PRIMARY KEY, owner_id INT, shop_name VARCHAR(100), pickup_address VARCHAR(100), status VARCHAR(20))");
-            sql.execute("CREATE TABLE orders(order_id INT PRIMARY KEY, shop_id INT, user_id INT, receiver_name VARCHAR(100), receiver_phone VARCHAR(20), shipping_address VARCHAR(100), total_amount DECIMAL(12,2), order_status VARCHAR(30), payment_method VARCHAR(20), payment_status VARCHAR(20), note VARCHAR(100))");
-            sql.execute("CREATE TABLE deliveries(delivery_id INT PRIMARY KEY, order_id INT, shop_id INT, shipper_id INT, delivery_status VARCHAR(30), pickup_time TIMESTAMP, delivered_time TIMESTAMP, note VARCHAR(100))");
+            sql.execute("CREATE TABLE users(user_id INT PRIMARY KEY, full_name VARCHAR(100), phone VARCHAR(20))");
+            sql.execute("CREATE TABLE shops(shop_id INT PRIMARY KEY, owner_id INT, shop_name VARCHAR(100), description VARCHAR(255), pickup_address VARCHAR(100), status VARCHAR(20))");
+            sql.execute("CREATE TABLE user_addresses(address_id INT PRIMARY KEY, user_id INT, recipient_name VARCHAR(100), phone VARCHAR(20), address_line VARCHAR(100), ward VARCHAR(100), district VARCHAR(100), province VARCHAR(100), is_default BIT)");
+            sql.execute("CREATE TABLE payments(payment_id INT PRIMARY KEY, order_id INT, method VARCHAR(20), status VARCHAR(20))");
+            sql.execute("CREATE TABLE orders(order_id INT PRIMARY KEY, shop_id INT, user_id INT, address_id INT, receiver_name VARCHAR(100), receiver_phone VARCHAR(20), shipping_address VARCHAR(100), total_amount DECIMAL(12,2), status VARCHAR(30), order_status VARCHAR(30), payment_method VARCHAR(20), payment_status VARCHAR(20), note VARCHAR(100))");
+            sql.execute("CREATE TABLE deliveries(delivery_id INT PRIMARY KEY, order_id INT, shop_id INT, staff_id INT, shipper_id INT, status VARCHAR(30), delivery_status VARCHAR(30), pickup_time TIMESTAMP, delivered_time TIMESTAMP, created_at TIMESTAMP, note VARCHAR(100))");
             sql.execute("CREATE TABLE shop_delivery_staff(shop_id INT, shipper_id INT, status VARCHAR(20))");
             sql.execute("CREATE TABLE products(product_id INT PRIMARY KEY, product_name VARCHAR(100))");
             sql.execute("CREATE TABLE product_variants(variant_id INT PRIMARY KEY, product_id INT, sku VARCHAR(30))");
-            sql.execute("CREATE TABLE order_items(order_item_id INT PRIMARY KEY, order_id INT, variant_id INT, price DECIMAL(12,2), quantity INT)");
-            sql.execute("INSERT INTO users VALUES (201, 'Shipper A'), (202, 'Shipper B')");
-            sql.execute("INSERT INTO shops VALUES (1,101,'Shop A','A','active'), (2,102,'Shop B','B','active'), (3,101,'Closed shop','C','inactive')");
+            sql.execute("CREATE TABLE order_items(order_item_id INT PRIMARY KEY, order_id INT, variant_id INT, price DECIMAL(12,2), unit_price DECIMAL(12,2), quantity INT)");
+            sql.execute("INSERT INTO users VALUES (201, 'Shipper A', '0901'), (202, 'Shipper B', '0902')");
+            sql.execute("INSERT INTO shops VALUES (1,101,'Shop A','A','A','active'), (2,102,'Shop B','B','B','active'), (3,101,'Closed shop','C','C','inactive')");
             sql.execute("INSERT INTO shop_delivery_staff VALUES (1,201,'Active'), (2,202,'Active'), (2,201,'Inactive'), (3,201,'Active')");
-            sql.execute("INSERT INTO orders(order_id,shop_id,user_id,total_amount) VALUES (1,1,1001,100),(2,2,1002,200),(3,1,1002,300),(4,3,1001,400),(5,2,1001,500)");
-            sql.execute("INSERT INTO deliveries(delivery_id,order_id,shop_id,shipper_id,delivery_status) VALUES (1,1,1,201,'Assigned'),(2,2,2,202,'Assigned'),(3,3,1,201,'Assigned'),(4,4,3,201,'Assigned'),(5,5,2,201,'Assigned')");
+            sql.execute("INSERT INTO orders(order_id,shop_id,user_id,total_amount,status,order_status) VALUES (1,1,1001,100,'shipping','Shipping'),(2,2,1002,200,'shipping','Shipping'),(3,1,1002,300,'shipping','Shipping'),(4,3,1001,400,'shipping','Shipping'),(5,2,1001,500,'shipping','Shipping')");
+            sql.execute("INSERT INTO deliveries(delivery_id,order_id,shop_id,staff_id,shipper_id,status,delivery_status,created_at) VALUES (1,1,1,201,201,'assigned','Assigned',CURRENT_TIMESTAMP),(2,2,2,202,202,'assigned','Assigned',CURRENT_TIMESTAMP),(3,3,1,201,201,'assigned','Assigned',CURRENT_TIMESTAMP),(4,4,3,201,201,'assigned','Assigned',CURRENT_TIMESTAMP),(5,5,2,201,201,'assigned','Assigned',CURRENT_TIMESTAMP)");
             sql.execute("INSERT INTO products VALUES (1,'Apple')");
             sql.execute("INSERT INTO product_variants VALUES (1,1,'APPLE-1KG')");
-            sql.execute("INSERT INTO order_items VALUES (1,1,1,50,2),(2,2,1,50,4)");
+            sql.execute("INSERT INTO order_items VALUES (1,1,1,50,50,2),(2,2,1,50,50,4)");
         }
     }
 

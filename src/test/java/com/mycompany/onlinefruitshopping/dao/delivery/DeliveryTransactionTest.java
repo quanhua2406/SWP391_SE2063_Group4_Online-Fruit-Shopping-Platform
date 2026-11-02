@@ -21,16 +21,18 @@ class DeliveryTransactionTest {
                 "CREATE TABLE user_roles(user_id INT, role_id INT)",
                 "CREATE TABLE shops(shop_id INT PRIMARY KEY, owner_id INT, status VARCHAR(20))",
                 "CREATE TABLE shop_delivery_staff(shop_id INT, shipper_id INT, status VARCHAR(20))",
-                "CREATE TABLE orders(order_id INT PRIMARY KEY, shop_id INT, user_id INT, order_status VARCHAR(30), payment_method VARCHAR(20), payment_status VARCHAR(20))",
-                "CREATE TABLE deliveries(delivery_id INT IDENTITY PRIMARY KEY, shop_id INT, order_id INT, shipper_id INT, delivery_status VARCHAR(30), note NVARCHAR(255), pickup_time TIMESTAMP, delivered_time TIMESTAMP)",
-                "CREATE TABLE notifications(notification_id INT IDENTITY PRIMARY KEY, user_id INT, title NVARCHAR(100), message NVARCHAR(255), is_read INT)",
+                "CREATE TABLE user_addresses(address_id INT PRIMARY KEY, user_id INT, recipient_name VARCHAR(100), phone VARCHAR(20), address_line VARCHAR(100), ward VARCHAR(100), district VARCHAR(100), province VARCHAR(100))",
+                "CREATE TABLE payments(payment_id INT IDENTITY PRIMARY KEY, order_id INT, method VARCHAR(20), status VARCHAR(20), amount DECIMAL(12,2))",
+                "CREATE TABLE orders(order_id INT PRIMARY KEY, shop_id INT, user_id INT, address_id INT, status VARCHAR(30), order_status VARCHAR(30), payment_method VARCHAR(20), payment_status VARCHAR(20))",
+                "CREATE TABLE deliveries(delivery_id INT IDENTITY PRIMARY KEY, shop_id INT, order_id INT, staff_id INT, shipper_id INT, status VARCHAR(30), delivery_status VARCHAR(30), note NVARCHAR(255), pickup_time TIMESTAMP, delivered_time TIMESTAMP, created_at TIMESTAMP)",
+                "CREATE TABLE notifications(notification_id INT IDENTITY PRIMARY KEY, user_id INT, title NVARCHAR(100), content NVARCHAR(255), message NVARCHAR(255), is_read INT, channel VARCHAR(20), created_at TIMESTAMP)",
                 "INSERT INTO users VALUES(10,'Owner','active'),(20,'Shipper','active'),(21,'Other shipper','active'),(30,'Customer','active'),(11,'Other owner','active')",
                 "INSERT INTO roles VALUES(1,'ShopOwner'),(2,'DeliveryStaff'),(3,'Customer')",
                 "INSERT INTO user_roles VALUES(10,1),(11,1),(20,2),(21,2),(30,3)",
                 "INSERT INTO shops VALUES(1,10,'active'),(2,11,'active')",
                 "INSERT INTO shop_delivery_staff VALUES(1,20,'Active'),(1,21,'Active')",
-                "INSERT INTO orders VALUES(100,1,30,'Shipping','COD','Unpaid'),(101,1,30,'Confirmed','COD','Unpaid'),(102,2,30,'Confirmed','COD','Unpaid')",
-                "INSERT INTO deliveries(shop_id,order_id,shipper_id,delivery_status) VALUES(1,100,20,'Delivering')");
+                "INSERT INTO orders VALUES(100,1,30,NULL,'shipping','Shipping','COD','Unpaid'),(101,1,30,NULL,'confirmed','Confirmed','COD','Unpaid'),(102,2,30,NULL,'confirmed','Confirmed','COD','Unpaid')",
+                "INSERT INTO deliveries(shop_id,order_id,staff_id,shipper_id,status,delivery_status,created_at) VALUES(1,100,20,20,'delivering','Delivering',CURRENT_TIMESTAMP)");
     }
 
     @Test void codCompletionCommitsAllEffectsAndRejectsReplay() throws Exception {
