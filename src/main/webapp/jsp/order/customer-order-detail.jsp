@@ -370,8 +370,18 @@
                     <div class="info-text">
                         Thanh toán: <strong>
                             <c:choose>
-                                <c:when test="${order.paymentMethod == 'vnpay'}">Thanh toán trực tuyến VNPay / QR</c:when>
+                                <c:when test="${order.paymentMethod == 'vnpay' || order.paymentMethod == 'online'}">Thanh toán trực tuyến VNPay / QR</c:when>
                                 <c:otherwise>Thanh toán khi nhận hàng (COD)</c:otherwise>
+                            </c:choose>
+                        </strong><br>
+                        Trạng thái thanh toán: <strong>
+                            <c:choose>
+                                <c:when test="${order.paymentStatus == 'paid'}">
+                                    <span style="color:#059669; font-weight:700;">Đã thanh toán</span>
+                                </c:when>
+                                <c:otherwise>
+                                    <span style="color:#d97706; font-weight:700;">Chưa thanh toán</span>
+                                </c:otherwise>
                             </c:choose>
                         </strong><br>
                         Phương thức giao: <strong>${order.deliveryMethod}</strong><br>
@@ -460,9 +470,20 @@
                     </form>
 
                     <!-- Thanh toán trực tuyến nếu chưa thanh toán -->
-                    <c:if test="${order.paymentStatus == 'pending' && (order.paymentMethod == 'vnpay' || order.paymentMethod == 'online')}">
+                    <c:if test="${order.paymentStatus == 'pending' && order.status != 'cancelled'}">
                         <a href="${pageContext.request.contextPath}/payment/process?orderId=${order.orderId}" class="btn-action btn-reorder" style="background-color: var(--primary); color: #fff; text-decoration: none; text-align: center;">
-                            Thanh Toán Ngay (VNPay / VietQR)
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                                <line x1="12" y1="8" x2="12" y2="16"></line>
+                            </svg>
+                            <c:choose>
+                                <c:when test="${order.paymentMethod == 'vnpay' || order.paymentMethod == 'online'}">
+                                    Thanh Toán Ngay (VNPay / VietQR)
+                                </c:when>
+                                <c:otherwise>
+                                    Thanh Toán Online (VNPay / VietQR)
+                                </c:otherwise>
+                            </c:choose>
                         </a>
                     </c:if>
 

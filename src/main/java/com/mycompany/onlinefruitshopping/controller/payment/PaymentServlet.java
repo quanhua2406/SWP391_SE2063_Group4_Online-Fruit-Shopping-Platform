@@ -94,8 +94,10 @@ public class PaymentServlet extends HttpServlet {
         }
 
         // Lấy chi tiết đơn hàng
-        int checkUserId = "admin".equalsIgnoreCase(user.getRoleName()) || "store_owner".equalsIgnoreCase(user.getRoleName()) ? 0 : user.getUserID();
-        Order order = orderService.getOrderDetail(orderId, checkUserId);
+        Order order = orderService.getCustomerOrderDetail(orderId, user.getUserID());
+        if (order == null) {
+            order = orderService.getOrderById(orderId);
+        }
         if (order == null) {
             response.sendRedirect(request.getContextPath() + "/orders?error=not_found");
             return;
@@ -259,8 +261,10 @@ public class PaymentServlet extends HttpServlet {
             return;
         }
 
-        int checkUserId = "admin".equalsIgnoreCase(user.getRoleName()) || "store_owner".equalsIgnoreCase(user.getRoleName()) ? 0 : user.getUserID();
-        Order order = orderService.getOrderDetail(orderId, checkUserId);
+        Order order = orderService.getCustomerOrderDetail(orderId, user.getUserID());
+        if (order == null) {
+            order = orderService.getOrderById(orderId);
+        }
         Payment payment = paymentService.getPaymentByOrderId(orderId);
 
         request.setAttribute("order", order);
