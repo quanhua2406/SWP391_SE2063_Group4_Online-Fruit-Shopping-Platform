@@ -137,7 +137,7 @@ public class PaymentServlet extends HttpServlet {
         request.setAttribute("bankName", "MB Bank (Ngan hang Quan Doi)");
         request.setAttribute("qrContent", "DH" + orderId);
 
-        request.getRequestDispatcher("/payment-gateway.jsp").forward(request, response);
+        request.getRequestDispatcher("/jsp/payment/payment-gateway.jsp").forward(request, response);
     }
 
     /**
@@ -268,7 +268,7 @@ public class PaymentServlet extends HttpServlet {
         request.setAttribute("txnRef", request.getParameter("txnRef"));
         request.setAttribute("bankCode", request.getParameter("bankCode"));
 
-        request.getRequestDispatcher("/payment-success.jsp").forward(request, response);
+        request.getRequestDispatcher("/jsp/payment/payment-success.jsp").forward(request, response);
     }
 
     private User getAuthenticatedUser(HttpServletRequest request, HttpServletResponse response) throws IOException {

@@ -131,7 +131,7 @@ public class NotificationServlet extends HttpServlet {
         request.setAttribute("unreadCount", unreadCount);
         request.setAttribute("unreadPerGroup", unreadPerGroup);
 
-        request.getRequestDispatcher("/notification/notifications.jsp").forward(request, response);
+        request.getRequestDispatcher("/jsp/customer/customer-notifications.jsp").forward(request, response);
     }
 
     // =========================================================================

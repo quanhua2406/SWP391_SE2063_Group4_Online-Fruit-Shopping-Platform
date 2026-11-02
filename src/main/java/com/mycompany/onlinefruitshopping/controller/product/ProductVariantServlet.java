@@ -122,7 +122,7 @@ public class ProductVariantServlet extends HttpServlet {
 
         request.setAttribute("product", product);
         request.setAttribute("variants", variants);
-        request.getRequestDispatcher("/product-variants.jsp").forward(request, response);
+        request.getRequestDispatcher("/jsp/shopowner/product-variants.jsp").forward(request, response);
     }
 
     // =========================================================

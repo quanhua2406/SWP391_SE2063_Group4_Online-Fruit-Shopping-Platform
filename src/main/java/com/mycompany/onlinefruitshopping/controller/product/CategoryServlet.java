@@ -102,7 +102,7 @@ public class CategoryServlet extends HttpServlet {
 
         request.setAttribute("categories", categories);
         request.setAttribute("parentOptions", parentOptions);
-        request.getRequestDispatcher("/categories.jsp").forward(request, response);
+        request.getRequestDispatcher("/jsp/shopowner/categories.jsp").forward(request, response);
     }
 
     // =========================================================

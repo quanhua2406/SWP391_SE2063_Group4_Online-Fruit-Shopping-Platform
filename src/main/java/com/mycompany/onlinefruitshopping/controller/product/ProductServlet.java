@@ -133,7 +133,7 @@ public class ProductServlet extends HttpServlet {
         request.setAttribute("selectedCategory", categoryId);
         request.setAttribute("selectedStatus", status != null ? status : "all");
 
-        request.getRequestDispatcher("/products.jsp").forward(request, response);
+        request.getRequestDispatcher("/jsp/shopowner/products.jsp").forward(request, response);
     }
 
     // =========================================================
@@ -144,7 +144,7 @@ public class ProductServlet extends HttpServlet {
 
         List<Category> categories = categoryService.getAllCategories();
         request.setAttribute("categories", categories);
-        request.getRequestDispatcher("/add-product.jsp").forward(request, response);
+        request.getRequestDispatcher("/jsp/shopowner/add-product.jsp").forward(request, response);
     }
 
     private void processAddProduct(HttpServletRequest request, HttpServletResponse response, User user)
@@ -206,7 +206,7 @@ public class ProductServlet extends HttpServlet {
             request.setAttribute("imageUrl", imageUrl);
             request.setAttribute("description", description);
             request.setAttribute("categories", categoryService.getAllCategories());
-            request.getRequestDispatcher("/add-product.jsp").forward(request, response);
+            request.getRequestDispatcher("/jsp/shopowner/add-product.jsp").forward(request, response);
             return;
         }
 
@@ -250,7 +250,7 @@ public class ProductServlet extends HttpServlet {
 
         request.setAttribute("product", product);
         request.setAttribute("categories", categoryService.getAllCategories());
-        request.getRequestDispatcher("/edit-product.jsp").forward(request, response);
+        request.getRequestDispatcher("/jsp/shopowner/edit-product.jsp").forward(request, response);
     }
 
     private void processEditProduct(HttpServletRequest request, HttpServletResponse response)
@@ -307,7 +307,7 @@ public class ProductServlet extends HttpServlet {
             request.setAttribute("error", error);
             request.setAttribute("product", p);
             request.setAttribute("categories", categoryService.getAllCategories());
-            request.getRequestDispatcher("/edit-product.jsp").forward(request, response);
+            request.getRequestDispatcher("/jsp/shopowner/edit-product.jsp").forward(request, response);
             return;
         }
 

@@ -52,7 +52,7 @@ public class ShopOwnerPlanServlet extends HttpServlet {
         int shopId = getShopId(request, owner.getUserID());
         if (shopId <= 0) {
             request.setAttribute("error", "Bạn chưa có shop. Vui lòng tạo shop trước.");
-            request.getRequestDispatcher("/store-owner-dashboard.jsp").forward(request, response);
+            request.getRequestDispatcher("/jsp/shopowner/store-owner-dashboard.jsp").forward(request, response);
             return;
         }
 
@@ -122,7 +122,7 @@ public class ShopOwnerPlanServlet extends HttpServlet {
         req.setAttribute("totalPages", totalPages);
         req.setAttribute("status",     status);
 
-        req.getRequestDispatcher("/subscription/planList.jsp").forward(req, resp);
+        req.getRequestDispatcher("/jsp/subscription/planList.jsp").forward(req, resp);
     }
 
     // ─────────────────────────────────────────────────────────────────────
@@ -134,7 +134,7 @@ public class ShopOwnerPlanServlet extends HttpServlet {
         req.setAttribute("availableVariants", variants);
         req.setAttribute("mode",   "create");
         req.setAttribute("shopId", shopId);
-        req.getRequestDispatcher("/subscription/planForm.jsp").forward(req, resp);
+        req.getRequestDispatcher("/jsp/subscription/planForm.jsp").forward(req, resp);
     }
 
     // ─────────────────────────────────────────────────────────────────────
@@ -159,7 +159,7 @@ public class ShopOwnerPlanServlet extends HttpServlet {
         req.setAttribute("plan",   plan);
         req.setAttribute("mode",   "edit");
         req.setAttribute("shopId", shopId);
-        req.getRequestDispatcher("/subscription/planForm.jsp").forward(req, resp);
+        req.getRequestDispatcher("/jsp/subscription/planForm.jsp").forward(req, resp);
     }
 
     // ─────────────────────────────────────────────────────────────────────
@@ -177,7 +177,7 @@ public class ShopOwnerPlanServlet extends HttpServlet {
             req.setAttribute("plan",   plan);
             req.setAttribute("mode",   "create");
             req.setAttribute("errors", result.getErrors());
-            req.getRequestDispatcher("/subscription/planForm.jsp").forward(req, resp);
+            req.getRequestDispatcher("/jsp/subscription/planForm.jsp").forward(req, resp);
             return;
         }
 
@@ -207,7 +207,7 @@ public class ShopOwnerPlanServlet extends HttpServlet {
             req.setAttribute("plan",   updated);
             req.setAttribute("mode",   "edit");
             req.setAttribute("errors", result.getErrors());
-            req.getRequestDispatcher("/subscription/planForm.jsp").forward(req, resp);
+            req.getRequestDispatcher("/jsp/subscription/planForm.jsp").forward(req, resp);
             return;
         }
 

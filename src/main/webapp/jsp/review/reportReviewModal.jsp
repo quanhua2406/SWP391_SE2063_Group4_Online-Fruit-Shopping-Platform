@@ -2,7 +2,7 @@
   reportReviewModal.jsp
   Fragment – nhúng vào trang product detail hoặc view review.
   Cách dùng:
-    <jsp:include page="/review/reportReviewModal.jsp"/>
+    <jsp:include page="/jsp/review/reportReviewModal.jsp"/>
   Kích hoạt modal:
     openReportModal(reviewId, redirectUrl)
 --%>

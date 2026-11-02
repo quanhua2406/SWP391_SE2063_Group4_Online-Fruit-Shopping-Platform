@@ -73,7 +73,7 @@ public class ReviewServlet extends HttpServlet {
         request.setAttribute("productId", productId);
         String redirect = request.getParameter("redirect");
         request.setAttribute("redirect", redirect);
-        request.getRequestDispatcher("/review/writeProductReview.jsp").forward(request, response);
+        request.getRequestDispatcher("/jsp/review/writeProductReview.jsp").forward(request, response);
     }
 
     // ----------------------------------------------------------------
@@ -255,7 +255,7 @@ public class ReviewServlet extends HttpServlet {
         request.setAttribute("errorMsg",  errorMsg);
         request.setAttribute("productId", productId);
         request.setAttribute("orderId",   orderId);
-        request.getRequestDispatcher("/review/writeProductReview.jsp")
+        request.getRequestDispatcher("/jsp/review/writeProductReview.jsp")
                 .forward(request, response);
     }
 }

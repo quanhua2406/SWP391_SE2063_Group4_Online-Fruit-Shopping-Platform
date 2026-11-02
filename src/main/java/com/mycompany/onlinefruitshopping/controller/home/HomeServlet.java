@@ -55,7 +55,7 @@ public class HomeServlet extends HttpServlet {
             LOG.log(Level.WARNING, "Cannot load featured products for home page", e);
         }
 
-        request.getRequestDispatcher("/home.jsp")
+        request.getRequestDispatcher("/jsp/home/home.jsp")
                 .forward(request, response);
     }
 }

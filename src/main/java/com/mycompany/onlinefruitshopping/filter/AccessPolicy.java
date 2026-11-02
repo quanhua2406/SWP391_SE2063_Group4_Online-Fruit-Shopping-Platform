@@ -12,14 +12,14 @@ final class AccessPolicy {
     private static final Set<String> DELIVERY_READERS =
             Set.of("CUSTOMER", "SHOPOWNER", "DELIVERYSTAFF");
     private static final Set<String> PUBLIC_READ = Set.of(
-            "/", "/index.html", "/index.jsp", "/home", "/home.jsp",
+            "/", "/index.html", "/index.jsp", "/home", "/jsp/home/home.jsp",
             "/products", "/catalog", "/product", "/product-detail",
-            "/product-details.jsp", "/product-catalog.jsp",
+            "/jsp/product/product-details.jsp", "/jsp/product/product-catalog.jsp",
             "/api/products/search-suggestions",
             "/subscriptions", "/subscription/plans", "/subscription/detail",
             "/ViewReviewServlet", "/view-review", "/reviews", "/review",
             "/login.jsp", "/register.jsp", "/forgot-password.jsp",
-            "/verify-otp.jsp", "/reset-password.jsp", "/cart.jsp");
+            "/verify-otp.jsp", "/reset-password.jsp", "/jsp/cart/cart.jsp");
     private static final Set<String> AUTH_ROUTES = Set.of(
             "/login", "/register", "/verify-register-otp", "/forgot-password",
             "/verify-otp", "/reset-password", "/logout",

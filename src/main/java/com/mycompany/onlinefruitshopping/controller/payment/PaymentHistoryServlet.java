@@ -58,7 +58,7 @@ public class PaymentHistoryServlet extends HttpServlet {
             request.setAttribute("searchQuery", searchQuery != null ? searchQuery : "");
             request.setAttribute("isStaffOrAdmin", isStaffOrAdmin);
 
-            request.getRequestDispatcher("/payment-history.jsp").forward(request, response);
+            request.getRequestDispatcher("/jsp/payment/payment-history.jsp").forward(request, response);
         } catch (SQLException e) {
             throw new ServletException("Database error in PaymentHistoryServlet", e);
         }
