@@ -91,15 +91,8 @@
         }
 
         .payment-methods-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-        }
-
-        @media (max-width: 768px) {
-            .payment-methods-grid {
-                grid-template-columns: 1fr;
-            }
+            max-width: 640px;
+            margin: 0 auto;
         }
 
         .method-card {
@@ -254,8 +247,8 @@
     <div class="gateway-container">
 
         <div class="header-title">
-            <h1>Cổng Thanh Toán Trực Tuyến</h1>
-            <p>Hệ thống hỗ trợ cổng thanh toán quốc gia VNPay Sandbox & Quét mã VietQR tiện lợi</p>
+            <h1>Cổng Thanh Toán VNPay Sandbox</h1>
+            <p>Hệ thống chuyển tiếp trực tiếp sang cổng thanh toán bảo mật VNPay Sandbox để nhập thông tin thẻ</p>
         </div>
 
         <div class="card">
@@ -277,37 +270,37 @@
 
             <div class="payment-methods-grid">
 
-                <!-- PHƯƠNG THỨC 1: VNPAY SANDBOX (TASK 1, 2) -->
+                <!-- CỔNG VNPAY SANDBOX (TASK 1, 2) -->
                 <div class="method-card">
                     <div>
                         <div class="method-header">
-                            <span class="method-badge badge-vnpay">Cổng Điện Tử VNPay</span>
-                            <div class="method-title">Cổng Thanh Toán VNPay</div>
+                            <span class="method-badge badge-vnpay">Cổng Điện Tử VNPay Sandbox</span>
+                            <div class="method-title">Cổng Thanh Toán Trực Tuyến VNPay</div>
                             <div class="method-desc">
-                                Hỗ trợ hơn 34 ngân hàng nội địa (Thẻ ATM), Thẻ quốc tế Visa/Mastercard và quét mã QR ứng dụng ngân hàng.
+                                Hỗ trợ hơn 34 ngân hàng nội địa (Thẻ ATM), Thẻ quốc tế Visa/Mastercard và xác thực giao dịch bảo mật chuẩn VNPAY.
                             </div>
                         </div>
 
                         <ul class="instructions-list">
-                            <li>Chuyển tiếp trực tiếp sang cổng bảo mật VNPay Sandbox.</li>
-                            <li>Sử dụng thông tin thẻ thử nghiệm để xác thực giao dịch.</li>
-                            <li>Hệ thống tự động kích hoạt trạng thái đơn hàng khi thành công.</li>
+                            <li>Chuyển tiếp trực tiếp sang cổng bảo mật VNPay Sandbox để nhập thông tin thẻ.</li>
+                            <li>Sử dụng thông tin thẻ thử nghiệm bên dưới để thanh toán.</li>
+                            <li>Hệ thống tự động kích hoạt trạng thái đơn hàng khi giao dịch thành công.</li>
                         </ul>
 
                         <!-- Thông tin thẻ test VNPay Sandbox -->
-                        <div style="background: #f0fdf4; border: 1px dashed #86efac; border-radius: 8px; padding: 12px; margin: 12px 0 16px; font-size: 13px;">
-                            <div style="font-weight: 700; color: #166534; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <div style="background: #f0fdf4; border: 1px dashed #86efac; border-radius: 8px; padding: 16px; margin: 16px 0 20px; font-size: 14px;">
+                            <div style="font-weight: 700; color: #166534; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; font-size: 15px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
                                     <line x1="1" y1="10" x2="23" y2="10"></line>
                                 </svg>
-                                Thông tin thẻ kiểm thử VNPay Sandbox:
+                                Thông tin thẻ kiểm thử VNPay Sandbox để nhập:
                             </div>
-                            <div style="display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; color: #1e293b;">
+                            <div style="display: grid; grid-template-columns: 140px 1fr; gap: 8px 12px; color: #1e293b;">
                                 <span style="color: #64748b;">Ngân hàng:</span>
-                                <strong>NCB</strong>
+                                <strong>NCB (Ngân hàng Quốc Dân)</strong>
                                 <span style="color: #64748b;">Số thẻ:</span>
-                                <code style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-weight: 700; color: #0f172a; width: fit-content;">9704198526191432198</code>
+                                <code style="background: #e2e8f0; padding: 3px 8px; border-radius: 4px; font-weight: 700; color: #0f172a; width: fit-content; font-size: 15px;">9704198526191432198</code>
                                 <span style="color: #64748b;">Tên chủ thẻ:</span>
                                 <strong>NGUYEN VAN A</strong>
                                 <span style="color: #64748b;">Ngày phát hành:</span>
@@ -318,59 +311,15 @@
                         </div>
                     </div>
 
-                    <div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
                         <a href="${vnpayUrl}" class="btn-action btn-vnpay" id="btn-vnpay-direct">
-                            Thanh Toán Ngay Qua VNPay
+                            Chuyển Sang Cổng VNPay Sandbox Nhập Thẻ
                         </a>
-                        <a href="${pageContext.request.contextPath}/payment/confirm-simulated?orderId=${order.orderId}" class="btn-action btn-secondary">
+                        <a href="${pageContext.request.contextPath}/payment/confirm-simulated?orderId=${order.orderId}" class="btn-action btn-secondary" style="margin-top:0;">
                             Mô phỏng VNPay Thành Công (Sandbox Demo)
                         </a>
-                    </div>
-                </div>
-
-                <!-- PHƯƠNG THỨC 2: VIETQR CHUYỂN KHOẢN TRỰC TIẾP (TASK 1, 2) -->
-                <div class="method-card">
-                    <div>
-                        <div class="method-header">
-                            <span class="method-badge badge-vietqr">Chuyển Khoản 24/7</span>
-                            <div class="method-title">Quét Mã VietQR Ngân Hàng</div>
-                            <div class="method-desc">
-                                Mở ứng dụng ngân hàng bất kỳ để quét mã QR và xác nhận giao dịch tức thì.
-                            </div>
-                        </div>
-
-                        <div class="qr-image-container">
-                            <img src="https://img.vietqr.io/image/970422-999888666888-compact2.png?amount=${order.totalAmount}&addInfo=${qrContent}&accountName=CONG%20TY%20CP%20HOA%20QUA%20SACH%20ONLINE%20FRUIT"
-                                 alt="VietQR Payment Code"
-                                 onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${qrContent}';">
-                        </div>
-
-                        <div class="bank-details">
-                            <div class="bank-row">
-                                <span class="bank-label">Ngân hàng:</span>
-                                <span class="bank-value">${bankName}</span>
-                            </div>
-                            <div class="bank-row">
-                                <span class="bank-label">Số tài khoản:</span>
-                                <span class="bank-value">${bankAccountNumber}</span>
-                            </div>
-                            <div class="bank-row">
-                                <span class="bank-label">Chủ tài khoản:</span>
-                                <span class="bank-value">${bankAccountName}</span>
-                            </div>
-                            <div class="bank-row">
-                                <span class="bank-label">Nội dung chuyển khoản:</span>
-                                <span class="bank-value" style="color: #dc2626; font-weight: 700;">${qrContent}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <a href="${pageContext.request.contextPath}/payment/confirm-simulated?orderId=${order.orderId}" class="btn-action btn-vietqr">
-                            Xác Nhận Đã Chuyển Khoản VietQR
-                        </a>
-                        <a href="${pageContext.request.contextPath}/orders/detail?id=${order.orderId}" class="btn-action btn-secondary">
-                            Xem Lại Chi Tiết Đơn Hàng
+                        <a href="${pageContext.request.contextPath}/orders/detail?id=${order.orderId}" class="btn-action" style="background:#f3f4f6; color:#4b5563; border:1px solid #d1d5db;">
+                            Quay Lại Chi Tiết Đơn Hàng
                         </a>
                     </div>
                 </div>
