@@ -3,24 +3,25 @@ package com.mycompany.onlinefruitshopping.utils;
 /** Quy tắc nghiệp vụ tách riêng để dễ đọc và dễ kiểm thử. */
 public class DeliveryRules {
     public static String nextStatus(String current, String action) {
-        if ("Assigned".equals(current) && "accept".equals(action)) return "Accepted";
-        if ("Assigned".equals(current) && "reject".equals(action)) return "Rejected";
-        if ("Accepted".equals(current) && "pickup".equals(action)) return "PickedUp";
-        if ("PickedUp".equals(current) && "start".equals(action)) return "Delivering";
-        if ("Delivering".equals(current) && "delivered".equals(action)) return "Delivered";
-        if ("Delivering".equals(current) && "failed".equals(action)) return "Failed";
+        if ("Assigned".equalsIgnoreCase(current) && "accept".equalsIgnoreCase(action)) return "Accepted";
+        if ("Assigned".equalsIgnoreCase(current) && "reject".equalsIgnoreCase(action)) return "Rejected";
+        if ("Accepted".equalsIgnoreCase(current) && "pickup".equalsIgnoreCase(action)) return "PickedUp";
+        if ("PickedUp".equalsIgnoreCase(current) && "start".equalsIgnoreCase(action)) return "Delivering";
+        if ("Delivering".equalsIgnoreCase(current) && "delivered".equalsIgnoreCase(action)) return "Delivered";
+        if ("Delivering".equalsIgnoreCase(current) && "failed".equalsIgnoreCase(action)) return "Failed";
         throw new IllegalArgumentException("Thao tác không phù hợp với trạng thái hiện tại. Hãy tải lại trang.");
     }
 
     public static String orderStatus(String deliveryStatus) {
-        switch (deliveryStatus) {
-            case "Assigned":
-            case "Accepted":
-            case "Rejected": return "Confirmed";
-            case "PickedUp":
-            case "Delivering":
-            case "Failed": return "Shipping";
-            case "Delivered": return "Completed";
+        if (deliveryStatus == null) throw new IllegalArgumentException("Trạng thái giao hàng không hợp lệ.");
+        switch (deliveryStatus.toLowerCase()) {
+            case "assigned":
+            case "accepted":
+            case "rejected": return "Confirmed";
+            case "pickedup":
+            case "delivering":
+            case "failed": return "Shipping";
+            case "delivered": return "Completed";
             default: throw new IllegalArgumentException("Trạng thái giao hàng không hợp lệ.");
         }
     }

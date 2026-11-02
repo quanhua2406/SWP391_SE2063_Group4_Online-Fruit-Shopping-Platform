@@ -24,24 +24,25 @@ public class DeliveryDAO {
     }
 
     private static final String SELECT_DELIVERY = """
-        SELECT d.delivery_id, d.order_id, o.shop_id, d.staff_id AS shipper_id, d.status AS delivery_status,
-               d.created_at AS pickup_time, d.created_at AS delivered_time, d.note AS delivery_note,
-               s.shop_name, COALESCE(s.description, s.shop_name) AS pickup_address, a.full_name AS shipper_name,
-               COALESCE(ua.recipient_name, u.full_name) AS receiver_name,
-               COALESCE(ua.phone, u.phone) AS receiver_phone,
-               CONCAT_WS(', ', ua.address_line, ua.ward, ua.district, ua.province) AS shipping_address,
-               o.total_amount, o.status AS order_status,
-               COALESCE(pay.method, 'COD') AS payment_method,
-               COALESCE(pay.status, 'Pending') AS payment_status,
-               d.note AS order_note
+        SELECT d.delivery_id, d.order_id, o.shop_id, COALESCE(d.staff_id, d.shipper_id) AS shipper_id, COALESCE(d.status, d.delivery_status) AS delivery_status,
+               COALESCE(d.pickup_time, d.created_at) AS pickup_time, COALESCE(d.delivered_time, d.created_at) AS delivered_time, d.note AS delivery_note,
+               s.shop_name, COALESCE(s.description, s.pickup_address, s.shop_name) AS pickup_address, a.full_name AS shipper_name,
+               COALESCE(ua.recipient_name, o.receiver_name, u.full_name) AS receiver_name,
+               COALESCE(ua.phone, o.receiver_phone, u.phone) AS receiver_phone,
+               COALESCE(CONCAT_WS(', ', ua.address_line, ua.ward, ua.district, ua.province), o.shipping_address) AS shipping_address,
+               o.total_amount, COALESCE(o.status, o.order_status) AS order_status,
+               COALESCE(pay.method, o.payment_method, 'COD') AS payment_method,
+               COALESCE(pay.status, o.payment_status, 'Pending') AS payment_status,
+               COALESCE(d.note, o.note) AS order_note
         FROM deliveries d
         JOIN orders o ON o.order_id = d.order_id
         LEFT JOIN shops s ON s.shop_id = o.shop_id
-        LEFT JOIN users a ON a.user_id = d.staff_id
+        LEFT JOIN users a ON a.user_id = COALESCE(d.staff_id, d.shipper_id)
         LEFT JOIN users u ON u.user_id = o.user_id
         LEFT JOIN user_addresses ua ON ua.address_id = o.address_id
         LEFT JOIN payments pay ON pay.order_id = o.order_id
-        WHERE 1=1
+        LEFT JOIN shop_delivery_staff t ON t.shop_id = o.shop_id AND t.shipper_id = COALESCE(d.staff_id, d.shipper_id)
+        WHERE (s.status = N'active' OR s.status IS NULL)
         """;
 
     private String scope(User user) {
@@ -50,7 +51,7 @@ public class DeliveryDAO {
         }
         return switch (ValidationUtil.normalizeRoleName(user.getRoleName())) {
             case "SHOPOWNER" -> " AND s.owner_id = ?";
-            case "DELIVERYSTAFF" -> " AND d.staff_id = ?";
+            case "DELIVERYSTAFF" -> " AND COALESCE(d.shipper_id, d.staff_id) = ? AND (t.status = N'Active' OR t.status IS NULL)";
             case "CUSTOMER" -> " AND o.user_id = ?";
             default -> throw new IllegalArgumentException("Bạn không có quyền xem giao hàng.");
         };
@@ -95,17 +96,19 @@ public class DeliveryDAO {
         if (delivery == null) throw new IllegalArgumentException("Không tìm thấy giao hàng thuộc quyền của bạn.");
         List<DeliveryOrderItem> list = new ArrayList<>();
         String sql = """
-            SELECT p.product_name, v.sku AS variant_name, oi.unit_price AS price, oi.quantity
+            SELECT p.product_name, v.sku AS variant_name, COALESCE(oi.unit_price, oi.price) AS price, oi.quantity
             FROM deliveries d
             JOIN orders o ON o.order_id = d.order_id
+            LEFT JOIN shops s ON s.shop_id = o.shop_id
+            LEFT JOIN shop_delivery_staff t ON t.shop_id = o.shop_id AND t.shipper_id = COALESCE(d.staff_id, d.shipper_id)
             JOIN order_items oi ON oi.order_id = o.order_id
             JOIN product_variants v ON v.variant_id = oi.variant_id
             JOIN products p ON p.product_id = v.product_id
-            WHERE d.delivery_id = ?
-            ORDER BY oi.order_item_id
-            """;
+            WHERE (s.status = N'active' OR s.status IS NULL) AND d.delivery_id = ?
+            """ + scope(user) + " ORDER BY oi.order_item_id";
         try (Connection c = connections.open(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, delivery.getId());
+            ps.setInt(2, user.getUserID());
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     DeliveryOrderItem item = new DeliveryOrderItem();
@@ -126,15 +129,15 @@ public class DeliveryDAO {
             c.setAutoCommit(false);
             try {
                 String orderSql = """
-                    SELECT o.order_id, o.status AS order_status, o.user_id,
-                           COALESCE(pay.method, 'COD') AS payment_method,
-                           COALESCE(pay.status, 'Pending') AS payment_status,
+                    SELECT o.order_id, COALESCE(o.status, o.order_status) AS order_status, o.user_id,
+                           COALESCE(pay.method, o.payment_method, 'COD') AS payment_method,
+                           COALESCE(pay.status, o.payment_status, 'Pending') AS payment_status,
                            s.owner_id
                     FROM orders o WITH (UPDLOCK, HOLDLOCK)
                     LEFT JOIN shops s ON s.shop_id = o.shop_id
                     LEFT JOIN payments pay ON pay.order_id = o.order_id
                     WHERE o.order_id = (
-                        SELECT order_id FROM deliveries WHERE delivery_id = ? AND staff_id = ?
+                        SELECT order_id FROM deliveries WHERE delivery_id = ? AND COALESCE(staff_id, shipper_id) = ?
                     )
                     """;
                 int orderId;
@@ -159,9 +162,13 @@ public class DeliveryDAO {
 
                 String oldStatus;
                 String deliverySql = """
-                    SELECT d.status AS delivery_status, d.note
+                    SELECT COALESCE(d.delivery_status, d.status) AS delivery_status, d.note
                     FROM deliveries d WITH (UPDLOCK, HOLDLOCK)
-                    WHERE d.delivery_id = ? AND d.staff_id = ?
+                    LEFT JOIN users a WITH (HOLDLOCK) ON a.user_id = COALESCE(d.shipper_id, d.staff_id)
+                    LEFT JOIN shop_delivery_staff t WITH (HOLDLOCK) ON t.shop_id = d.shop_id AND t.shipper_id = COALESCE(d.shipper_id, d.staff_id)
+                    WHERE d.delivery_id = ? AND COALESCE(d.shipper_id, d.staff_id) = ?
+                      AND (a.status = N'active' OR a.status IS NULL)
+                      AND (t.status = N'Active' OR t.status IS NULL)
                     """;
                 try (PreparedStatement ps = c.prepareStatement(deliverySql)) {
                     ps.setInt(1, deliveryId);
@@ -174,26 +181,42 @@ public class DeliveryDAO {
 
                 String nextStatus = DeliveryRules.nextStatus(oldStatus, action);
                 String cleanReason = DeliveryRules.validateReason(nextStatus, reason);
+                if (!DeliveryRules.orderStatus(oldStatus).equalsIgnoreCase(orderStatus)) {
+                    throw new IllegalArgumentException("Trạng thái đơn hàng đã thay đổi. Hãy liên hệ chủ shop.");
+                }
+                if ("Delivered".equalsIgnoreCase(nextStatus)) {
+                    DeliveryRules.validatePayment(paymentMethod, paymentStatus, collected);
+                }
 
                 String updateDelivery = """
-                    UPDATE deliveries SET status = ?, note = ?
-                    WHERE delivery_id = ? AND staff_id = ?
+                    UPDATE deliveries SET status = ?, delivery_status = ?, note = ?,
+                        pickup_time = CASE WHEN ? = N'PickedUp' THEN GETDATE() ELSE pickup_time END,
+                        delivered_time = CASE WHEN ? = N'Delivered' THEN GETDATE() ELSE delivered_time END
+                    WHERE delivery_id = ? AND COALESCE(staff_id, shipper_id) = ?
                     """;
                 try (PreparedStatement ps = c.prepareStatement(updateDelivery)) {
-                    ps.setNString(1, nextStatus);
-                    ps.setNString(2, cleanReason.isEmpty() ? DeliveryRules.label(nextStatus) + "." : cleanReason);
-                    ps.setInt(3, deliveryId);
-                    ps.setInt(4, shipperId);
+                    ps.setNString(1, nextStatus.toLowerCase());
+                    ps.setNString(2, nextStatus);
+                    ps.setNString(3, cleanReason.isEmpty() ? DeliveryRules.label(nextStatus) + "." : cleanReason);
+                    ps.setNString(4, nextStatus);
+                    ps.setNString(5, nextStatus);
+                    ps.setInt(6, deliveryId);
+                    ps.setInt(7, shipperId);
                     if (ps.executeUpdate() != 1) throw new SQLException("Giao hàng đã thay đổi, hãy thử lại.");
                 }
 
                 String updateOrder = """
-                    UPDATE orders SET status = ?
+                    UPDATE orders SET status = ?, order_status = ?,
+                        payment_status = CASE WHEN ? = N'Delivered' AND (payment_method = N'COD' OR ? = N'COD')
+                                              THEN N'Paid' ELSE payment_status END
                     WHERE order_id = ?
                     """;
                 try (PreparedStatement ps = c.prepareStatement(updateOrder)) {
-                    ps.setNString(1, DeliveryRules.orderStatus(nextStatus));
-                    ps.setInt(2, orderId);
+                    ps.setNString(1, DeliveryRules.orderStatus(nextStatus).toLowerCase());
+                    ps.setNString(2, DeliveryRules.orderStatus(nextStatus));
+                    ps.setNString(3, nextStatus);
+                    ps.setNString(4, paymentMethod);
+                    ps.setInt(5, orderId);
                     ps.executeUpdate();
                 }
 
