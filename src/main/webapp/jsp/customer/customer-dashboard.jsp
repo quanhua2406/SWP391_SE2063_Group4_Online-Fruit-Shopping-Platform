@@ -7,6 +7,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Customer Dashboard - FreshFruit</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
 
     <style>
         * {
@@ -239,40 +240,9 @@
 <body>
 
 <!-- =========================
-     NAVBAR
+     NAVBAR (Reusable Component)
      ========================= -->
-
-<header class="navbar">
-
-    <div class="logo">
-        🍊 FreshFruit
-    </div>
-
-    <nav class="nav-actions">
-
-        <a href="${pageContext.request.contextPath}/home">
-            🏠 Home
-        </a>
-
-        <a href="${pageContext.request.contextPath}/cart">
-            🛒 Cart
-        </a>
-
-        <a href="${pageContext.request.contextPath}/notifications">
-            🔔 Notifications
-            <c:if test="${not empty sessionScope.unreadNotificationCount and sessionScope.unreadNotificationCount > 0}">
-                <span class="bell-badge">${sessionScope.unreadNotificationCount}</span>
-            </c:if>
-        </a>
-
-        <a href="${pageContext.request.contextPath}/logout"
-           class="logout">
-            Logout
-        </a>
-
-    </nav>
-
-</header>
+<jsp:include page="/includes/header.jsp" />
 
 <!-- =========================
      CUSTOMER DASHBOARD
@@ -353,7 +323,7 @@
                 View your order history and current orders.
             </p>
 
-            <a class="card-button" href="#">
+            <a class="card-button" href="${pageContext.request.contextPath}/orders">
                 My Orders
             </a>
 
@@ -371,7 +341,7 @@
             </p>
 
             <a class="card-button"
-               href="${pageContext.request.contextPath}/shopowner/delivery/list">
+               href="${pageContext.request.contextPath}/orders?status=shipping">
                 Track Order
             </a>
 
