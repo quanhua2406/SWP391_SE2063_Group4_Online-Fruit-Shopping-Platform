@@ -521,26 +521,6 @@
 
             </div>
 
-            <!-- ROLE MANAGEMENT -->
-
-            <div class="dashboard-card">
-
-                <div class="dashboard-icon">🔐</div>
-
-                <h3>Role Management</h3>
-
-                <p>
-                    Search users by email and
-                    change their system role.
-                </p>
-
-                <a class="action-btn"
-                   href="${pageContext.request.contextPath}/admin/roles">
-                    Manage Roles
-                </a>
-
-            </div>
-
             <!-- SHOP OWNER MANAGEMENT -->
 
             <div class="dashboard-card">
@@ -557,46 +537,6 @@
                 <a class="action-btn"
                    href="${pageContext.request.contextPath}/admin/shops">
                     Manage Shops
-                </a>
-
-            </div>
-
-            <!-- PRODUCT MANAGEMENT -->
-
-            <div class="dashboard-card">
-
-                <div class="dashboard-icon">🍎</div>
-
-                <h3>Product Management</h3>
-
-                <p>
-                    Manage and approve products
-                    on the platform.
-                </p>
-
-                <a class="action-btn"
-                   href="${pageContext.request.contextPath}/admin/product-management">
-                    Manage Products
-                </a>
-
-            </div>
-
-            <!-- CATEGORY MANAGEMENT -->
-
-            <div class="dashboard-card">
-
-                <div class="dashboard-icon">📂</div>
-
-                <h3>Category Management</h3>
-
-                <p>
-                    Create and organise product categories
-                    used when adding products.
-                </p>
-
-                <a class="action-btn"
-                   href="${pageContext.request.contextPath}/admin/category-management">
-                    Manage Categories
                 </a>
 
             </div>
@@ -700,24 +640,6 @@
                     <c:if test="${not empty reportedReviewsCount && reportedReviewsCount > 0}">
                         (${reportedReviewsCount})
                     </c:if>
-                </a>
-
-            </div>
-
-            <!-- PAYMENT MANAGEMENT -->
-
-            <div class="dashboard-card">
-
-                <div class="dashboard-icon">💳</div>
-
-                <h3>Payments</h3>
-
-                <p>
-                    Monitor transactions and payment status.
-                </p>
-
-                <a class="action-btn" href="${pageContext.request.contextPath}/payments">
-                    View Payments
                 </a>
 
             </div>

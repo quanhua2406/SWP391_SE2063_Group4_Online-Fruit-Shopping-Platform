@@ -247,6 +247,25 @@
 
             </div>
 
+            <!-- VARIANT MANAGEMENT -->
+
+            <div class="dashboard-card">
+
+                <div class="dashboard-icon">📏</div>
+
+                <h3>Quản lý biến thể</h3>
+
+                <p>
+                    Thêm, sửa và xóa biến thể (quy cách đóng gói, SKU, khối lượng)
+                    của từng sản phẩm.
+                </p>
+
+                <a href="<%= contextPath %>/store-owner/variants">
+                    Quản lý biến thể
+                </a>
+
+            </div>
+
             <!-- STOCK MANAGEMENT -->
 
             <div class="dashboard-card">
