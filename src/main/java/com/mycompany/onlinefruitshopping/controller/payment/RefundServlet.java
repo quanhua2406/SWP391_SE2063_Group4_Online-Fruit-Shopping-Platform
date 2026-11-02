@@ -114,7 +114,7 @@ public class RefundServlet extends HttpServlet {
 
         request.setAttribute("order", order);
         request.setAttribute("payment", payment);
-        request.getRequestDispatcher("/refund-request.jsp").forward(request, response);
+        request.getRequestDispatcher("/jsp/payment/refund-request.jsp").forward(request, response);
     }
 
     private void handleCreateRefundRequest(HttpServletRequest request, HttpServletResponse response, User user)
@@ -154,7 +154,7 @@ public class RefundServlet extends HttpServlet {
         List<Refund> refundList = paymentService.getCustomerRefunds(user.getUserID());
         request.setAttribute("refundList", refundList);
         request.setAttribute("isCustomerView", true);
-        request.getRequestDispatcher("/refund-request.jsp").forward(request, response);
+        request.getRequestDispatcher("/jsp/payment/refund-request.jsp").forward(request, response);
     }
 
     private void showAdminRefunds(HttpServletRequest request, HttpServletResponse response, User user)
@@ -171,7 +171,7 @@ public class RefundServlet extends HttpServlet {
 
         request.setAttribute("refundList", refundList);
         request.setAttribute("statusFilter", statusFilter != null ? statusFilter : "all");
-        request.getRequestDispatcher("/admin-refunds.jsp").forward(request, response);
+        request.getRequestDispatcher("/jsp/admin/admin-refunds.jsp").forward(request, response);
     }
 
     private void handleProcessRefund(HttpServletRequest request, HttpServletResponse response, User user)

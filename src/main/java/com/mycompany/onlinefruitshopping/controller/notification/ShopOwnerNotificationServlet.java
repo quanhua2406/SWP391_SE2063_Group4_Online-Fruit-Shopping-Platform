@@ -140,7 +140,7 @@ public class ShopOwnerNotificationServlet extends HttpServlet {
         request.setAttribute("importantUnreadCount", importantUnreadCount);
         request.setAttribute("unreadPerGroup", unreadPerGroup);
 
-        request.getRequestDispatcher("/notification/shop-owner-notifications.jsp").forward(request, response);
+        request.getRequestDispatcher("/jsp/shopowner/shop-owner-notifications.jsp").forward(request, response);
     }
 
     // =========================================================================

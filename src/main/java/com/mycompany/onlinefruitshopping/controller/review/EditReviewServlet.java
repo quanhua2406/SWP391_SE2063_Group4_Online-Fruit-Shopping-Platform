@@ -115,7 +115,7 @@ public class EditReviewServlet extends HttpServlet {
         String redirect = request.getParameter("redirect");
         request.setAttribute("redirect", redirect);
         request.setAttribute("review", result.review);
-        request.getRequestDispatcher("/review/editProductReview.jsp").forward(request, response);
+        request.getRequestDispatcher("/jsp/review/editProductReview.jsp").forward(request, response);
     }
 
     // ----------------------------------------------------------------
@@ -203,7 +203,7 @@ public class EditReviewServlet extends HttpServlet {
 
             request.setAttribute("review", originalReview);
             request.setAttribute("errorMsg", errorMsg);
-            request.getRequestDispatcher("/review/editProductReview.jsp").forward(request, response);
+            request.getRequestDispatcher("/jsp/review/editProductReview.jsp").forward(request, response);
             return;
         }
 
@@ -218,7 +218,7 @@ public class EditReviewServlet extends HttpServlet {
 
             request.setAttribute("review", originalReview);
             request.setAttribute("errorMsg", ex.getMessage());
-            request.getRequestDispatcher("/review/editProductReview.jsp").forward(request, response);
+            request.getRequestDispatcher("/jsp/review/editProductReview.jsp").forward(request, response);
             return;
         }
 
@@ -241,7 +241,7 @@ public class EditReviewServlet extends HttpServlet {
         } else {
             request.setAttribute("review", originalReview);
             request.setAttribute("errorMsg", "Không thể cập nhật đánh giá. Vui lòng thử lại sau.");
-            request.getRequestDispatcher("/review/editProductReview.jsp").forward(request, response);
+            request.getRequestDispatcher("/jsp/review/editProductReview.jsp").forward(request, response);
         }
     }
 

@@ -66,7 +66,7 @@ public class CartServlet extends HttpServlet {
             request.setAttribute("freeShippingRemaining", summary.getFreeShippingRemaining());
             request.setAttribute("cartWarnings", summary.getWarnings());
 
-            request.getRequestDispatcher("/cart.jsp").forward(request, response);
+            request.getRequestDispatcher("/jsp/cart/cart.jsp").forward(request, response);
 
         } catch (SQLException e) {
             throw new ServletException("Không thể tải dữ liệu giỏ hàng: " + e.getMessage(), e);

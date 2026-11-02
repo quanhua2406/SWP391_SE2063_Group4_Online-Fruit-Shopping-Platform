@@ -248,7 +248,7 @@ public class AuthorizationFilter implements Filter {
 
                 // Home (storefront)
                 || path.equals("/home")
-                || path.equals("/home.jsp")
+                || path.equals("/jsp/home/home.jsp")
                 || path.startsWith("/jsp/home/")
 
                 // Direct JSP pages kept by the storefront
@@ -257,13 +257,13 @@ public class AuthorizationFilter implements Filter {
                 || path.equals("/forgot-password.jsp")
                 || path.equals("/verify-otp.jsp")
                 || path.equals("/reset-password.jsp")
-                || path.equals("/product-details.jsp")
-                || path.equals("/product-catalog.jsp")
+                || path.equals("/jsp/product/product-details.jsp")
+                || path.equals("/jsp/product/product-catalog.jsp")
 
                 // Guest cart (browsing only; actions
                 // check the session themselves)
                 || path.equals("/cart")
-                || path.equals("/cart.jsp")
+                || path.equals("/jsp/cart/cart.jsp")
                 || path.startsWith("/cart/")
 
                 // Authentication

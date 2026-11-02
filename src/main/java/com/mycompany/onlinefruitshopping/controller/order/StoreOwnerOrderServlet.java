@@ -74,7 +74,7 @@ public class StoreOwnerOrderServlet extends HttpServlet {
             request.setAttribute("searchQuery", searchQuery);
             request.setAttribute("availableShippers", availableShippers);
 
-            request.getRequestDispatcher("/store-owner-orders.jsp").forward(request, response);
+            request.getRequestDispatcher("/jsp/shopowner/store-owner-orders.jsp").forward(request, response);
 
         } catch (SQLException e) {
             throw new ServletException("Lỗi CSDL khi truy vấn danh sách đơn hàng", e);
@@ -111,7 +111,7 @@ public class StoreOwnerOrderServlet extends HttpServlet {
             request.setAttribute("selectedOrder", order);
             request.setAttribute("availableShippers", availableShippers);
 
-            request.getRequestDispatcher("/store-owner-orders.jsp").forward(request, response);
+            request.getRequestDispatcher("/jsp/shopowner/store-owner-orders.jsp").forward(request, response);
 
         } catch (NumberFormatException e) {
             redirectWithError(request, response, "Định dạng mã đơn hàng không đúng.");

@@ -89,7 +89,7 @@ public class CheckoutServlet extends HttpServlet {
             request.setAttribute("deliveryMethod", deliveryMethod);
             request.setAttribute("activeCoupons", activeCoupons);
 
-            request.getRequestDispatcher("/checkout.jsp").forward(request, response);
+            request.getRequestDispatcher("/jsp/order/checkout.jsp").forward(request, response);
 
         } catch (SQLException e) {
             throw new ServletException("Database error in CheckoutServlet doGet", e);

@@ -202,7 +202,7 @@ public class CustomerProductServlet extends HttpServlet {
             request.setAttribute("sortBy", sortBy);
             request.setAttribute("baseQueryString", baseQueryString);
 
-            request.getRequestDispatcher("/product-catalog.jsp").forward(request, response);
+            request.getRequestDispatcher("/jsp/product/product-catalog.jsp").forward(request, response);
 
         } catch (SQLException e) {
             LOG.log(Level.SEVERE, "Database error in CustomerProductServlet", e);

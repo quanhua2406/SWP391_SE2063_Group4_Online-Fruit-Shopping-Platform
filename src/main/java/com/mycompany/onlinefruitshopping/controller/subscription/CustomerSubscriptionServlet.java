@@ -106,7 +106,7 @@ public class CustomerSubscriptionServlet extends HttpServlet {
         request.setAttribute("totalPages", totalPages);
         request.setAttribute("totalPlans", totalPlans);
 
-        request.getRequestDispatcher("/subscription/browsePlans.jsp").forward(request, response);
+        request.getRequestDispatcher("/jsp/subscription/browsePlans.jsp").forward(request, response);
     }
 
     // ─────────────────────────────────────────────────────────────────────
@@ -136,7 +136,7 @@ public class CustomerSubscriptionServlet extends HttpServlet {
 
         request.setAttribute("plan", plan);
         request.setAttribute("savings", savings);
-        request.getRequestDispatcher("/subscription/planDetail.jsp").forward(request, response);
+        request.getRequestDispatcher("/jsp/subscription/planDetail.jsp").forward(request, response);
     }
 
     // ─────────────────────────────────────────────────────────────────────
@@ -196,7 +196,7 @@ public class CustomerSubscriptionServlet extends HttpServlet {
         request.setAttribute("defaultDate", defaultDateStr);
         request.setAttribute("minDate", minDateStr);
 
-        request.getRequestDispatcher("/subscription/subscribeCheckout.jsp").forward(request, response);
+        request.getRequestDispatcher("/jsp/subscription/subscribeCheckout.jsp").forward(request, response);
     }
 
     // ─────────────────────────────────────────────────────────────────────
@@ -307,7 +307,7 @@ public class CustomerSubscriptionServlet extends HttpServlet {
             request.setAttribute("fruitPreferences", fruitPreferences);
             request.setAttribute("backupPhone", backupPhone);
             request.setAttribute("notes", rawNotes);
-            request.getRequestDispatcher("/subscription/subscribeCheckout.jsp").forward(request, response);
+            request.getRequestDispatcher("/jsp/subscription/subscribeCheckout.jsp").forward(request, response);
         }
     }
 

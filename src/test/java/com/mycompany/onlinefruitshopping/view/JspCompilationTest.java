@@ -19,7 +19,7 @@ class JspCompilationTest {
                     .sorted().forEach(path -> pages.add(webapp.relativize(path).toString().replace('\\', '/')));
         }
         assertEquals(15, pages.size());
-        pages.addAll(List.of("jsp/customer/customer-dashboard.jsp", "customer-dashboard.jsp",
+        pages.addAll(List.of("jsp/customer/customer-dashboard.jsp",
                 "jsp/delivery/delivery-dashboard.jsp", "jsp/shopowner/store-owner-dashboard.jsp",
                 "jsp/admin/admin-delivery-assign.jsp", "jsp/admin/admin-delivery-staff.jsp"));
         Path output = Path.of("target/jsp-compilation").toAbsolutePath();

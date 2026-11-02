@@ -158,7 +158,7 @@ public class ProductDetailServlet extends HttpServlet {
             request.setAttribute("authError", authError);
             request.setAttribute("deleteError", deleteError);
 
-            request.getRequestDispatcher("/product-details.jsp").forward(request, response);
+            request.getRequestDispatcher("/jsp/product/product-details.jsp").forward(request, response);
 
         } catch (SQLException e) {
             LOG.log(Level.SEVERE, "Lỗi CSDL khi xem chi tiết sản phẩm ID: " + productId, e);

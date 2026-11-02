@@ -70,7 +70,7 @@ public class AdminReviewServlet extends HttpServlet {
 
             ReviewReportDetailDTO detail = reportDAO.getReportDetailByReviewId(reviewId);
             request.setAttribute("detail", detail);
-            request.getRequestDispatcher("/admin/review/reviewReportDetail.jsp")
+            request.getRequestDispatcher("/jsp/admin/review/reviewReportDetail.jsp")
                    .forward(request, response);
             return;
         }
@@ -94,7 +94,7 @@ public class AdminReviewServlet extends HttpServlet {
         request.setAttribute("totalPages", totalPages);
         request.setAttribute("status",     status);
 
-        request.getRequestDispatcher("/admin/review/reviewModeration.jsp")
+        request.getRequestDispatcher("/jsp/admin/review/reviewModeration.jsp")
                .forward(request, response);
     }
 

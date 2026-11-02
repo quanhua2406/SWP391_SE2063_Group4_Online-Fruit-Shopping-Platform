@@ -1166,7 +1166,7 @@
             </form>
         </div>
     </div>
-    <jsp:include page="/review/reportReviewModal.jsp"/>
+    <jsp:include page="/jsp/review/reportReviewModal.jsp"/>
 
     <!-- Related Fruits Section -->
     <c:if test="${not empty relatedProducts}">

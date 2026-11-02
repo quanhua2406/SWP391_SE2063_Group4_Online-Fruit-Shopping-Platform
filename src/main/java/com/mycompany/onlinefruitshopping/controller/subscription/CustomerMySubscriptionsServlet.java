@@ -77,7 +77,7 @@ public class CustomerMySubscriptionsServlet extends HttpServlet {
         request.setAttribute("countCancelled", countCancelled);
         request.setAttribute("nextDeliveryDate", nextDeliveryDate);
 
-        request.getRequestDispatcher("/subscription/mySubscriptions.jsp").forward(request, response);
+        request.getRequestDispatcher("/jsp/subscription/mySubscriptions.jsp").forward(request, response);
     }
 
     @Override

@@ -522,7 +522,7 @@
 </body>
 
 <%-- ===== REPORT REVIEW MODAL ===== --%>
-<jsp:include page="/review/reportReviewModal.jsp"/>
+<jsp:include page="/jsp/review/reportReviewModal.jsp"/>
 
 <style>
   /* Nút báo cáo */

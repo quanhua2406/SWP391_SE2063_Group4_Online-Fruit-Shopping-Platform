@@ -95,7 +95,7 @@ public class ViewReviewServlet extends HttpServlet {
         request.setAttribute("authError",     authError);
         request.setAttribute("deleteError",   deleteError);
 
-        request.getRequestDispatcher("/review/viewProductReview.jsp")
+        request.getRequestDispatcher("/jsp/review/viewProductReview.jsp")
                 .forward(request, response);
     }
 

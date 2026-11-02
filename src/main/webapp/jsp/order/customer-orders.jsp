@@ -340,7 +340,11 @@
 
         <c:if test="${not empty param.error}">
             <div style="background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 14px;">
-                ${param.error}
+                <c:choose>
+                    <c:when test="${param.error == 'not_found'}">Không tìm thấy thông tin đơn hàng yêu cầu.</c:when>
+                    <c:when test="${param.error == 'payment_failed'}">Giao dịch thanh toán không thành công hoặc đã bị hủy.</c:when>
+                    <c:otherwise>${param.error}</c:otherwise>
+                </c:choose>
             </div>
         </c:if>
 
@@ -411,6 +415,13 @@
                                 <a href="${pageContext.request.contextPath}/orders/detail?id=${ord.orderId}" class="btn-action btn-view">
                                     Chi Tiết & Tiến Trình
                                 </a>
+
+                                <!-- Thanh toán trực tuyến nếu chưa thanh toán (Feature 7) -->
+                                <c:if test="${ord.paymentStatus == 'pending' && ord.status != 'cancelled'}">
+                                    <a href="${pageContext.request.contextPath}/payment/process?orderId=${ord.orderId}" class="btn-action" style="background:#005baa; color:#ffffff; text-decoration:none; font-weight:600;">
+                                        Thanh Toán VNPay
+                                    </a>
+                                </c:if>
 
                                 <!-- Mua lại (Task 10: Re-order) -->
                                 <form action="${pageContext.request.contextPath}/orders" method="POST" style="margin:0;">

@@ -106,7 +106,7 @@ public class CustomerOrderServlet extends HttpServlet {
         request.setAttribute("currentStatus", status);
         request.setAttribute("searchQuery", searchQuery);
 
-        request.getRequestDispatcher("/customer-orders.jsp").forward(request, response);
+        request.getRequestDispatcher("/jsp/order/customer-orders.jsp").forward(request, response);
     }
 
     private void handleViewDetail(HttpServletRequest request, HttpServletResponse response, int userId)
@@ -132,7 +132,7 @@ public class CustomerOrderServlet extends HttpServlet {
         }
 
         request.setAttribute("order", order);
-        request.getRequestDispatcher("/customer-order-detail.jsp").forward(request, response);
+        request.getRequestDispatcher("/jsp/order/customer-order-detail.jsp").forward(request, response);
     }
 
     private void handleCancelOrder(HttpServletRequest request, HttpServletResponse response, int userId)

@@ -79,10 +79,17 @@ public class OrderService {
     }
 
     public Order getOrderDetail(int orderId, int shopId) throws SQLException {
-        if (orderId <= 0 || shopId <= 0) {
+        if (orderId <= 0) {
             return null;
         }
         return orderDAO.getOrderById(orderId, shopId);
+    }
+
+    public Order getOrderById(int orderId) throws SQLException {
+        if (orderId <= 0) {
+            return null;
+        }
+        return orderDAO.getOrderById(orderId, 0);
     }
 
     public void confirmOrder(int orderId, int shopId, int changedBy) throws SQLException {

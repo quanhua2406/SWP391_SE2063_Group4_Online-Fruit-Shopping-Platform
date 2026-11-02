@@ -122,7 +122,7 @@ public class ProductImageServlet extends HttpServlet {
 
         request.setAttribute("product", product);
         request.setAttribute("images", images);
-        request.getRequestDispatcher("/product-images.jsp").forward(request, response);
+        request.getRequestDispatcher("/jsp/shopowner/product-images.jsp").forward(request, response);
     }
 
     // =========================================================

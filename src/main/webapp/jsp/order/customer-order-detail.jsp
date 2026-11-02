@@ -249,14 +249,28 @@
         </c:if>
 
         <c:if test="${not empty param.msg}">
-            <div style="background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 14px;">
-                ${param.msg}
+            <div style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 14px 18px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <div>
+                    <strong>Thông Báo Xác Nhận:</strong> ${param.msg}
+                </div>
             </div>
         </c:if>
 
         <c:if test="${not empty param.error}">
-            <div style="background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 14px;">
-                ${param.error}
+            <div style="background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; padding: 14px 18px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>
+                <div>
+                    <strong>Lỗi:</strong> ${param.error}
+                </div>
             </div>
         </c:if>
 
@@ -370,8 +384,18 @@
                     <div class="info-text">
                         Thanh toán: <strong>
                             <c:choose>
-                                <c:when test="${order.paymentMethod == 'vnpay'}">Thanh toán trực tuyến VNPay / QR</c:when>
+                                <c:when test="${order.paymentMethod == 'vnpay' || order.paymentMethod == 'online'}">Thanh toán trực tuyến VNPay / QR</c:when>
                                 <c:otherwise>Thanh toán khi nhận hàng (COD)</c:otherwise>
+                            </c:choose>
+                        </strong><br>
+                        Trạng thái thanh toán: <strong>
+                            <c:choose>
+                                <c:when test="${order.paymentStatus == 'paid'}">
+                                    <span style="color:#059669; font-weight:700;">Đã thanh toán</span>
+                                </c:when>
+                                <c:otherwise>
+                                    <span style="color:#d97706; font-weight:700;">Chưa thanh toán</span>
+                                </c:otherwise>
                             </c:choose>
                         </strong><br>
                         Phương thức giao: <strong>${order.deliveryMethod}</strong><br>
@@ -460,9 +484,13 @@
                     </form>
 
                     <!-- Thanh toán trực tuyến nếu chưa thanh toán -->
-                    <c:if test="${order.paymentStatus == 'pending' && (order.paymentMethod == 'vnpay' || order.paymentMethod == 'online')}">
-                        <a href="${pageContext.request.contextPath}/payment/process?orderId=${order.orderId}" class="btn-action btn-reorder" style="background-color: var(--primary); color: #fff; text-decoration: none; text-align: center;">
-                            Thanh Toán Ngay (VNPay / VietQR)
+                    <c:if test="${order.paymentStatus == 'pending' && order.status != 'cancelled'}">
+                        <a href="${pageContext.request.contextPath}/payment/process?orderId=${order.orderId}" class="btn-action" style="background-color: #005baa; color: #fff; text-decoration: none; text-align: center; font-weight: 600;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                                <line x1="12" y1="8" x2="12" y2="16"></line>
+                            </svg>
+                            Thanh Toán VNPay
                         </a>
                     </c:if>
 
