@@ -418,8 +418,8 @@
 
                                 <!-- Thanh toán trực tuyến nếu chưa thanh toán (Feature 7) -->
                                 <c:if test="${ord.paymentStatus == 'pending' && ord.status != 'cancelled'}">
-                                    <a href="${pageContext.request.contextPath}/payment/process?orderId=${ord.orderId}" class="btn-action" style="background:#0284c7; color:#ffffff; text-decoration:none;">
-                                        Thanh Toán
+                                    <a href="${pageContext.request.contextPath}/payment/process?orderId=${ord.orderId}" class="btn-action" style="background:#005baa; color:#ffffff; text-decoration:none; font-weight:600;">
+                                        Thanh Toán VNPay
                                     </a>
                                 </c:if>
 

@@ -471,19 +471,12 @@
 
                     <!-- Thanh toán trực tuyến nếu chưa thanh toán -->
                     <c:if test="${order.paymentStatus == 'pending' && order.status != 'cancelled'}">
-                        <a href="${pageContext.request.contextPath}/payment/process?orderId=${order.orderId}" class="btn-action btn-reorder" style="background-color: var(--primary); color: #fff; text-decoration: none; text-align: center;">
+                        <a href="${pageContext.request.contextPath}/payment/process?orderId=${order.orderId}" class="btn-action" style="background-color: #005baa; color: #fff; text-decoration: none; text-align: center; font-weight: 600;">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <rect x="2" y="4" width="20" height="16" rx="2"></rect>
                                 <line x1="12" y1="8" x2="12" y2="16"></line>
                             </svg>
-                            <c:choose>
-                                <c:when test="${order.paymentMethod == 'vnpay' || order.paymentMethod == 'online'}">
-                                    Thanh Toán Ngay (VNPay / VietQR)
-                                </c:when>
-                                <c:otherwise>
-                                    Thanh Toán Online (VNPay / VietQR)
-                                </c:otherwise>
-                            </c:choose>
+                            Thanh Toán VNPay
                         </a>
                     </c:if>
 
