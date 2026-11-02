@@ -172,49 +172,49 @@ public class AdminUserService {
 
         // ---- Full name ----
         if (fullName.isEmpty()) {
-            return UpdateResult.error("Full Name is required.");
+            return UpdateResult.error("Họ và tên là bắt buộc.");
         }
 
         if (fullName.length() < 2 || fullName.length() > MAX_FULL_NAME) {
             return UpdateResult.error(
-                    "Full Name must contain 2 to 100 characters.");
+                    "Họ và tên phải từ 2 đến 100 ký tự.");
         }
 
         if (!fullName.matches("[\\p{L}\\p{M} .'-]+")) {
             return UpdateResult.error(
-                    "Full Name contains invalid characters.");
+                    "Họ và tên chứa ký tự không hợp lệ.");
         }
 
         // ---- Email ----
         if (email.isEmpty()) {
-            return UpdateResult.error("Email is required.");
+            return UpdateResult.error("Email là bắt buộc.");
         }
 
         if (email.length() > MAX_EMAIL || !email.matches(EMAIL_REGEX)) {
             return UpdateResult.error(
-                    "Please enter a valid email address.");
+                    "Vui lòng nhập địa chỉ email hợp lệ.");
         }
 
         if (userDAO.emailExists(email, userId)) {
             return UpdateResult.error(
-                    "This email is already used by another account.");
+                    "Email này đã được sử dụng bởi tài khoản khác.");
         }
 
         // ---- Phone ----
         if (phone.isEmpty()) {
-            return UpdateResult.error("Phone is required.");
+            return UpdateResult.error("Số điện thoại là bắt buộc.");
         }
 
         if (phone.length() > MAX_PHONE || !phone.matches(PHONE_REGEX)) {
             return UpdateResult.error(
-                    "Phone must start with 0 and contain 10 or 11 digits.");
+                    "Số điện thoại phải bắt đầu bằng số 0 và gồm 10 hoặc 11 chữ số.");
         }
 
         boolean updated = userDAO.updateUser(userId, fullName, email, phone);
 
         return updated
                 ? UpdateResult.ok()
-                : UpdateResult.error("Update failed. Please try again.");
+                : UpdateResult.error("Cập nhật thất bại. Vui lòng thử lại.");
     }
 
     // =========================================================

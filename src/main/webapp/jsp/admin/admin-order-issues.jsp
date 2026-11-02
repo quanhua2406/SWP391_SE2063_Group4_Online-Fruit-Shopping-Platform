@@ -34,6 +34,32 @@
         return String.format(Locale.US, "%,.0f", number) + " \u0111";
     }
 
+    private String statusLabel(Object value) {
+        String status = value == null ? "" : value.toString();
+
+        switch (status) {
+            case "pending_confirmation":
+                return "Chờ xác nhận";
+            case "preparing":
+                return "Đang chuẩn bị";
+            case "shipping":
+            case "delivering":
+                return "Đang giao";
+            case "delivered":
+                return "Đã giao";
+            case "cancelled":
+                return "Đã hủy";
+            case "failed":
+                return "Thất bại";
+            case "assigned":
+                return "Đã phân công";
+            case "picked_up":
+                return "Đã lấy hàng";
+            default:
+                return status;
+        }
+    }
+
     private String pillClass(String status) {
 
         if ("failed".equals(status) || "cancelled".equals(status)) {
@@ -66,7 +92,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Order Issues - FreshFruit Admin</title>
+    <title>Sự cố đơn hàng - FreshFruit Admin</title>
 
     <link rel="stylesheet" href="<%= contextPath %>/css/style.css">
 </head>
@@ -81,13 +107,13 @@
 
     <nav class="nav-actions">
 
-        <a href="<%= contextPath %>/admin/dashboard">📊 Dashboard</a>
+        <a href="<%= contextPath %>/admin/dashboard">📊 Bảng điều khiển</a>
 
-        <a href="<%= contextPath %>/admin/orders">🛒 Orders</a>
+        <a href="<%= contextPath %>/admin/orders">🛒 Đơn hàng</a>
 
-        <a href="<%= contextPath %>/admin/delivery-assign">🚚 Assignments</a>
+        <a href="<%= contextPath %>/admin/delivery-assign">🚚 Phân công</a>
 
-        <a href="<%= contextPath %>/logout" class="logout">Logout</a>
+        <a href="<%= contextPath %>/logout" class="logout">Đăng xuất</a>
 
     </nav>
 
@@ -96,30 +122,30 @@
 <section class="dashboard">
 
     <p class="breadcrumb">
-        <a href="<%= contextPath %>/admin/dashboard">← Admin Dashboard</a>
+        <a href="<%= contextPath %>/admin/dashboard">← Bảng điều khiển</a>
     </p>
 
-    <h1>Order Issues</h1>
+    <h1>Sự cố đơn hàng</h1>
 
     <p class="dashboard-welcome">
-        Failed and cancelled orders, plus orders stuck in the same
-        stage for more than three days. Reopen an order to push it
-        back into processing, or cancel it to close the dispute.
+        Đơn thất bại và đã hủy, cùng các đơn bị kẹt cùng một giai đoạn
+        hơn ba ngày. Mở lại đơn để đưa về xử lý, hoặc hủy đơn
+        để đóng khiếu nại.
     </p>
 
     <% if (msg != null && !msg.isEmpty()) { %>
 
         <% if ("reopened".equals(msg)) { %>
-            <div class="success-message">✅ Order reopened — it is back in processing.</div>
+            <div class="success-message">✅ Đã mở lại đơn — đơn quay lại xử lý.</div>
         <% } else if ("cancelled".equals(msg)) { %>
-            <div class="success-message">✅ Order cancelled.</div>
+            <div class="success-message">✅ Đã hủy đơn hàng.</div>
         <% } else if ("terminal".equals(msg)) { %>
             <div class="error-message">
-                This order already reached a final state (delivered or cancelled)
-                and cannot be changed.
+                Đơn hàng này đã ở trạng thái cuối (đã giao hoặc đã hủy)
+                nên không thể thay đổi.
             </div>
         <% } else { %>
-            <div class="error-message">The requested action could not be applied.</div>
+            <div class="error-message">Không thể thực hiện thao tác yêu cầu.</div>
         <% } %>
 
     <% } %>
@@ -128,15 +154,15 @@
 
     <form method="get" action="<%= contextPath %>/admin/order-issues" class="filter-form">
 
-        <label for="search">Search</label>
+        <label for="search">Tìm kiếm</label>
 
         <input class="filter-input" type="text" id="search" name="search"
-               placeholder="Order id, customer, email, phone, shop"
+               placeholder="Mã đơn, khách hàng, email, SĐT, cửa hàng"
                value="<%= esc(search) %>">
 
-        <button type="submit" class="btn-sm">Apply</button>
+        <button type="submit" class="btn-sm">Áp dụng</button>
 
-        <a class="filter-clear" href="<%= contextPath %>/admin/order-issues">Clear</a>
+        <a class="filter-clear" href="<%= contextPath %>/admin/order-issues">Xóa lọc</a>
 
     </form>
 
@@ -144,10 +170,10 @@
 
     <div class="panel">
 
-        <h2>🛠️ Orders needing attention</h2>
+        <h2>🛠️ Đơn hàng cần xử lý</h2>
 
         <p class="panel-hint">
-            <%= orders == null ? 0 : orders.getTotal() %> order(s) flagged.
+            <%= orders == null ? 0 : orders.getTotal() %> đơn hàng được đánh dấu.
         </p>
 
         <div class="table-scroll">
@@ -156,14 +182,14 @@
 
                 <thead>
                     <tr>
-                        <th>Order</th>
-                        <th>Customer</th>
-                        <th>Shop</th>
-                        <th>Total</th>
-                        <th>Status</th>
-                        <th>Age</th>
-                        <th>Issue</th>
-                        <th>Handle</th>
+                        <th>Đơn hàng</th>
+                        <th>Khách hàng</th>
+                        <th>Cửa hàng</th>
+                        <th>Tổng tiền</th>
+                        <th>Trạng thái</th>
+                        <th>Thời gian chờ</th>
+                        <th>Vấn đề</th>
+                        <th>Xử lý</th>
                     </tr>
                 </thead>
 
@@ -172,8 +198,8 @@
 
                     <tr>
                         <td colspan="8">
-                            No order needs attention — nothing failed, cancelled
-                            or delayed.
+                            Không có đơn nào cần xử lý — không có đơn thất bại, đã hủy
+                            hoặc bị trễ.
                         </td>
                     </tr>
 
@@ -197,11 +223,11 @@
 
                         <td>
                             <span class="pill <%= pillClass(status) %>">
-                                <%= esc(status) %>
+                                <%= esc(statusLabel(status)) %>
                             </span>
                         </td>
 
-                        <td><%= esc(row.get("age_days")) %> day(s)</td>
+                        <td><%= esc(row.get("age_days")) %> ngày</td>
 
                         <td><%= esc(row.get("issue_type")) %></td>
 
@@ -215,17 +241,17 @@
 
                                 <input type="text" name="note" class="filter-input"
                                        maxlength="40"
-                                       placeholder="Note for the history">
+                                       placeholder="Ghi chú cho lịch sử">
 
                                 <button type="submit" class="btn-sm"
                                         name="resolution" value="reopen">
-                                    Reopen
+                                    Mở lại
                                 </button>
 
                                 <% if (closable) { %>
                                     <button type="submit" class="btn-sm-danger"
                                             name="resolution" value="cancel">
-                                        Cancel order
+                                        Hủy đơn
                                     </button>
                                 <% } %>
 
@@ -233,7 +259,7 @@
 
                             <a class="btn-sm-info"
                                href="<%= contextPath %>/admin/order-detail?orderId=<%= esc(row.get("order_id")) %>">
-                                Details
+                                Chi tiết
                             </a>
                         </td>
                     </tr>

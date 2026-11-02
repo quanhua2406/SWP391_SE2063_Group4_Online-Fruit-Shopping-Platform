@@ -21,7 +21,7 @@ public class ForgotPasswordServlet extends HttpServlet {
      * screen never reveals whether an email is registered.
      */
     private static final String GENERIC_SUCCESS =
-            "If this email is registered, an OTP has been sent to it.";
+            "Nếu email này đã được đăng ký, OTP đã được gửi đến email đó.";
 
     private final PasswordResetService passwordResetService =
             new PasswordResetService();
@@ -69,7 +69,7 @@ public class ForgotPasswordServlet extends HttpServlet {
                 case INVALID_EMAIL ->
 
                     showError(request, response,
-                            "Please enter a valid email address.");
+                            "Vui lòng nhập địa chỉ email hợp lệ.");
 
                 case ACCOUNT_NOT_FOUND ->
 
@@ -79,7 +79,7 @@ public class ForgotPasswordServlet extends HttpServlet {
                 case SEND_FAILED ->
 
                     showError(request, response,
-                            "Unable to send the OTP. Please try again.");
+                            "Không thể gửi OTP. Vui lòng thử lại.");
 
                 case OTP_SENT -> {
 
@@ -98,7 +98,7 @@ public class ForgotPasswordServlet extends HttpServlet {
         } catch (SQLException e) {
 
             throw new ServletException(
-                    "Unable to create reset request.",
+                    "Không thể tạo yêu cầu đặt lại mật khẩu.",
                     e
             );
         }

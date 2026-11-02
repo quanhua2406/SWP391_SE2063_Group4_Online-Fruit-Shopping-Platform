@@ -72,7 +72,7 @@ public class RoleManagementService {
             throws SQLException {
 
         if (userIdRaw == null || roleIdRaw == null) {
-            return new UpdateResult(false, "Invalid user or role.");
+            return new UpdateResult(false, "Người dùng hoặc vai trò không hợp lệ.");
         }
 
         int userId;
@@ -82,26 +82,26 @@ public class RoleManagementService {
             userId = Integer.parseInt(userIdRaw.trim());
             roleId = Integer.parseInt(roleIdRaw.trim());
         } catch (NumberFormatException e) {
-            return new UpdateResult(false, "Invalid user or role.");
+            return new UpdateResult(false, "Người dùng hoặc vai trò không hợp lệ.");
         }
 
         if (userId <= 0 || roleId <= 0) {
-            return new UpdateResult(false, "Invalid user or role.");
+            return new UpdateResult(false, "Người dùng hoặc vai trò không hợp lệ.");
         }
 
         if (!roleDAO.roleExists(roleId)) {
-            return new UpdateResult(false, "Selected role does not exist.");
+            return new UpdateResult(false, "Vai trò đã chọn không tồn tại.");
         }
 
         if (roleDAO.isAdminUser(userId)) {
-            return new UpdateResult(false, "Admin role cannot be changed.");
+            return new UpdateResult(false, "Không thể thay đổi vai trò quản trị viên.");
         }
 
         boolean updated = roleDAO.updateUserRole(userId, roleId);
 
         return updated
-                ? new UpdateResult(true, "User role updated successfully.")
-                : new UpdateResult(false, "Unable to update user role.");
+                ? new UpdateResult(true, "Cập nhật vai trò người dùng thành công.")
+                : new UpdateResult(false, "Không thể cập nhật vai trò người dùng.");
     }
 
     private String trim(String value) {

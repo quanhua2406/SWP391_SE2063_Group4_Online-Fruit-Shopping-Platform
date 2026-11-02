@@ -29,10 +29,10 @@ public class EmailService {
         sendOTP(
                 recipientEmail,
                 otp,
-                "FreshFruit - Account Verification OTP",
-                "Your FreshFruit account verification OTP is:",
-                "If you did not try to create a FreshFruit "
-                        + "account, please ignore this email."
+                "FreshFruit - Mã OTP xác minh tài khoản",
+                "Mã OTP xác minh tài khoản FreshFruit của bạn là:",
+                "Nếu bạn không thực hiện đăng ký tài khoản FreshFruit, "
+                        + "vui lòng bỏ qua email này."
         );
     }
 
@@ -46,10 +46,10 @@ public class EmailService {
         sendOTP(
                 recipientEmail,
                 otp,
-                "FreshFruit - Password Reset OTP",
-                "Your FreshFruit password reset OTP is:",
-                "If you did not request a password reset, "
-                        + "please ignore this email."
+                "FreshFruit - Mã OTP đặt lại mật khẩu",
+                "Mã OTP đặt lại mật khẩu FreshFruit của bạn là:",
+                "Nếu bạn không yêu cầu đặt lại mật khẩu, "
+                        + "vui lòng bỏ qua email này."
         );
     }
 
@@ -63,10 +63,10 @@ public class EmailService {
         sendOTP(
                 recipientEmail,
                 otp,
-                "FreshFruit - Password Reset OTP",
-                "Your FreshFruit password reset OTP is:",
-                "If you did not request a password reset, "
-                        + "please ignore this email."
+                "FreshFruit - Mã OTP đặt lại mật khẩu",
+                "Mã OTP đặt lại mật khẩu FreshFruit của bạn là:",
+                "Nếu bạn không yêu cầu đặt lại mật khẩu, "
+                        + "vui lòng bỏ qua email này."
         );
     }
 
@@ -284,13 +284,13 @@ public class EmailService {
         // =====================================================
 
         String content =
-                "Hello,\n\n"
+                "Xin chào,\n\n"
                 + intro + "\n\n"
                 + finalOtp
                 + "\n\n"
-                + "This OTP will expire in 5 minutes.\n\n"
+                + "Mã OTP này sẽ hết hạn sau 5 phút.\n\n"
                 + footer + "\n\n"
-                + "FreshFruit Team";
+                + "Đội ngũ FreshFruit";
 
         message.setText(content);
 

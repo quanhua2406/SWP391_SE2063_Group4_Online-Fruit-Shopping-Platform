@@ -36,7 +36,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Shop Dashboard - FreshFruit</title>
+    <title>Bảng điều khiển cửa hàng - FreshFruit</title>
 
     <style>
         * {
@@ -253,19 +253,19 @@
     <div class="logo">🍊 FreshFruit</div>
 
     <nav class="nav-actions">
-        <a href="<%=contextPath%>/admin/dashboard">Dashboard</a>
-        <a href="<%=contextPath%>/admin/shops">Shops</a>
-        <a href="<%=contextPath%>/logout">Logout</a>
+        <a href="<%=contextPath%>/admin/dashboard">Bảng điều khiển</a>
+        <a href="<%=contextPath%>/admin/shops">Cửa hàng</a>
+        <a href="<%=contextPath%>/logout">Đăng xuất</a>
     </nav>
 </header>
 
 <main class="container">
 
     <section class="page-header">
-        <h1>Shop Management Dashboard</h1>
+        <h1>Bảng điều khiển quản lý cửa hàng</h1>
         <p>
-            An overview of every shop on the platform, taken from the
-            shop-owner management screen.
+            Tổng quan mọi cửa hàng trên hệ thống, lấy từ
+            màn hình quản lý chủ cửa hàng.
         </p>
     </section>
 
@@ -273,39 +273,39 @@
     <section class="stat-grid">
 
         <div class="stat-card">
-            <span class="stat-label">Total Shops</span>
+            <span class="stat-label">Tổng cửa hàng</span>
             <span class="stat-value"><%=stats.getTotalShops()%></span>
-            <span class="stat-hint">Registered stores</span>
+            <span class="stat-hint">Cửa hàng đã đăng ký</span>
         </div>
 
         <div class="stat-card">
-            <span class="stat-label">Active Shops</span>
+            <span class="stat-label">Cửa hàng đang hoạt động</span>
             <span class="stat-value"><%=stats.getActiveShops()%></span>
-            <span class="stat-hint">Open and selling</span>
+            <span class="stat-hint">Đang mở và bán hàng</span>
         </div>
 
         <div class="stat-card is-suspended">
-            <span class="stat-label">Suspended Shops</span>
+            <span class="stat-label">Cửa hàng bị khóa</span>
             <span class="stat-value"><%=stats.getSuspendedShops()%></span>
-            <span class="stat-hint">Blocked by an admin</span>
+            <span class="stat-hint">Bị quản trị viên khóa</span>
         </div>
 
         <div class="stat-card is-pending">
-            <span class="stat-label">Pending Shops</span>
+            <span class="stat-label">Cửa hàng chờ duyệt</span>
             <span class="stat-value"><%=stats.getPendingShops()%></span>
-            <span class="stat-hint">Waiting for review</span>
+            <span class="stat-hint">Đang chờ xem xét</span>
         </div>
 
         <div class="stat-card is-products">
-            <span class="stat-label">Products On Sale</span>
+            <span class="stat-label">Sản phẩm đang bán</span>
             <span class="stat-value"><%=stats.getPublishedProducts()%></span>
-            <span class="stat-hint">Published across all shops</span>
+            <span class="stat-hint">Đã đăng trên tất cả cửa hàng</span>
         </div>
 
         <div class="stat-card is-suspended">
-            <span class="stat-label">Products Hidden By Admin</span>
+            <span class="stat-label">Sản phẩm bị admin ẩn</span>
             <span class="stat-value"><%=stats.getHiddenProducts()%></span>
-            <span class="stat-hint">Taken off sale by a block</span>
+            <span class="stat-hint">Đã gỡ khỏi bán do bị khóa</span>
         </div>
 
     </section>
@@ -313,22 +313,22 @@
     <!-- ACTIONS -->
     <section class="panel">
 
-        <h2>Manage Shops</h2>
+        <h2>Quản lý cửa hàng</h2>
         <p>
-            Open the shop list to search, view a shop profile, or block
-            and unblock a store owner.
+            Mở danh sách cửa hàng để tìm kiếm, xem hồ sơ cửa hàng, hoặc khóa
+            và mở khóa chủ cửa hàng.
         </p>
 
         <div class="button-row">
 
             <a class="btn btn-primary"
                href="<%=contextPath%>/admin/shops">
-                View Shop List
+                Xem danh sách cửa hàng
             </a>
 
             <a class="btn btn-secondary"
                href="<%=contextPath%>/admin/shops?status=suspended">
-                View Blocked Shops
+                Xem cửa hàng bị khóa
             </a>
 
         </div>

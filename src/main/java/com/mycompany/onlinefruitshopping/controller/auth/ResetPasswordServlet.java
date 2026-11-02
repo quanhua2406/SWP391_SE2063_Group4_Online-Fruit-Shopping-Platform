@@ -101,7 +101,7 @@ public class ResetPasswordServlet extends HttpServlet {
             if (!reset) {
 
                 showError(request, response,
-                        "Unable to reset password.");
+                        "Không thể đặt lại mật khẩu.");
                 return;
             }
 
@@ -116,7 +116,7 @@ public class ResetPasswordServlet extends HttpServlet {
         } catch (SQLException e) {
 
             throw new ServletException(
-                    "Unable to reset password.",
+                    "Không thể đặt lại mật khẩu.",
                     e
             );
         }

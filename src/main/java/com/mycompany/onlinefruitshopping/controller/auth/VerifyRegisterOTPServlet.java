@@ -89,7 +89,7 @@ public class VerifyRegisterOTPServlet extends HttpServlet {
         if (!RegistrationService.isValidOtp(otp)) {
 
             showOtpError(request, response,
-                    "OTP must contain exactly 6 digits.");
+                    "OTP phải gồm đúng 6 chữ số.");
             return;
         }
 
@@ -122,7 +122,7 @@ public class VerifyRegisterOTPServlet extends HttpServlet {
 
                     request.setAttribute(
                             "error",
-                            "This email is already registered."
+                            "Email này đã được đăng ký."
                     );
 
                     request.getRequestDispatcher(
@@ -143,24 +143,24 @@ public class VerifyRegisterOTPServlet extends HttpServlet {
                 case INVALID_OTP ->
 
                     showOtpError(request, response,
-                            "Invalid or expired OTP.");
+                            "OTP không hợp lệ hoặc đã hết hạn.");
 
                 case PENDING_NOT_FOUND ->
 
                     showOtpError(request, response,
-                            "Registration information was not found.");
+                            "Không tìm thấy thông tin đăng ký.");
 
                 case CREATE_FAILED ->
 
                     showOtpError(request, response,
-                            "Unable to create your account. "
-                                    + "Please try again.");
+                            "Không thể tạo tài khoản của bạn. "
+                                    + "Vui lòng thử lại.");
             }
 
         } catch (SQLException e) {
 
             throw new ServletException(
-                    "Email verification failed.",
+                    "Xác minh email thất bại.",
                     e
             );
         }

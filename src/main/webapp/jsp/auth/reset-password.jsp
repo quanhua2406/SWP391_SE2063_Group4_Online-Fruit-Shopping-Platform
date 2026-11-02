@@ -7,7 +7,7 @@
 
     <meta charset="UTF-8">
 
-    <title>Reset Password - FreshFruit</title>
+    <title>Đặt lại mật khẩu - FreshFruit</title>
 
     <link rel="stylesheet"
           href="${pageContext.request.contextPath}/css/style.css">
@@ -36,11 +36,11 @@
              TITLE
              ================================================= -->
 
-        <h2>Reset Password</h2>
+        <h2>Đặt lại mật khẩu</h2>
 
 
         <p class="auth-description">
-            Create a new password for your account.
+            Tạo mật khẩu mới cho tài khoản của bạn.
         </p>
 
 
@@ -88,20 +88,20 @@
             <div class="auth-form-group">
 
                 <label for="password">
-                    New Password
+                    Mật khẩu mới
                 </label>
 
                 <input
                     type="password"
                     id="password"
                     name="password"
-                    placeholder="Enter your new password"
+                    placeholder="Nhập mật khẩu mới"
                     autocomplete="new-password"
                 >
 
                 <div class="password-note">
-                    Minimum 8 characters, including
-                    at least one letter and one number.
+                    Tối thiểu 8 ký tự, bao gồm
+                    ít nhất một chữ cái và một chữ số.
                 </div>
 
             </div>
@@ -114,14 +114,14 @@
             <div class="auth-form-group">
 
                 <label for="confirmPassword">
-                    Confirm New Password
+                    Xác nhận mật khẩu mới
                 </label>
 
                 <input
                     type="password"
                     id="confirmPassword"
                     name="confirmPassword"
-                    placeholder="Confirm your new password"
+                    placeholder="Nhập lại mật khẩu mới"
                     autocomplete="new-password"
                 >
 
@@ -136,7 +136,7 @@
                 type="submit"
                 class="auth-button">
 
-                Reset Password
+                Đặt lại mật khẩu
 
             </button>
 
@@ -152,11 +152,11 @@
 
             <p>
 
-                Remember your password?
+                Nhớ mật khẩu rồi?
 
                 <a href="${pageContext.request.contextPath}/login">
 
-                    Login
+                    Đăng nhập
 
                 </a>
 
@@ -205,7 +205,7 @@ function validateResetPassword() {
     if (password === "") {
 
         error.innerHTML =
-            "Password cannot be empty.";
+            "Mật khẩu không được để trống.";
 
         error.style.display = "block";
 
@@ -220,7 +220,7 @@ function validateResetPassword() {
     if (password.length < 8) {
 
         error.innerHTML =
-            "Password must contain at least 8 characters.";
+            "Mật khẩu phải có ít nhất 8 ký tự.";
 
         error.style.display = "block";
 
@@ -235,7 +235,7 @@ function validateResetPassword() {
     if (!/[A-Za-z]/.test(password)) {
 
         error.innerHTML =
-            "Password must contain at least one letter.";
+            "Mật khẩu phải chứa ít nhất một chữ cái.";
 
         error.style.display = "block";
 
@@ -250,7 +250,7 @@ function validateResetPassword() {
     if (!/[0-9]/.test(password)) {
 
         error.innerHTML =
-            "Password must contain at least one number.";
+            "Mật khẩu phải chứa ít nhất một chữ số.";
 
         error.style.display = "block";
 
@@ -265,7 +265,7 @@ function validateResetPassword() {
     if (confirmPassword === "") {
 
         error.innerHTML =
-            "Confirm password cannot be empty.";
+            "Xác nhận mật khẩu không được để trống.";
 
         error.style.display = "block";
 
@@ -280,7 +280,7 @@ function validateResetPassword() {
     if (password !== confirmPassword) {
 
         error.innerHTML =
-            "Passwords do not match.";
+            "Mật khẩu xác nhận không khớp.";
 
         error.style.display = "block";
 

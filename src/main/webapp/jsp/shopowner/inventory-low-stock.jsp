@@ -29,11 +29,11 @@
 
 <div class="panel">
 
-    <h2>⚠️ Low Stock Monitoring</h2>
+    <h2>⚠️ Theo dõi tồn kho thấp</h2>
 
     <p class="panel-hint">
-        Variants at or below the safety threshold of
-        <strong><%= esc(thresholdText) %></strong> units.
+        Các biến thể có tồn kho bằng hoặc thấp hơn ngưỡng an toàn
+        <strong><%= esc(thresholdText) %></strong> đơn vị.
     </p>
 
     <form method="post"
@@ -42,14 +42,14 @@
 
         <input type="hidden" name="action" value="setThreshold">
 
-        <label for="threshold">Safety threshold</label>
+        <label for="threshold">Ngưỡng an toàn</label>
 
         <input class="qty-input" type="number" id="threshold"
                name="threshold" min="0" step="1"
                value="<%= esc(thresholdText) %>" required>
 
         <button type="submit" class="btn-sm">
-            Save Threshold
+            Lưu ngưỡng
         </button>
 
     </form>
@@ -61,11 +61,11 @@
         <input type="hidden" name="action" value="notifyLowStock">
 
         <button type="submit" class="btn-sm btn-sm-warning">
-            ✉️ Email Alert
+            ✉️ Gửi cảnh báo email
         </button>
 
         <span class="hint">
-            Sends the list below to your account email address.
+            Gửi danh sách bên dưới tới email tài khoản của bạn.
         </span>
 
     </form>
@@ -76,12 +76,12 @@
 
         <input type="text" class="filter-input" name="lq"
                value="<%= esc(lq) %>"
-               placeholder="Search product or SKU...">
+               placeholder="Tìm sản phẩm hoặc SKU...">
 
-        <button type="submit" class="btn-sm">Filter</button>
+        <button type="submit" class="btn-sm">Lọc</button>
 
         <a class="filter-clear"
-           href="<%= contextPath %>/store-owner/inventory/low-stock">Clear</a>
+           href="<%= contextPath %>/store-owner/inventory/low-stock">Xóa lọc</a>
 
     </form>
 
@@ -89,12 +89,12 @@
 
         <thead>
             <tr>
-                <th>Product</th>
+                <th>Sản phẩm</th>
                 <th>SKU</th>
-                <th>Weight</th>
-                <th>Packaging</th>
-                <th>Price</th>
-                <th>Stock</th>
+                <th>Khối lượng</th>
+                <th>Đóng gói</th>
+                <th>Giá</th>
+                <th>Tồn kho</th>
             </tr>
         </thead>
 
@@ -103,8 +103,8 @@
 
             <tr>
                 <td colspan="6">
-                    ✅ Everything is well stocked. No low stock
-                    items right now.
+                    ✅ Tồn kho đều ổn định. Hiện không có sản phẩm nào
+                    sắp hết.
                 </td>
             </tr>
 

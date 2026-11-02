@@ -48,7 +48,7 @@ public class AdminOrdersServlet extends HttpServlet {
                     .forward(request, response);
 
         } catch (SQLException e) {
-            throw new ServletException("Cannot load orders", e);
+            throw new ServletException("Không thể tải danh sách đơn hàng", e);
         }
     }
 }

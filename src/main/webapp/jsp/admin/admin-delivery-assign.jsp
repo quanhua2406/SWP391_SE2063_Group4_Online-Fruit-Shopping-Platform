@@ -38,7 +38,7 @@
 
         StringBuilder html = new StringBuilder();
 
-        html.append("<option value=\"\">— select a shipper —</option>");
+        html.append("<option value=\"\">— Chọn shipper —</option>");
 
         if (staff != null) {
             for (Map<String, Object> s : staff) {
@@ -49,8 +49,8 @@
 
                 String label = s.get("full_name") + " ("
                         + (s.get("active_deliveries") == null ? "0" : s.get("active_deliveries"))
-                        + " active)"
-                        + ("active".equals(s.get("status")) ? "" : " — locked");
+                        + " đang giao)"
+                        + ("active".equals(s.get("status")) ? "" : " — đã khóa");
 
                 html.append("<option value=\"").append(esc(id)).append("\"")
                     .append(selected ? " selected" : "")
@@ -87,7 +87,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Manage Assignments - FreshFruit Admin</title>
+    <title>Phân công giao hàng - FreshFruit Admin</title>
 
     <link rel="stylesheet" href="<%= contextPath %>/css/style.css">
 </head>
@@ -102,13 +102,13 @@
 
     <nav class="nav-actions">
 
-        <a href="<%= contextPath %>/admin/dashboard">📊 Dashboard</a>
+        <a href="<%= contextPath %>/admin/dashboard">📊 Bảng điều khiển</a>
 
-        <a href="<%= contextPath %>/admin/orders">🛒 Orders</a>
+        <a href="<%= contextPath %>/admin/orders">🛒 Đơn hàng</a>
 
-        <a href="<%= contextPath %>/admin/deliveries">🚚 Deliveries</a>
+        <a href="<%= contextPath %>/admin/deliveries">🚚 Giao hàng</a>
 
-        <a href="<%= contextPath %>/logout" class="logout">Logout</a>
+        <a href="<%= contextPath %>/logout" class="logout">Đăng xuất</a>
 
     </nav>
 
@@ -117,35 +117,35 @@
 <section class="dashboard">
 
     <p class="breadcrumb">
-        <a href="<%= contextPath %>/admin/dashboard">← Admin Dashboard</a>
+        <a href="<%= contextPath %>/admin/dashboard">← Bảng điều khiển</a>
     </p>
 
-    <h1>Manage Delivery Assignments</h1>
+    <h1>Quản lý phân công giao hàng</h1>
 
     <p class="dashboard-welcome">
-        Shop owners assign a shipper when they prepare an order.
-        Use this screen to reassign, cancel or add an assignment
-        when something goes wrong.
+        Chủ cửa hàng phân shipper khi chuẩn bị đơn hàng.
+        Dùng màn hình này để phân lại, hủy hoặc thêm phân công
+        khi có sự cố.
     </p>
 
     <% if (msg != null && !msg.isEmpty()) { %>
 
         <% if ("assigned".equals(msg)) { %>
-            <div class="success-message">✅ Shipper assigned to the order.</div>
+            <div class="success-message">✅ Đã phân shipper cho đơn hàng.</div>
         <% } else if ("reassigned".equals(msg)) { %>
-            <div class="success-message">✅ Delivery reassigned to the new shipper.</div>
+            <div class="success-message">✅ Đã phân lại đơn giao cho shipper mới.</div>
         <% } else if ("unassigned".equals(msg)) { %>
-            <div class="success-message">✅ Assignment cancelled — the order is back in the queue.</div>
+            <div class="success-message">✅ Đã hủy phân công — đơn hàng quay lại hàng chờ.</div>
         <% } else if ("conflict".equals(msg)) { %>
             <div class="error-message">
-                The order already has a delivery, or it can no longer be assigned.
+                Đơn hàng đã có đơn giao hoặc không còn có thể phân công.
             </div>
         <% } else if ("invalid-note".equals(msg)) { %>
             <div class="error-message">
-                The note is too long (255 characters maximum).
+                Ghi chú quá dài (tối đa 255 ký tự).
             </div>
         <% } else { %>
-            <div class="error-message">The requested action could not be applied.</div>
+            <div class="error-message">Không thể thực hiện thao tác yêu cầu.</div>
         <% } %>
 
     <% } %>
@@ -154,15 +154,15 @@
 
     <form method="get" action="<%= contextPath %>/admin/delivery-assign" class="filter-form">
 
-        <label for="search">Search</label>
+        <label for="search">Tìm kiếm</label>
 
         <input class="filter-input" type="text" id="search" name="search"
-               placeholder="Order id, customer, email, phone, shop"
+               placeholder="Mã đơn, khách hàng, email, SĐT, cửa hàng"
                value="<%= esc(search) %>">
 
-        <button type="submit" class="btn-sm">Apply</button>
+        <button type="submit" class="btn-sm">Áp dụng</button>
 
-        <a class="filter-clear" href="<%= contextPath %>/admin/delivery-assign">Clear</a>
+        <a class="filter-clear" href="<%= contextPath %>/admin/delivery-assign">Xóa lọc</a>
 
     </form>
 
@@ -170,11 +170,11 @@
 
     <div class="panel">
 
-        <h2>🚚 Open orders</h2>
+        <h2>🚚 Đơn hàng đang mở</h2>
 
         <p class="panel-hint">
-            <%= orders == null ? 0 : orders.getTotal() %> open order(s) — pending confirmation,
-            preparing or shipping. Delivered and cancelled orders are excluded.
+            <%= orders == null ? 0 : orders.getTotal() %> đơn đang mở — chờ xác nhận,
+            đang chuẩn bị hoặc đang giao. Không hiển thị đơn đã giao và đã hủy.
         </p>
 
         <div class="table-scroll">
@@ -183,13 +183,13 @@
 
                 <thead>
                     <tr>
-                        <th>Order</th>
-                        <th>Customer</th>
-                        <th>Shop</th>
-                        <th>Total</th>
-                        <th>Order status</th>
-                        <th>Current shipper</th>
-                        <th>Assign / reassign</th>
+                        <th>Đơn hàng</th>
+                        <th>Khách hàng</th>
+                        <th>Cửa hàng</th>
+                        <th>Tổng tiền</th>
+                        <th>Trạng thái đơn</th>
+                        <th>Shipper hiện tại</th>
+                        <th>Phân công / phân lại</th>
                     </tr>
                 </thead>
 
@@ -197,7 +197,7 @@
                 <% if (orders == null || orders.isEmpty()) { %>
 
                     <tr>
-                        <td colspan="7">No open order to assign right now.</td>
+                        <td colspan="7">Hiện không có đơn nào cần phân công.</td>
                     </tr>
 
                 <% } else {
@@ -231,7 +231,7 @@
 
                         <td>
                             <% if (staffId == null) { %>
-                                <span class="pill pill-muted">Not assigned</span>
+                                <span class="pill pill-muted">Chưa phân công</span>
                             <% } else { %>
                                 <%= esc(row.get("assigned_staff_name")) %>
                                 <br><small><%= esc(deliveryStatus) %></small>
@@ -255,9 +255,9 @@
 
                                     <input type="text" name="note" class="filter-input"
                                            maxlength="255"
-                                           placeholder="Note (optional)">
+                                           placeholder="Ghi chú (không bắt buộc)">
 
-                                    <button type="submit" class="btn-sm">Assign</button>
+                                    <button type="submit" class="btn-sm">Phân công</button>
 
                                 </form>
 
@@ -277,15 +277,15 @@
 
                                     <input type="text" name="note" class="filter-input"
                                            maxlength="255"
-                                           placeholder="Reason (optional)">
+                                           placeholder="Lý do (không bắt buộc)">
 
-                                    <button type="submit" class="btn-sm-info">Reassign</button>
+                                    <button type="submit" class="btn-sm-info">Phân lại</button>
 
                                     <button type="submit" class="btn-sm-danger"
                                             name="action" value="unassign"
                                             formnovalidate
-                                            title="Cancel this assignment">
-                                        Cancel
+                                            title="Hủy phân công này">
+                                        Hủy
                                     </button>
 
                                 </form>
@@ -309,10 +309,10 @@
 
     <p class="action-row">
         <a class="btn-secondary" href="<%= contextPath %>/admin/deliveries">
-            🚚 Delivery monitoring
+            🚚 Theo dõi giao hàng
         </a>
         <a class="btn-secondary" href="<%= contextPath %>/admin/delivery-staff">
-            🧑‍✈️ Delivery staff
+            🧑‍✈️ Nhân viên giao hàng
         </a>
     </p>
 

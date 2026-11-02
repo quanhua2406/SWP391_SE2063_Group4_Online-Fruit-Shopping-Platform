@@ -120,7 +120,7 @@ public class ProfileServlet extends HttpServlet {
         } catch (SQLException e) {
 
             throw new ServletException(
-                    "Cannot load profile.",
+                    "Không thể tải thông tin hồ sơ.",
                     e
             );
         }
@@ -199,7 +199,7 @@ public class ProfileServlet extends HttpServlet {
                     request,
                     response,
                     sessionUser,
-                    "Full name cannot be empty."
+                    "Họ và tên không được để trống."
             );
 
             return;
@@ -213,7 +213,7 @@ public class ProfileServlet extends HttpServlet {
                     request,
                     response,
                     sessionUser,
-                    "Full name must contain at least 2 characters."
+                    "Họ và tên phải có ít nhất 2 ký tự."
             );
 
             return;
@@ -227,7 +227,7 @@ public class ProfileServlet extends HttpServlet {
                     request,
                     response,
                     sessionUser,
-                    "Full name cannot exceed 100 characters."
+                    "Họ và tên không được vượt quá 100 ký tự."
             );
 
             return;
@@ -241,7 +241,7 @@ public class ProfileServlet extends HttpServlet {
                     request,
                     response,
                     sessionUser,
-                    "Full name must contain letters."
+                    "Họ và tên phải chứa chữ cái."
             );
 
             return;
@@ -255,7 +255,7 @@ public class ProfileServlet extends HttpServlet {
                     request,
                     response,
                     sessionUser,
-                    "Full name can contain only letters and spaces."
+                    "Họ và tên chỉ được chứa chữ cái và khoảng trắng."
             );
 
             return;
@@ -272,7 +272,7 @@ public class ProfileServlet extends HttpServlet {
                     request,
                     response,
                     sessionUser,
-                    "Phone number cannot be empty."
+                    "Số điện thoại không được để trống."
             );
 
             return;
@@ -286,7 +286,7 @@ public class ProfileServlet extends HttpServlet {
                     request,
                     response,
                     sessionUser,
-                    "Phone number can contain only digits."
+                    "Số điện thoại chỉ được chứa chữ số."
             );
 
             return;
@@ -301,7 +301,7 @@ public class ProfileServlet extends HttpServlet {
                     request,
                     response,
                     sessionUser,
-                    "Phone number must contain 9 to 11 digits."
+                    "Số điện thoại phải gồm 9 đến 11 chữ số."
             );
 
             return;
@@ -328,7 +328,7 @@ public class ProfileServlet extends HttpServlet {
                         request,
                         response,
                         sessionUser,
-                        "Failed to update profile."
+                        "Cập nhật hồ sơ thất bại."
                 );
 
                 return;
@@ -372,7 +372,7 @@ public class ProfileServlet extends HttpServlet {
         } catch (SQLException e) {
 
             throw new ServletException(
-                    "Cannot update profile.",
+                    "Không thể cập nhật hồ sơ.",
                     e
             );
         }

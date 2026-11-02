@@ -64,7 +64,7 @@ public class AdminUserServlet extends HttpServlet {
         } catch (SQLException e) {
             log("Failed to retrieve user data.", e);
             throw new ServletException(
-                    "Unable to retrieve user data.", e
+                    "Không thể tải dữ liệu người dùng.", e
             );
         }
     }
@@ -89,7 +89,7 @@ public class AdminUserServlet extends HttpServlet {
         if (user == null) {
             response.sendError(
                     HttpServletResponse.SC_NOT_FOUND,
-                    "User not found."
+                    "Không tìm thấy người dùng."
             );
             return;
         }
@@ -120,7 +120,7 @@ public class AdminUserServlet extends HttpServlet {
         if (user == null) {
             response.sendError(
                     HttpServletResponse.SC_NOT_FOUND,
-                    "User not found."
+                    "Không tìm thấy người dùng."
             );
             return;
         }
@@ -167,7 +167,7 @@ public class AdminUserServlet extends HttpServlet {
         if (users == null) {
             response.sendError(
                     HttpServletResponse.SC_BAD_REQUEST,
-                    "Invalid role."
+                    "Vai trò không hợp lệ."
             );
             return;
         }
@@ -210,14 +210,14 @@ public class AdminUserServlet extends HttpServlet {
             } else {
                 response.sendError(
                         HttpServletResponse.SC_BAD_REQUEST,
-                        "Invalid action."
+                        "Hành động không hợp lệ."
                 );
             }
 
         } catch (SQLException e) {
             log("Failed to update user.", e);
             throw new ServletException(
-                    "Unable to update user.", e
+                    "Không thể cập nhật người dùng.", e
             );
         }
     }
@@ -242,7 +242,7 @@ public class AdminUserServlet extends HttpServlet {
         if (user == null) {
             response.sendError(
                     HttpServletResponse.SC_NOT_FOUND,
-                    "User not found."
+                    "Không tìm thấy người dùng."
             );
             return;
         }
@@ -311,7 +311,7 @@ public class AdminUserServlet extends HttpServlet {
         if (user == null) {
             response.sendError(
                     HttpServletResponse.SC_NOT_FOUND,
-                    "User not found."
+                    "Không tìm thấy người dùng."
             );
             return;
         }
@@ -354,7 +354,7 @@ public class AdminUserServlet extends HttpServlet {
         if (value == null || value.isBlank()) {
             response.sendError(
                     HttpServletResponse.SC_BAD_REQUEST,
-                    "Missing user ID."
+                    "Thiếu mã người dùng."
             );
             return null;
         }
@@ -365,7 +365,7 @@ public class AdminUserServlet extends HttpServlet {
             if (userId <= 0) {
                 response.sendError(
                         HttpServletResponse.SC_BAD_REQUEST,
-                        "Invalid user ID."
+                        "Mã người dùng không hợp lệ."
                 );
                 return null;
             }
@@ -375,7 +375,7 @@ public class AdminUserServlet extends HttpServlet {
         } catch (NumberFormatException e) {
             response.sendError(
                     HttpServletResponse.SC_BAD_REQUEST,
-                    "Invalid user ID."
+                    "Mã người dùng không hợp lệ."
             );
             return null;
         }

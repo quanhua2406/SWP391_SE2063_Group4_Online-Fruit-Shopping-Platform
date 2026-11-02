@@ -68,7 +68,7 @@ public class StoreOwnerPromotionServlet extends HttpServlet {
 
         } catch (SQLException e) {
             throw new ServletException(
-                    "Unable to load your promotions.", e);
+                    "Không tải được danh sách khuyến mãi của bạn.", e);
         }
 
         request.getRequestDispatcher(
@@ -112,7 +112,7 @@ public class StoreOwnerPromotionServlet extends HttpServlet {
 
         } catch (SQLException e) {
             throw new ServletException(
-                    "Unable to save the promotion.", e);
+                    "Không lưu được khuyến mãi.", e);
         }
 
         // Keep the current search / filter / page while redirecting,

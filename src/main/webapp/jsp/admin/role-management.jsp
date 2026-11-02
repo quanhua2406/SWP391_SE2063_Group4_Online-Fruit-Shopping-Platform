@@ -42,7 +42,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Role Management - FreshFruit</title>
+    <title>Quản lý vai trò - FreshFruit</title>
 
     <style>
         * { box-sizing: border-box; }
@@ -317,17 +317,17 @@
     <div class="logo">FreshFruit</div>
 
     <nav class="nav-links">
-        <a href="<%=cp%>/admin/dashboard">Dashboard</a>
-        <a href="<%=cp%>/logout">Logout</a>
+        <a href="<%=cp%>/admin/dashboard">Bảng điều khiển</a>
+        <a href="<%=cp%>/logout">Đăng xuất</a>
     </nav>
 </header>
 
 <main class="container">
 
     <div class="page-header">
-        <h1>Role Management</h1>
+        <h1>Quản lý vai trò</h1>
         <p class="muted">
-            Search users and manage their system roles.
+            Tìm người dùng và quản lý vai trò hệ thống của họ.
         </p>
     </div>
 
@@ -354,15 +354,15 @@
             <input type="text"
                    name="email"
                    value="<%=escapeHtml(searchEmail)%>"
-                   placeholder="Search by email...">
+                   placeholder="Tìm theo email...">
 
             <button class="btn btn-primary" type="submit">
-                Search
+                Tìm kiếm
             </button>
 
             <a class="btn btn-secondary"
                href="<%=cp%>/admin/roles">
-                Reset
+                Đặt lại
             </a>
         </form>
     </section>
@@ -371,9 +371,9 @@
     <section class="panel">
 
         <div class="panel-heading">
-            <h2>User Role List</h2>
+            <h2>Danh sách vai trò người dùng</h2>
             <p class="muted">
-                Select a role and choose Update to change a user's role.
+                Chọn vai trò và bấm Cập nhật để đổi vai trò của người dùng.
             </p>
         </div>
 
@@ -381,13 +381,13 @@
             <table>
                 <thead>
                     <tr>
-                        <th>User ID</th>
-                        <th>Full Name</th>
+                        <th>Mã người dùng</th>
+                        <th>Họ và tên</th>
                         <th>Email</th>
-                        <th>Phone</th>
-                        <th>Current Role</th>
-                        <th>Change Role</th>
-                        <th>Action</th>
+                        <th>Số điện thoại</th>
+                        <th>Vai trò hiện tại</th>
+                        <th>Đổi vai trò</th>
+                        <th>Thao tác</th>
                     </tr>
                 </thead>
 
@@ -470,13 +470,13 @@
                                 <button type="button"
                                         class="btn btn-protected"
                                         disabled>
-                                    Protected
+                                    Được bảo vệ
                                 </button>
                             <% } else { %>
                                 <button type="submit"
                                         form="roleForm<%=user.getUserId()%>"
                                         class="btn btn-update">
-                                    Update
+                                    Cập nhật
                                 </button>
                             <% } %>
                         </td>
@@ -486,7 +486,7 @@
                    } else { %>
                     <tr>
                         <td colspan="7" class="empty">
-                            No users found.
+                            Không tìm thấy người dùng.
                         </td>
                     </tr>
                 <% } %>
@@ -500,7 +500,7 @@
 <script>
     function confirmRoleUpdate() {
         return confirm(
-            "Are you sure you want to update this user's role?"
+            "Bạn có chắc muốn cập nhật vai trò của người dùng này không?"
         );
     }
 </script>

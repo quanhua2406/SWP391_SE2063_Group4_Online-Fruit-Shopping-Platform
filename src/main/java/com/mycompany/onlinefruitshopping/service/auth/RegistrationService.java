@@ -80,38 +80,37 @@ public class RegistrationService {
                                        String role) {
 
         if (!ValidationUtil.isValidFullName(fullName)) {
-            return "Full name must contain 2-100 letters and spaces only.";
+            return "Họ và tên chỉ được gồm 2-100 chữ cái và khoảng trắng.";
         }
 
         if (!ValidationUtil.isValidEmail(email)) {
-            return "Please enter a valid email address.";
+            return "Vui lòng nhập địa chỉ email hợp lệ.";
         }
 
         if (!ValidationUtil.isValidPassword(password)) {
-            return "Password must be at least 8 characters and contain "
-                    + "at least one letter and one number.";
+            return "Mật khẩu phải có ít nhất 8 ký tự và chứa ít nhất một chữ cái và một chữ số.";
         }
 
         if (confirmPassword == null
                 || !password.equals(confirmPassword)) {
-            return "Passwords do not match.";
+            return "Mật khẩu xác nhận không khớp.";
         }
 
         if (phone == null || !phone.matches("\\d{9,11}")) {
-            return "Phone number must contain 9 to 11 digits.";
+            return "Số điện thoại phải gồm 9 đến 11 chữ số.";
         }
 
         if (address == null || address.isBlank()) {
-            return "Address cannot be empty.";
+            return "Địa chỉ không được để trống.";
         }
 
         if (address.length() > 255) {
-            return "Address cannot exceed 255 characters.";
+            return "Địa chỉ không được vượt quá 255 ký tự.";
         }
 
         if (!isSelfRegisterRole(role)) {
-            return "Please choose a valid role "
-                    + "(Customer, Shop Owner or Delivery Staff).";
+            return "Vui lòng chọn vai trò hợp lệ "
+                    + "(Khách hàng, Chủ cửa hàng hoặc Nhân viên giao hàng).";
         }
 
         return null;
@@ -161,7 +160,7 @@ public class RegistrationService {
 
         if (!saved) {
             throw new SQLException(
-                    "Unable to store pending registration."
+                    "Không thể lưu thông tin đăng ký đang chờ xử lý."
             );
         }
 

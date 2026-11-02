@@ -48,12 +48,12 @@
 %>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Shop Owner Dashboard - FreshFruit</title>
+    <title>Bảng điều khiển chủ shop - FreshFruit</title>
 
     <link rel="stylesheet"
           href="<%= contextPath %>/css/style.css">
@@ -72,15 +72,15 @@
     <nav class="nav-actions">
 
         <a href="<%= contextPath %>/home">
-            🏠 Home
+            🏠 Trang chủ
         </a>
 
-        <a href="<%= contextPath %>/shopowner/shop/deliveries" style="color: #16a34a; font-weight: 700;">Giao h&#224;ng &amp; M&#7843; gi&#7843;m gi&#225;</a>
+        <a href="<%= contextPath %>/shopowner/shop/deliveries" style="color: #16a34a; font-weight: 700;">Giao hàng &amp; Mã giảm giá</a>
 
 
         <a href="<%= contextPath %>/logout"
            class="logout">
-            Logout
+            Đăng xuất
         </a>
 
     </nav>
@@ -91,22 +91,22 @@
 
 <section class="dashboard">
 
-    <h1>Shop Owner Dashboard</h1>
+    <h1>Bảng điều khiển chủ shop</h1>
 
     <p class="dashboard-welcome">
-        Welcome back, <%= esc(ownerName) %>!
+        Xin chào, <%= esc(ownerName) %>!
     </p>
 
     <% if ("created".equals(shopStatus)) { %>
 
         <div class="success-message">
-            ✅ Your shop was created successfully.
+            ✅ Cửa hàng của bạn đã được tạo thành công.
         </div>
 
     <% } else if ("exists".equals(shopStatus)) { %>
 
         <div class="success-message">
-            ℹ️ You already have a shop.
+            ℹ️ Bạn đã có cửa hàng.
         </div>
 
     <% } %>
@@ -114,8 +114,8 @@
     <% if (!hasShop) { %>
 
         <div class="error-message">
-            You do not have a shop yet. Create your shop first, then
-            you can manage its products, inventory and pricing.
+            Bạn chưa có cửa hàng. Hãy tạo cửa hàng trước, sau đó
+            bạn có thể quản lý sản phẩm, kho và giá bán.
         </div>
 
         <div class="dashboard-grid">
@@ -124,15 +124,15 @@
 
                 <div class="dashboard-icon">🏪</div>
 
-                <h3>Create Shop</h3>
+                <h3>Tạo cửa hàng</h3>
 
                 <p>
-                    Set up your fruit shop to start managing
-                    products, inventory and prices.
+                    Thiết lập cửa hàng để bắt đầu quản lý
+                    sản phẩm, kho và giá bán.
                 </p>
 
                 <a href="<%= contextPath %>/store-owner/create-shop">
-                    + Create Shop
+                    + Tạo cửa hàng
                 </a>
 
             </div>
@@ -142,7 +142,7 @@
     <% } else { %>
 
         <p class="breadcrumb">
-            🏪 Your shop:
+            🏪 Cửa hàng của bạn:
             <strong><%= esc(shopName) %></strong>
         </p>
 
@@ -161,17 +161,17 @@
         <div class="summary-grid summary-grid-4">
 
             <div class="summary-card">
-                <span class="summary-label">Products</span>
+                <span class="summary-label">Sản phẩm</span>
                 <span class="summary-value"><%= esc(num(productCount)) %></span>
             </div>
 
             <div class="summary-card">
-                <span class="summary-label">Variants</span>
+                <span class="summary-label">Biến thể</span>
                 <span class="summary-value"><%= esc(num(variantCount)) %></span>
             </div>
 
             <div class="summary-card">
-                <span class="summary-label">Total Stock</span>
+                <span class="summary-label">Tổng tồn kho</span>
                 <span class="summary-value"><%= esc(num(totalStock)) %></span>
             </div>
 
@@ -179,7 +179,7 @@
                     && new BigDecimal(lowStockCount.toString()).signum() > 0
                     ? "summary-warn" : "" %>">
                 <span class="summary-label">
-                    Low / Out of Stock
+                    Sắp hết / Hết hàng
                 </span>
                 <span class="summary-value">
                     <%= esc(num(lowStockCount)) %> /
@@ -207,15 +207,34 @@
 
                 <div class="dashboard-icon">🍎</div>
 
-                <h3>Product Management</h3>
+                <h3>Quản lý sản phẩm</h3>
 
                 <p>
-                    View your products, their status and the
-                    commission the platform keeps on each sale.
+                    Xem sản phẩm, trạng thái và phần hoa hồng nền tảng thu
+                    trên mỗi đơn bán.
                 </p>
 
                 <a href="<%= contextPath %>/store-owner/commission">
-                    Manage Products
+                    Quản lý sản phẩm
+                </a>
+
+            </div>
+
+            <!-- VARIANT MANAGEMENT -->
+
+            <div class="dashboard-card">
+
+                <div class="dashboard-icon">📏</div>
+
+                <h3>Quản lý biến thể</h3>
+
+                <p>
+                    Thêm, sửa và xóa biến thể (quy cách đóng gói, SKU, khối lượng)
+                    của từng sản phẩm.
+                </p>
+
+                <a href="<%= contextPath %>/store-owner/variants">
+                    Quản lý biến thể
                 </a>
 
             </div>
@@ -226,15 +245,15 @@
 
                 <div class="dashboard-icon">📦</div>
 
-                <h3>Stock Management</h3>
+                <h3>Quản lý kho</h3>
 
                 <p>
-                    View and update stock, restock products, watch
-                    low stock and see the inventory history.
+                    Xem và cập nhật tồn kho, nhập hàng, theo dõi
+                    hàng sắp hết và xem lịch sử kho.
                 </p>
 
                 <a href="<%= contextPath %>/store-owner/inventory">
-                    Manage Stock
+                    Quản lý kho
                 </a>
 
             </div>
@@ -245,15 +264,15 @@
 
                 <div class="dashboard-icon">💲</div>
 
-                <h3>Pricing Management</h3>
+                <h3>Quản lý giá bán</h3>
 
                 <p>
-                    Set and edit the selling price of every product
-                    variant (package weight in kg).
+                    Đặt và sửa giá bán của từng
+                    biến thể sản phẩm (khối lượng gói tính theo kg).
                 </p>
 
                 <a href="<%= contextPath %>/store-owner/pricing">
-                    Manage Pricing
+                    Quản lý giá bán
                 </a>
 
             </div>
@@ -264,15 +283,15 @@
 
                 <div class="dashboard-icon">💼</div>
 
-                <h3>Commission Report</h3>
+                <h3>Báo cáo hoa hồng</h3>
 
                 <p>
-                    See the platform fee you have to pay, broken down
-                    by product and by commission %.
+                    Xem phí nền tảng bạn phải trả, chia theo
+                    từng sản phẩm và tỷ lệ hoa hồng.
                 </p>
 
                 <a href="<%= contextPath %>/store-owner/commission-report">
-                    View Report
+                    Xem báo cáo
                 </a>
 
             </div>
@@ -283,12 +302,12 @@
 
                 <div class="dashboard-icon">🎁</div>
 
-                <h3>Promotion Management</h3>
+                <h3>Quản lý khuyến mãi</h3>
 
                 <p>Quản lý chương trình khuyến mãi cho sản phẩm của cửa hàng.</p>
 
                 <a href="${pageContext.request.contextPath}/shopowner/shop/promotions">
-                    Manage Promotions
+                    Quản lý khuyến mãi
                 </a>
 
             </div>
@@ -299,14 +318,14 @@
 
                 <div class="dashboard-icon">🎟️</div>
 
-                <h3>Coupon Management</h3>
+                <h3>Quản lý mã giảm giá</h3>
 
                 <p>
-                    Create discount coupons and track their usage.
+                    Tạo mã giảm giá và theo dõi lượt sử dụng.
                 </p>
 
                 <a href="${pageContext.request.contextPath}/shopowner/shop/coupons">
-                    Manage Coupons
+                    Quản lý mã giảm giá
                 </a>
 
             </div>
@@ -317,15 +336,15 @@
 
                 <div class="dashboard-icon">📋</div>
 
-                <h3>Order Management</h3>
+                <h3>Quản lý đơn hàng</h3>
 
                 <p>
-                    Track and process the orders that contain your
-                    products.
+                    Theo dõi và xử lý các đơn có
+                    sản phẩm của bạn.
                 </p>
 
                 <a href="#">
-                    Manage Orders
+                    Quản lý đơn hàng
                 </a>
 
             </div>
@@ -336,15 +355,15 @@
 
                 <div class="dashboard-icon">🔄</div>
 
-                <h3>Subscription</h3>
+                <h3>Gói đăng ký</h3>
 
                 <p>
-                    Offer recurring fruit boxes and manage
-                    subscription plans.
+                    Cung cấp gói trái cây định kỳ và quản lý
+                    các gói đăng ký.
                 </p>
 
                 <a href="#">
-                    Manage Subscriptions
+                    Quản lý gói đăng ký
                 </a>
 
             </div>
@@ -355,15 +374,15 @@
 
                 <div class="dashboard-icon">🔔</div>
 
-                <h3>Notifications</h3>
+                <h3>Thông báo</h3>
 
                 <p>
-                    Send and review notifications for your
-                    customers.
+                    Gửi và xem thông báo cho
+                    khách hàng.
                 </p>
 
                 <a href="#">
-                    Manage Notifications
+                    Quản lý thông báo
                 </a>
 
             </div>

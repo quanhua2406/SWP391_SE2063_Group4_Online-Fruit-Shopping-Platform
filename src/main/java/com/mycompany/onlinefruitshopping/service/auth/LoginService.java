@@ -78,7 +78,7 @@ public class LoginService {
             return new LoginResult(
                     Status.INVALID_CREDENTIALS,
                     null,
-                    "Invalid email or password."
+                    "Email hoặc mật khẩu không đúng."
             );
         }
 
@@ -108,7 +108,7 @@ public class LoginService {
             return new LoginResult(
                     Status.INVALID_CREDENTIALS,
                     null,
-                    "Invalid email or password."
+                    "Email hoặc mật khẩu không đúng."
             );
         }
 
@@ -121,7 +121,7 @@ public class LoginService {
             return new LoginResult(
                     Status.ACCOUNT_LOCKED,
                     null,
-                    "Your account has been blocked."
+                    "Tài khoản của bạn đã bị khóa."
             );
         }
 
@@ -136,10 +136,10 @@ public class LoginService {
             return new LoginResult(
                     Status.ROLE_MISMATCH,
                     null,
-                    "This account is registered as a "
+                    "Tài khoản này được đăng ký với vai trò "
                             + displayRole(user.getRoleName())
-                            + ". Please choose the correct "
-                            + "login type."
+                            + ". Vui lòng chọn đúng "
+                            + "loại đăng nhập."
             );
         }
 
@@ -182,11 +182,11 @@ public class LoginService {
         String normalized = normalizeRole(role);
 
         return switch (normalized) {
-            case "CUSTOMER" -> "Customer";
-            case "SHOPOWNER" -> "Shop Owner";
-            case "DELIVERYSTAFF" -> "Delivery Staff";
-            case "ADMIN" -> "Admin";
-            default -> role == null ? "user" : role;
+            case "CUSTOMER" -> "Khách hàng";
+            case "SHOPOWNER" -> "Chủ cửa hàng";
+            case "DELIVERYSTAFF" -> "Nhân viên giao hàng";
+            case "ADMIN" -> "Quản trị viên";
+            default -> role == null ? "người dùng" : role;
         };
     }
 

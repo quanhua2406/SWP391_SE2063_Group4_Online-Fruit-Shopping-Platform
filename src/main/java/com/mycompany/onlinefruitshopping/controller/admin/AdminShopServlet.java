@@ -61,7 +61,7 @@ public class AdminShopServlet extends HttpServlet {
         } catch (SQLException e) {
             log("Failed to retrieve shop data.", e);
             throw new ServletException(
-                    "Unable to retrieve shop data.", e
+                    "Không thể tải dữ liệu cửa hàng.", e
             );
         }
     }
@@ -104,7 +104,7 @@ public class AdminShopServlet extends HttpServlet {
         if (shop == null) {
             response.sendError(
                     HttpServletResponse.SC_NOT_FOUND,
-                    "Shop not found."
+                    "Không tìm thấy cửa hàng."
             );
             return;
         }
@@ -152,7 +152,7 @@ public class AdminShopServlet extends HttpServlet {
         if (shops == null) {
             response.sendError(
                     HttpServletResponse.SC_BAD_REQUEST,
-                    "Invalid status."
+                    "Trạng thái không hợp lệ."
             );
             return;
         }
@@ -194,7 +194,7 @@ public class AdminShopServlet extends HttpServlet {
             } else {
                 response.sendError(
                         HttpServletResponse.SC_BAD_REQUEST,
-                        "Invalid action."
+                        "Hành động không hợp lệ."
                 );
                 return;
             }
@@ -209,7 +209,7 @@ public class AdminShopServlet extends HttpServlet {
         } catch (SQLException e) {
             log("Failed to change shop status.", e);
             throw new ServletException(
-                    "Unable to change shop status.", e
+                    "Không thể thay đổi trạng thái cửa hàng.", e
             );
         }
     }
@@ -228,7 +228,7 @@ public class AdminShopServlet extends HttpServlet {
         if (value == null || value.isBlank()) {
             response.sendError(
                     HttpServletResponse.SC_BAD_REQUEST,
-                    "Missing shop ID."
+                    "Thiếu mã cửa hàng."
             );
             return null;
         }
@@ -239,7 +239,7 @@ public class AdminShopServlet extends HttpServlet {
             if (shopId <= 0) {
                 response.sendError(
                         HttpServletResponse.SC_BAD_REQUEST,
-                        "Invalid shop ID."
+                        "Mã cửa hàng không hợp lệ."
                 );
                 return null;
             }
@@ -249,7 +249,7 @@ public class AdminShopServlet extends HttpServlet {
         } catch (NumberFormatException e) {
             response.sendError(
                     HttpServletResponse.SC_BAD_REQUEST,
-                    "Invalid shop ID."
+                    "Mã cửa hàng không hợp lệ."
             );
             return null;
         }

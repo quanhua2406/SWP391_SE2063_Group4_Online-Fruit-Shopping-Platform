@@ -11,6 +11,7 @@ public class ProductVariant {
     private String unit;
     private Double weightValue;
     private String packagingType;
+    private String qualityGrade = "1";
     private double price;
     private double stock;
     private Timestamp createdAt;
@@ -72,6 +73,14 @@ public class ProductVariant {
 
     public void setPackagingType(String packagingType) {
         this.packagingType = packagingType;
+    }
+
+    public String getQualityGrade() {
+        return qualityGrade;
+    }
+
+    public void setQualityGrade(String qualityGrade) {
+        this.qualityGrade = qualityGrade;
     }
 
     public double getPrice() {

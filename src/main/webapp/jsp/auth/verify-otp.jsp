@@ -7,7 +7,7 @@
 
     <meta charset="UTF-8">
 
-    <title>Verify OTP - FreshFruit</title>
+    <title>Xác minh OTP - FreshFruit</title>
 
     <link rel="stylesheet"
           href="${pageContext.request.contextPath}/css/style.css">
@@ -36,11 +36,11 @@
              TITLE
              ================================================= -->
 
-        <h2>Verify OTP</h2>
+        <h2>Xác minh OTP</h2>
 
 
         <p class="auth-description">
-            Enter the 6-digit OTP sent to your email.
+            Nhập mã OTP gồm 6 chữ số đã gửi đến email của bạn.
         </p>
 
 
@@ -84,14 +84,14 @@
             <div class="auth-form-group">
 
                 <label for="otp">
-                    OTP Code
+                    Mã OTP
                 </label>
 
                 <input
                     type="text"
                     id="otp"
                     name="otp"
-                    placeholder="Enter 6-digit OTP"
+                    placeholder="Nhập mã OTP gồm 6 chữ số"
                     maxlength="6"
                     inputmode="numeric"
                     autocomplete="one-time-code"
@@ -108,7 +108,7 @@
                 type="submit"
                 class="auth-button">
 
-                Verify OTP
+                Xác minh OTP
 
             </button>
 
@@ -124,11 +124,11 @@
 
             <p>
 
-                Didn't receive the OTP?
+                Chưa nhận được mã OTP?
 
                 <a href="${pageContext.request.contextPath}/forgot-password">
 
-                    Send Again
+                    Gửi lại
 
                 </a>
 
@@ -139,7 +139,7 @@
 
                 <a href="${pageContext.request.contextPath}/login">
 
-                    Back to Login
+                    Quay lại đăng nhập
 
                 </a>
 
@@ -185,7 +185,7 @@ function validateOTP() {
     if (otp === "") {
 
         error.innerHTML =
-            "OTP cannot be empty.";
+            "Mã OTP không được để trống.";
 
         error.style.display = "block";
 
@@ -200,7 +200,7 @@ function validateOTP() {
     if (!/^\d{6}$/.test(otp)) {
 
         error.innerHTML =
-            "OTP must contain exactly 6 digits.";
+            "Mã OTP phải gồm đúng 6 chữ số.";
 
         error.style.display = "block";
 

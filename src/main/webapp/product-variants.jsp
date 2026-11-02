@@ -2,94 +2,78 @@
 <%@taglib prefix="c" uri="jakarta.tags.core"%>
 <%@taglib prefix="fmt" uri="jakarta.tags.fmt"%>
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Quy Cách Đóng Gói - ${product.productName} - FreshFruit</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý biến thể - FreshFruit</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
     <style>
-        .variant-container {
-            width: 92%;
-            max-width: 1200px;
-            margin: 30px auto 60px;
-        }
-        .variant-grid {
+        .variant-layout {
             display: grid;
-            grid-template-columns: 390px 1fr;
-            gap: 25px;
+            grid-template-columns: 1fr;
+            gap: 20px;
             align-items: start;
         }
-        .variant-card {
+        .variant-layout .panel {
+            margin-bottom: 0;
+        }
+        .variant-form .form-field {
+            margin-bottom: 14px;
+        }
+        .variant-form .form-field small {
+            display: block;
+            margin-top: 4px;
+            color: #888;
+            font-size: 12px;
+        }
+        .variant-form .form-actions {
+            margin-top: 6px;
+        }
+        .detail-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .detail-modal[hidden] {
+            display: none;
+        }
+        .detail-box {
             background: #ffffff;
             border-radius: 12px;
-            border: 1px solid #e1ebe0;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-            padding: 24px;
+            padding: 20px 22px;
+            min-width: 300px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         }
-        .product-brief {
+        .detail-head {
             display: flex;
-            align-items: center;
-            gap: 16px;
-            background: #f7faf6;
-            border: 1px solid #e2ece0;
-            border-radius: 10px;
-            padding: 14px 18px;
-            margin-bottom: 24px;
-        }
-        .product-brief img {
-            width: 60px;
-            height: 60px;
-            border-radius: 8px;
-            object-fit: cover;
-            border: 1px solid #ccd8c9;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 6px;
-            font-size: 13px;
-            font-weight: 600;
-            color: #333;
-        }
-        .form-control {
-            width: 100%;
-            padding: 9px 12px;
-            border: 1px solid #ccd8c9;
-            border-radius: 6px;
-            font-size: 14px;
-            box-sizing: border-box;
-            outline: none;
-            transition: border 0.2s;
-        }
-        .form-control:focus {
-            border-color: #4caf50;
-        }
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-        .alert-box {
-            padding: 12px 18px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
             justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
         }
-        .alert-success {
-            background: #e8f5e9;
-            color: #2e7d32;
-            border: 1px solid #c8e6c9;
+        .detail-title {
+            font-size: 16px;
+            color: #234d25;
+            margin: 0 0 14px;
         }
-        .alert-error {
-            background: #ffebee;
-            color: #c62828;
-            border: 1px solid #ffcdd2;
+        .detail-actions {
+            justify-content: flex-start;
+        }
+        .detail-close {
+            background: none;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+            color: #666;
+        }
+        @media (max-width: 900px) {
+            .variant-layout {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -97,187 +81,193 @@
 
 <header class="navbar">
     <div class="logo">
-        FreshFruit
+        🍊 FreshFruit
     </div>
-    <div class="nav-actions">
-        <a href="${pageContext.request.contextPath}/home">Trang chủ</a>
-        <a href="${pageContext.request.contextPath}/store-owner/dashboard">Dashboard</a>
-        <a href="${pageContext.request.contextPath}/store-owner/products">Sản phẩm</a>
+    <nav class="nav-actions">
+        <a href="${pageContext.request.contextPath}/store-owner/dashboard">📊 Bảng điều khiển</a>
+        <a href="${pageContext.request.contextPath}/store-owner/products">🍎 Sản phẩm</a>
         <a href="${pageContext.request.contextPath}/logout" class="logout">Đăng xuất</a>
-    </div>
+    </nav>
 </header>
 
-<div class="variant-container">
+<section class="dashboard">
 
-    <!-- ALERTS -->
+    <p class="breadcrumb">
+        <a href="${pageContext.request.contextPath}/store-owner/products">← Danh sách sản phẩm</a>
+    </p>
+
+    <h1>Quản lý biến thể</h1>
+
+    <c:choose>
+        <c:when test="${not empty product}">
+            <p class="dashboard-welcome">
+                <strong>${product.productName}</strong> (#${product.productId}) ·
+                Danh mục: ${product.categoryName} ·
+                Xuất xứ: ${not empty product.origin ? product.origin : 'Chưa cập nhật'}
+            </p>
+        </c:when>
+        <c:otherwise>
+            <p class="dashboard-welcome">
+                Tất cả biến thể của các sản phẩm trong cửa hàng.
+            </p>
+        </c:otherwise>
+    </c:choose>
+
     <c:if test="${param.success == 'added'}">
-        <div class="alert-box alert-success">
-            <span>Đã thêm quy cách đóng gói mới cho sản phẩm thành công!</span>
-        </div>
+        <div class="success-message">Đã thêm biến thể mới cho sản phẩm.</div>
     </c:if>
     <c:if test="${param.success == 'updated'}">
-        <div class="alert-box alert-success">
-            <span>Cập nhật thông tin quy cách đóng gói thành công!</span>
-        </div>
+        <div class="success-message">Đã cập nhật biến thể.</div>
     </c:if>
     <c:if test="${param.success == 'deleted'}">
-        <div class="alert-box alert-success">
-            <span>Đã xóa quy cách đóng gói khỏi hệ thống thành công!</span>
-        </div>
+        <div class="success-message">Đã xóa biến thể.</div>
     </c:if>
     <c:if test="${not empty param.errorMsg}">
-        <div class="alert-box alert-error">
-            <span>${param.errorMsg}</span>
-        </div>
+        <div class="error-message">${param.errorMsg}</div>
     </c:if>
 
-    <!-- HEADER -->
-    <div class="page-header" style="margin-bottom: 18px;">
-        <div>
-            <h1 class="page-title">Quản Lý Quy Cách & Giá Biến Thể</h1>
-            <p style="color: #666; font-size: 14px; margin-top: 4px;">Cấu hình các phân loại đóng gói khác nhau (Hộp 500g, Túi 1kg, Thùng 5kg) cho sản phẩm.</p>
-        </div>
-        <div>
-            <a href="${pageContext.request.contextPath}/store-owner/products" class="btn-secondary" style="padding: 10px 16px; border-radius: 8px; font-weight: bold;">
-                Quay Lại Danh Sách
-            </a>
-        </div>
-    </div>
+    <div class="variant-layout">
 
-    <!-- PRODUCT BRIEF BANNER -->
-    <div class="product-brief">
-        <img src="${not empty product.imageUrl ? product.imageUrl : 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=500'}" 
-             alt="${product.productName}"
-             onerror="this.src='https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=500';">
-        <div>
-            <h2 style="font-size: 17px; color: #234d25; margin: 0 0 4px;">${product.productName} (#${product.productId})</h2>
-            <div style="font-size: 13px; color: #666;">
-                Danh mục: <strong>${product.categoryName}</strong> | Xuất xứ: <strong>${not empty product.origin ? product.origin : 'Chưa cập nhật'}</strong>
-            </div>
-        </div>
-    </div>
-
-    <!-- 2-COLUMN GRID -->
-    <div class="variant-grid">
-
-        <!-- FORM ADD / EDIT VARIANT -->
-        <div class="variant-card">
-            <h3 id="formTitle" style="font-size: 16px; color: #275629; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid #edf3eb;">
-                Thêm Quy Cách Mới
-            </h3>
+        <!-- FORM ADD / EDIT (opened in a card) -->
+        <div id="formModal" class="detail-modal" hidden
+             onclick="if (event.target === this) closeForm();">
+        <div class="panel variant-form" style="margin-bottom: 0; min-width: 340px; max-width: 420px;">
+            <h2 id="formTitle">Thêm biến thể mới</h2>
+            <p class="panel-hint">Mỗi biến thể là một gói bán riêng (hộp, túi, thùng...).</p>
 
             <form id="variantForm" action="${pageContext.request.contextPath}/store-owner/variants" method="POST">
                 <input type="hidden" id="actionInput" name="action" value="add">
-                <input type="hidden" name="productId" value="${product.productId}">
+                <c:choose>
+                    <c:when test="${not empty product}">
+                        <input type="hidden" name="productId" value="${product.productId}">
+                    </c:when>
+                    <c:otherwise>
+                        <div class="form-field">
+                            <label for="productSelect">Sản phẩm *</label>
+                            <select id="productSelect" name="productId" required>
+                                <c:forEach var="sp" items="${shopProducts}">
+                                    <option value="${sp.product_id}">${sp.product_name}</option>
+                                </c:forEach>
+                            </select>
+                        </div>
+                    </c:otherwise>
+                </c:choose>
                 <input type="hidden" id="variantIdInput" name="variantId" value="">
 
-                <div class="form-group">
-                    <label for="sku">Mã SKU định danh <span style="color: red;">*</span></label>
-                    <input type="text" id="sku" name="sku" class="form-control" 
-                           placeholder="Ví dụ: T-ENVY-1KG" required maxlength="50" style="text-transform: uppercase;">
-                    <small style="color: #888; font-size: 12px; margin-top: 3px; display: block;">Mã duy nhất, không trùng lặp trong kho.</small>
+                <div class="form-field">
+                    <label for="sku">Mã SKU *</label>
+                    <input type="text" id="sku" name="sku" placeholder="VD: T-ENVY-1KG"
+                           required maxlength="50" style="text-transform: uppercase;">
+                    <small>Mã duy nhất, không trùng trong cửa hàng.</small>
                 </div>
 
-                <div class="form-group">
-                    <label for="packagingType">Tên quy cách đóng gói <span style="color: red;">*</span></label>
-                    <input type="text" id="packagingType" name="packagingType" class="form-control" 
-                           placeholder="Ví dụ: Túi 1kg, Hộp 500g, Thùng 5kg" required maxlength="50">
+                <div class="form-field">
+                    <label for="packagingType">Tên quy cách đóng gói *</label>
+                    <input type="text" id="packagingType" name="packagingType"
+                           placeholder="VD: Túi 1kg, Hộp 500g" required maxlength="50">
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="unit">Đơn vị tính <span style="color: red;">*</span></label>
-                        <select id="unit" name="unit" class="form-control" required>
-                            <option value="kg">kg (Kilogram)</option>
-                            <option value="box">box (Hộp / Khay)</option>
-                            <option value="piece">piece (Quả / Trái)</option>
+                <div class="form-grid-2">
+                    <div class="form-field">
+                        <label for="unit">Đơn vị tính *</label>
+                        <select id="unit" name="unit" required>
+                            <option value="kg">kg</option>
+                            <option value="box">hộp</option>
+                            <option value="piece">quả</option>
                         </select>
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-field">
                         <label for="weightValue">Khối lượng (kg)</label>
-                        <input type="number" step="0.01" min="0" id="weightValue" name="weightValue" class="form-control" 
+                        <input type="number" step="0.01" min="0" id="weightValue" name="weightValue"
                                placeholder="VD: 1.0">
                     </div>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="price">Giá bán (VNĐ) <span style="color: red;">*</span></label>
-                        <input type="number" step="1000" min="0" id="price" name="price" class="form-control" 
+                <div class="form-field">
+                    <label for="qualityGrade">Phẩm cấp *</label>
+                    <select id="qualityGrade" name="qualityGrade" required>
+                        <c:forEach var="g" items="${qualityGrades}">
+                            <option value="${g.grade}">${g.label}</option>
+                        </c:forEach>
+                    </select>
+                </div>
+
+                <div class="form-grid-2">
+                    <div class="form-field">
+                        <label for="price">Giá bán (đ) *</label>
+                        <input type="number" step="1" min="0" id="price" name="price"
                                placeholder="VD: 220000" required>
+                        <small>Nếu sản phẩm đã đặt giá/kg và biến thể có khối lượng, giá được tính tự động.</small>
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-field">
                         <label for="stock">Tồn kho ban đầu</label>
-                        <input type="number" step="1" min="0" id="stock" name="stock" class="form-control" 
+                        <input type="number" step="1" min="0" id="stock" name="stock"
                                placeholder="VD: 50" value="0">
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 10px; margin-top: 18px;">
-                    <button type="submit" id="submitBtn" class="btn-primary" style="flex: 1; padding: 11px; border-radius: 8px; font-weight: bold;">
-                        Thêm Quy Cách
-                    </button>
-                    <button type="button" id="cancelEditBtn" class="btn-secondary" style="display: none; padding: 11px 16px; border-radius: 8px;" onclick="resetVariantForm();">
+                <div class="form-actions">
+                    <button type="button" id="cancelEditBtn" class="btn-secondary"
+                            style="display: none;" onclick="closeForm();">
                         Hủy
+                    </button>
+                    <button type="submit" id="submitBtn" class="btn-primary">
+                        Thêm biến thể
                     </button>
                 </div>
             </form>
         </div>
+        </div>
 
-        <!-- TABLE OF VARIANTS -->
-        <div class="variant-card">
-            <h3 style="font-size: 16px; color: #275629; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid #edf3eb;">
-                Danh Sách Quy Cách (${variants.size()})
-            </h3>
+        <!-- TABLE -->
+        <div class="panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h2>Danh sách biến thể (${variants.size()})</h2>
+                <button type="button" class="btn-primary" onclick="openAddForm()">+ Thêm biến thể</button>
+            </div>
 
             <div class="table-responsive">
                 <table class="data-table">
                     <thead>
                         <tr>
+                            <th>Sản phẩm</th>
                             <th>SKU</th>
                             <th>Quy cách</th>
+                            <th>Phẩm cấp</th>
                             <th>Đơn vị</th>
                             <th>Khối lượng</th>
-                            <th>Đơn giá</th>
+                            <th>Giá bán</th>
                             <th style="text-align: center;">Tồn kho</th>
-                            <th style="text-align: center; width: 130px;">Hành động</th>
+                            <th style="text-align: center;">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
                         <c:choose>
                             <c:when test="${empty variants}">
                                 <tr>
-                                    <td colspan="7" style="text-align: center; padding: 30px; color: #888;">
-                                        Sản phẩm này chưa có quy cách đóng gói nào.
-                                    </td>
+                                    <td colspan="9">Chưa có biến thể nào.</td>
                                 </tr>
                             </c:when>
                             <c:otherwise>
                                 <c:forEach var="v" items="${variants}">
                                     <tr>
-                                        <td>
-                                            <strong style="color: #275629; font-size: 13px;">${v.sku}</strong>
-                                        </td>
-                                        <td>
-                                            <strong style="color: #2e532f;">${v.packagingType}</strong>
-                                        </td>
+                                        <td>${v.productName}</td>
+                                        <td><strong>${v.sku}</strong></td>
+                                        <td>${v.packagingType}</td>
+                                        <td>Loại ${v.qualityGrade}</td>
                                         <td>${v.unit}</td>
                                         <td>
                                             <c:choose>
                                                 <c:when test="${v.weightValue != null && v.weightValue > 0}">
                                                     ${v.weightValue} kg
                                                 </c:when>
-                                                <c:otherwise>
-                                                    <span style="color: #999;">-</span>
-                                                </c:otherwise>
+                                                <c:otherwise>-</c:otherwise>
                                             </c:choose>
                                         </td>
                                         <td>
-                                            <strong style="color: #2e7d32;">
-                                                <fmt:formatNumber value="${v.price}" pattern="#,###"/> đ
-                                            </strong>
+                                            <fmt:formatNumber value="${v.price}" pattern="#,###"/> đ
                                         </td>
                                         <td style="text-align: center;">
                                             <span class="stock-badge ${v.stock <= 5 ? 'stock-low' : ''}">
@@ -285,19 +275,25 @@
                                             </span>
                                         </td>
                                         <td style="text-align: center;">
-                                            <div class="action-btns" style="justify-content: center;">
-                                                <button type="button" class="btn-sm btn-edit" 
-                                                        onclick="editVariant(${v.variantId}, '${v.sku}', '${v.packagingType}', '${v.unit}', '${v.weightValue}', ${v.price}, ${v.stock});"
-                                                        title="Sửa quy cách">
-                                                    Sửa
-                                                </button>
-                                                <a href="${pageContext.request.contextPath}/store-owner/variants?action=delete&variantId=${v.variantId}&productId=${product.productId}" 
-                                                   class="btn-sm btn-delete" 
-                                                   onclick="return confirm('Bạn có chắc muốn xóa quy cách ${v.sku} - ${v.packagingType}? Lưu ý: Sản phẩm phải có ít nhất 1 quy cách.');" 
-                                                   title="Xóa quy cách">
-                                                    Xóa
-                                                </a>
-                                            </div>
+                                            <button type="button" class="btn-sm btn-edit"
+                                                    onclick="openDetail(${v.variantId})">
+                                                Chi tiết
+                                            </button>
+
+                                            <template id="detail-${v.variantId}">
+                                                <h3 class="detail-title">${v.sku} - ${v.packagingType}</h3>
+                                                <div class="action-btns detail-actions">
+                                                    <button type="button" class="btn-sm btn-edit"
+                                                            onclick="closeDetail(); editVariant(${v.variantId}, '${v.sku}', '${v.packagingType}', '${v.unit}', '${v.weightValue}', ${v.price}, ${v.stock}, '${v.qualityGrade}', ${v.productId});">
+                                                        Sửa
+                                                    </button>
+                                                    <a href="${pageContext.request.contextPath}/store-owner/variants?action=delete&variantId=${v.variantId}&productId=${v.productId}"
+                                                       class="btn-sm btn-delete"
+                                                       onclick="event.preventDefault(); closeDetail(); askConfirm(this.href, 'Xóa biến thể ${v.sku} - ${v.packagingType}? Sản phẩm phải có ít nhất 1 biến thể.');">
+                                                        Xóa
+                                                    </a>
+                                                </div>
+                                            </template>
                                         </td>
                                     </tr>
                                 </c:forEach>
@@ -310,11 +306,15 @@
 
     </div>
 
-</div>
+</section>
 
 <script>
-    function editVariant(id, sku, pkg, unit, weight, price, stock) {
-        document.getElementById('formTitle').innerText = 'Chỉnh Sửa Quy Cách: ' + sku;
+    function editVariant(id, sku, pkg, unit, weight, price, stock, grade, productId) {
+        var productSelect = document.getElementById('productSelect');
+        if (productSelect) {
+            productSelect.value = productId;
+        }
+        document.getElementById('formTitle').innerText = 'Sửa biến thể: ' + sku;
         document.getElementById('actionInput').value = 'edit';
         document.getElementById('variantIdInput').value = id;
         document.getElementById('sku').value = sku;
@@ -323,14 +323,27 @@
         document.getElementById('weightValue').value = (weight && weight !== 'null') ? weight : '';
         document.getElementById('price').value = price;
         document.getElementById('stock').value = stock;
+        document.getElementById('qualityGrade').value = grade || '1';
 
-        document.getElementById('submitBtn').innerText = 'Lưu Thay Đổi';
+        document.getElementById('submitBtn').innerText = 'Lưu thay đổi';
         document.getElementById('cancelEditBtn').style.display = 'inline-block';
+        document.getElementById('formModal').hidden = false;
         document.getElementById('packagingType').focus();
     }
 
+    function openAddForm() {
+        resetVariantForm();
+        document.getElementById('formModal').hidden = false;
+        document.getElementById('packagingType').focus();
+    }
+
+    function closeForm() {
+        resetVariantForm();
+        document.getElementById('formModal').hidden = true;
+    }
+
     function resetVariantForm() {
-        document.getElementById('formTitle').innerText = 'Thêm Quy Cách Mới';
+        document.getElementById('formTitle').innerText = 'Thêm biến thể mới';
         document.getElementById('actionInput').value = 'add';
         document.getElementById('variantIdInput').value = '';
         document.getElementById('sku').value = '';
@@ -339,10 +352,59 @@
         document.getElementById('weightValue').value = '';
         document.getElementById('price').value = '';
         document.getElementById('stock').value = '0';
-        document.getElementById('submitBtn').innerText = 'Thêm Quy Cách';
+        document.getElementById('qualityGrade').value = '1';
+        document.getElementById('submitBtn').innerText = 'Thêm biến thể';
         document.getElementById('cancelEditBtn').style.display = 'none';
     }
 </script>
+
+    <div id="confirmModal" class="detail-modal" hidden
+         onclick="if (event.target === this) closeConfirm();">
+        <div class="detail-box">
+            <div class="detail-head">
+                <span>Xác nhận</span>
+                <button type="button" class="detail-close" onclick="closeConfirm()">×</button>
+            </div>
+            <p id="confirmMessage" class="panel-hint"></p>
+            <div class="action-btns detail-actions">
+                <button type="button" class="btn-secondary" onclick="closeConfirm()">Hủy</button>
+                <a id="confirmOk" href="#" class="btn-sm btn-delete">Xóa</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="detailModal" class="detail-modal" hidden
+         onclick="if (event.target === this) closeDetail();">
+        <div class="detail-box">
+            <div class="detail-head">
+                <span>Hành động biến thể</span>
+                <button type="button" class="detail-close" onclick="closeDetail()">×</button>
+            </div>
+            <div id="detailBody"></div>
+        </div>
+    </div>
+
+    <script>
+        function openDetail(id) {
+            var tpl = document.getElementById('detail-' + id);
+            document.getElementById('detailBody').replaceChildren(tpl.content.cloneNode(true));
+            document.getElementById('detailModal').hidden = false;
+        }
+
+        function closeDetail() {
+            document.getElementById('detailModal').hidden = true;
+        }
+
+        function askConfirm(url, message) {
+            document.getElementById('confirmMessage').innerText = message;
+            document.getElementById('confirmOk').href = url;
+            document.getElementById('confirmModal').hidden = false;
+        }
+
+        function closeConfirm() {
+            document.getElementById('confirmModal').hidden = true;
+        }
+    </script>
 
 </body>
 </html>

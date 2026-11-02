@@ -61,7 +61,7 @@ public class AdminCommissionReportServlet extends HttpServlet {
 
         } catch (SQLException e) {
             throw new ServletException(
-                    "Unable to load the commission report.", e);
+                    "Không thể tải báo cáo hoa hồng.", e);
         }
 
         request.getRequestDispatcher(

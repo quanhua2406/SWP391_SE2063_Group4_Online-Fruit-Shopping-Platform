@@ -52,7 +52,7 @@ public class AdminOrderIssueServlet extends HttpServlet {
                     .forward(request, response);
 
         } catch (SQLException e) {
-            throw new ServletException("Cannot load order issues", e);
+            throw new ServletException("Không thể tải danh sách sự cố đơn hàng", e);
         }
     }
 
@@ -75,7 +75,7 @@ public class AdminOrderIssueServlet extends HttpServlet {
                     + "/admin/order-issues?msg=" + message);
 
         } catch (SQLException e) {
-            throw new ServletException("Cannot resolve order #" + orderId, e);
+            throw new ServletException("Không thể xử lý sự cố đơn hàng #" + orderId, e);
         }
     }
 }

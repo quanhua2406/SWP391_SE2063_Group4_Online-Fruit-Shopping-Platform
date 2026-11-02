@@ -146,20 +146,19 @@ public class PasswordResetService {
                                       String confirmPassword) {
 
         if (password == null || password.isEmpty()) {
-            return "Password cannot be empty.";
+            return "Mật khẩu không được để trống.";
         }
 
         if (!ValidationUtil.isValidPassword(password)) {
-            return "Password must be at least 8 characters and contain "
-                    + "at least one letter and one number.";
+            return "Mật khẩu phải có ít nhất 8 ký tự và chứa ít nhất một chữ cái và một chữ số.";
         }
 
         if (confirmPassword == null || confirmPassword.isEmpty()) {
-            return "Confirm password cannot be empty.";
+            return "Xác nhận mật khẩu không được để trống.";
         }
 
         if (!password.equals(confirmPassword)) {
-            return "Passwords do not match.";
+            return "Mật khẩu xác nhận không khớp.";
         }
 
         return null;

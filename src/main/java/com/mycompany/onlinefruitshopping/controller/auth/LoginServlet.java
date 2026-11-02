@@ -78,7 +78,7 @@ public class LoginServlet extends HttpServlet {
 
         if (email.isEmpty()) {
             showError(request, response, email, role,
-                    "Email cannot be empty.");
+                    "Email không được để trống.");
             return;
         }
 
@@ -86,19 +86,19 @@ public class LoginServlet extends HttpServlet {
                 "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
 
             showError(request, response, email, role,
-                    "Please enter a valid email address.");
+                    "Vui lòng nhập địa chỉ email hợp lệ.");
             return;
         }
 
         if (password.isEmpty()) {
             showError(request, response, email, role,
-                    "Password cannot be empty.");
+                    "Mật khẩu không được để trống.");
             return;
         }
 
         if (role.isEmpty()) {
             showError(request, response, email, role,
-                    "Please choose who you are logging in as.");
+                    "Vui lòng chọn loại tài khoản bạn đăng nhập.");
             return;
         }
 
@@ -172,7 +172,7 @@ public class LoginServlet extends HttpServlet {
         } catch (SQLException e) {
 
             throw new ServletException(
-                    "Login failed.",
+                    "Đăng nhập thất bại.",
                     e
             );
         }

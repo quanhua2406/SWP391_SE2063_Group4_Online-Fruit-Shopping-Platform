@@ -21,14 +21,14 @@ public class ProductVariantDAO {
         List<ProductVariant> list = new ArrayList<>();
         String sql = """
                 SELECT pv.variant_id, pv.product_id, p.product_name, pv.sku, pv.unit,
-                       pv.weight_value, pv.packaging_type, pv.price, pv.created_at,
+                       pv.weight_value, pv.packaging_type, pv.quality_grade, pv.price, pv.created_at,
                        ISNULL(SUM(ib.quantity), 0) AS stock
                 FROM product_variants pv
                 JOIN products p ON pv.product_id = p.product_id
                 LEFT JOIN inventory_batches ib ON pv.variant_id = ib.variant_id AND ib.status = 'active'
                 WHERE pv.product_id = ?
                 GROUP BY pv.variant_id, pv.product_id, p.product_name, pv.sku, pv.unit,
-                         pv.weight_value, pv.packaging_type, pv.price, pv.created_at
+                         pv.weight_value, pv.packaging_type, pv.quality_grade, pv.price, pv.created_at
                 ORDER BY pv.variant_id ASC
                 """;
 
@@ -49,6 +49,7 @@ public class ProductVariantDAO {
                         v.setWeightValue(weight);
                     }
                     v.setPackagingType(rs.getString("packaging_type"));
+                    v.setQualityGrade(rs.getString("quality_grade"));
                     v.setPrice(rs.getDouble("price"));
                     v.setCreatedAt(rs.getTimestamp("created_at"));
                     v.setStock(rs.getDouble("stock"));
@@ -62,14 +63,14 @@ public class ProductVariantDAO {
     public ProductVariant getVariantById(int variantId) throws SQLException {
         String sql = """
                 SELECT pv.variant_id, pv.product_id, p.product_name, pv.sku, pv.unit,
-                       pv.weight_value, pv.packaging_type, pv.price, pv.created_at,
+                       pv.weight_value, pv.packaging_type, pv.quality_grade, pv.price, pv.created_at,
                        ISNULL(SUM(ib.quantity), 0) AS stock
                 FROM product_variants pv
                 JOIN products p ON pv.product_id = p.product_id
                 LEFT JOIN inventory_batches ib ON pv.variant_id = ib.variant_id AND ib.status = 'active'
                 WHERE pv.variant_id = ?
                 GROUP BY pv.variant_id, pv.product_id, p.product_name, pv.sku, pv.unit,
-                         pv.weight_value, pv.packaging_type, pv.price, pv.created_at
+                         pv.weight_value, pv.packaging_type, pv.quality_grade, pv.price, pv.created_at
                 """;
 
         try (Connection conn = DBConnection.getConnection();
@@ -89,6 +90,7 @@ public class ProductVariantDAO {
                         v.setWeightValue(weight);
                     }
                     v.setPackagingType(rs.getString("packaging_type"));
+                    v.setQualityGrade(rs.getString("quality_grade"));
                     v.setPrice(rs.getDouble("price"));
                     v.setCreatedAt(rs.getTimestamp("created_at"));
                     v.setStock(rs.getDouble("stock"));
@@ -150,8 +152,8 @@ public class ProductVariantDAO {
 
     public boolean addVariant(ProductVariant v, double initialStock) throws SQLException {
         String insVariant = """
-                INSERT INTO product_variants (product_id, sku, unit, weight_value, packaging_type, price)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO product_variants (product_id, sku, unit, weight_value, packaging_type, price, quality_grade)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
                 """;
 
         String insBatch = """
@@ -176,6 +178,7 @@ public class ProductVariantDAO {
                 }
                 psV.setString(5, v.getPackagingType().trim());
                 psV.setBigDecimal(6, BigDecimal.valueOf(v.getPrice()));
+                psV.setString(7, v.getQualityGrade() == null ? "1" : v.getQualityGrade());
                 psV.executeUpdate();
 
                 try (ResultSet keys = psV.getGeneratedKeys()) {
@@ -219,7 +222,7 @@ public class ProductVariantDAO {
     public boolean updateVariant(ProductVariant v, double newStock) throws SQLException {
         String updVariant = """
                 UPDATE product_variants
-                SET sku = ?, unit = ?, weight_value = ?, packaging_type = ?, price = ?
+                SET sku = ?, unit = ?, weight_value = ?, packaging_type = ?, price = ?, quality_grade = ?
                 WHERE variant_id = ?
                 """;
 
@@ -249,7 +252,8 @@ public class ProductVariantDAO {
                 }
                 psV.setString(4, v.getPackagingType().trim());
                 psV.setBigDecimal(5, BigDecimal.valueOf(v.getPrice()));
-                psV.setInt(6, v.getVariantId());
+                psV.setString(6, v.getQualityGrade() == null ? "1" : v.getQualityGrade());
+                psV.setInt(7, v.getVariantId());
                 psV.executeUpdate();
             }
 

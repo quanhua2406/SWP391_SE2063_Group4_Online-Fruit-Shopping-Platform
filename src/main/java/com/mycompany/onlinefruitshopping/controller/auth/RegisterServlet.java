@@ -90,7 +90,7 @@ public class RegisterServlet extends HttpServlet {
             if (registrationService.isEmailRegistered(email)) {
 
                 showError(request, response,
-                        "This email is already registered.");
+                        "Email này đã được đăng ký.");
 
                 return;
             }
@@ -102,7 +102,7 @@ public class RegisterServlet extends HttpServlet {
             if (!registrationService.roleExists(role)) {
 
                 showError(request, response,
-                        "The selected role is not available.");
+                        "Vai trò đã chọn hiện không khả dụng.");
 
                 return;
             }
@@ -132,7 +132,7 @@ public class RegisterServlet extends HttpServlet {
         } catch (SQLException e) {
 
             throw new ServletException(
-                    "Registration failed.",
+                    "Đăng ký thất bại.",
                     e
             );
 
@@ -142,7 +142,7 @@ public class RegisterServlet extends HttpServlet {
                     "Unable to send registration OTP", e);
 
             showError(request, response,
-                    "Unable to send the OTP email. Please try again.");
+                    "Không thể gửi email OTP. Vui lòng thử lại.");
         }
     }
 

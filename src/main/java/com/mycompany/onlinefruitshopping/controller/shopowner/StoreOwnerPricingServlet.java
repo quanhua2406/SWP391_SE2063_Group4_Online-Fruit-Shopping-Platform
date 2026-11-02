@@ -14,8 +14,9 @@ import java.io.IOException;
 import java.sql.SQLException;
 
 /**
- * Product &amp; variant pricing: set / edit the normal selling price of
- * each variant of the owner's shop.
+ * Product &amp; variant pricing: the price per kg of each product, the
+ * quality grade of each variant and the selling price of variants that
+ * are priced by hand.
  *
  * <p>Temporary offers are handled by
  * {@link StoreOwnerPromotionServlet} instead.</p>
@@ -57,11 +58,14 @@ public class StoreOwnerPricingServlet extends HttpServlet {
 
             request.setAttribute("variantsPage", view.getVariantsPage());
             request.setAttribute("weightOptions", view.getWeightOptions());
+            request.setAttribute("qualityGrades", view.getQualityGrades());
+            request.setAttribute("products", view.getProducts());
+            request.setAttribute("history", view.getHistory());
             request.setAttribute("message", request.getParameter("msg"));
 
         } catch (SQLException e) {
             throw new ServletException(
-                    "Unable to load your prices.", e);
+                    "Không tải được danh sách giá của bạn.", e);
         }
 
         request.getRequestDispatcher(
@@ -70,7 +74,7 @@ public class StoreOwnerPricingServlet extends HttpServlet {
     }
 
     // =====================================================
-    // POST - UPDATE A PRICE
+    // POST - UPDATE PRICES
     // =====================================================
 
     @Override
@@ -86,17 +90,32 @@ public class StoreOwnerPricingServlet extends HttpServlet {
             return;
         }
 
+        String action = request.getParameter("action");
         String result;
 
         try {
-            result = pricingService.savePrice(
-                    user.getUserID(),
-                    request.getParameter("variantId"),
-                    request.getParameter("price"));
+            if ("grade".equals(action)) {
+                result = pricingService.saveGrade(
+                        user.getUserID(),
+                        request.getParameter("variantId"),
+                        request.getParameter("grade"));
+
+            } else if ("kg".equals(action)) {
+                result = pricingService.savePricePerKg(
+                        user.getUserID(),
+                        request.getParameter("productId"),
+                        request.getParameter("pricePerKg"));
+
+            } else {
+                result = pricingService.savePrice(
+                        user.getUserID(),
+                        request.getParameter("variantId"),
+                        request.getParameter("price"));
+            }
 
         } catch (SQLException e) {
             throw new ServletException(
-                    "Unable to save the price.", e);
+                    "Không lưu được giá.", e);
         }
 
         // Keep the current search / filter / page while redirecting,

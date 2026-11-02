@@ -80,7 +80,7 @@ public class StoreOwnerCommissionReportServlet extends HttpServlet {
 
         } catch (SQLException e) {
             throw new ServletException(
-                    "Unable to load the commission report.", e);
+                    "Không tải được báo cáo hoa hồng.", e);
         }
 
         request.getRequestDispatcher(

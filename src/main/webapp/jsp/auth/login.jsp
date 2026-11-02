@@ -21,7 +21,7 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0">
 
-    <title>Login - FreshFruit</title>
+    <title>Đăng nhập - FreshFruit</title>
 
     <link rel="stylesheet"
           href="<%= contextPath %>/css/style.css">
@@ -53,14 +53,14 @@
              ================================================= -->
 
         <h2>
-            Login
+            Đăng nhập
         </h2>
 
 
         <p class="auth-description">
 
-            Choose who you are signing in as, then
-            enter your account details.
+            Chọn vai trò đăng nhập, sau đó
+            nhập thông tin tài khoản của bạn.
 
         </p>
 
@@ -73,8 +73,8 @@
 
             <div class="success-message">
 
-                ✅ Registration successful.
-                Please login to continue.
+                ✅ Đăng ký thành công.
+                Vui lòng đăng nhập để tiếp tục.
 
             </div>
 
@@ -89,8 +89,8 @@
 
             <div class="success-message">
 
-                ✅ Password reset successfully.
-                Please login with your new password.
+                ✅ Đặt lại mật khẩu thành công.
+                Vui lòng đăng nhập bằng mật khẩu mới.
 
             </div>
 
@@ -139,7 +139,7 @@
                  ================================================= -->
 
             <label class="role-label">
-                Login as
+                Đăng nhập với vai trò
             </label>
 
 
@@ -159,7 +159,7 @@
                         <span class="role-icon">🛒</span>
 
                         <span class="role-name">
-                            Customer
+                            Khách hàng
                         </span>
 
                     </span>
@@ -181,7 +181,7 @@
                         <span class="role-icon">🏪</span>
 
                         <span class="role-name">
-                            Shop Owner
+                            Chủ cửa hàng
                         </span>
 
                     </span>
@@ -203,7 +203,7 @@
                         <span class="role-icon">🚚</span>
 
                         <span class="role-name">
-                            Delivery Staff
+                            Nhân viên giao hàng
                         </span>
 
                     </span>
@@ -225,7 +225,7 @@
                         <span class="role-icon">🛠️</span>
 
                         <span class="role-name">
-                            Admin
+                            Quản trị viên
                         </span>
 
                     </span>
@@ -255,7 +255,7 @@
                     value="<%= request.getAttribute("email") != null
                             ? request.getAttribute("email")
                             : "" %>"
-                    placeholder="Enter your email"
+                    placeholder="Nhập email"
                     autocomplete="email"
                 >
 
@@ -270,7 +270,7 @@
 
                 <label for="password">
 
-                    Password
+                    Mật khẩu
 
                 </label>
 
@@ -279,7 +279,7 @@
                     type="password"
                     id="password"
                     name="password"
-                    placeholder="Enter your password"
+                    placeholder="Nhập mật khẩu"
                     autocomplete="current-password"
                 >
 
@@ -294,7 +294,7 @@
 
                 <a href="<%= contextPath %>/forgot-password">
 
-                    Forgot Password?
+                    Quên mật khẩu?
 
                 </a>
 
@@ -309,7 +309,7 @@
                 type="submit"
                 class="auth-button">
 
-                Login
+                Đăng nhập
 
             </button>
 
@@ -325,11 +325,11 @@
 
             <p>
 
-                Don't have an account?
+                Chưa có tài khoản?
 
                 <a href="<%= contextPath %>/register">
 
-                    Create Account
+                    Tạo tài khoản
 
                 </a>
 
@@ -384,7 +384,7 @@ function validateLogin() {
     if (!role) {
 
         error.innerHTML =
-            "Please choose who you are logging in as.";
+            "Vui lòng chọn vai trò đăng nhập.";
 
         error.style.display = "block";
 
@@ -399,7 +399,7 @@ function validateLogin() {
     if (email === "") {
 
         error.innerHTML =
-            "Email cannot be empty.";
+            "Email không được để trống.";
 
         error.style.display = "block";
 
@@ -418,7 +418,7 @@ function validateLogin() {
     if (!emailPattern.test(email)) {
 
         error.innerHTML =
-            "Please enter a valid email address.";
+            "Vui lòng nhập địa chỉ email hợp lệ.";
 
         error.style.display = "block";
 
@@ -433,7 +433,7 @@ function validateLogin() {
     if (password === "") {
 
         error.innerHTML =
-            "Password cannot be empty.";
+            "Mật khẩu không được để trống.";
 
         error.style.display = "block";
 

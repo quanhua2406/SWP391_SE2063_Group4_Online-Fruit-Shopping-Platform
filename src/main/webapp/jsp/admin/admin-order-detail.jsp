@@ -7,6 +7,32 @@
 <%@page import="com.mycompany.onlinefruitshopping.model.OrderStatusHistory"%>
 
 <%!
+    private String statusLabel(Object value) {
+        String status = value == null ? "" : value.toString();
+
+        switch (status) {
+            case "pending_confirmation":
+                return "Chờ xác nhận";
+            case "preparing":
+                return "Đang chuẩn bị";
+            case "shipping":
+            case "delivering":
+                return "Đang giao";
+            case "delivered":
+                return "Đã giao";
+            case "cancelled":
+                return "Đã hủy";
+            case "failed":
+                return "Thất bại";
+            case "assigned":
+                return "Đã phân công";
+            case "picked_up":
+                return "Đã lấy hàng";
+            default:
+                return status;
+        }
+    }
+
     private String pillClass(String status) {
 
         if ("delivered".equals(status)) {
@@ -105,7 +131,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Order #<%= esc(order.get("order_id")) %> - FreshFruit Admin</title>
+    <title>Đơn hàng #<%= esc(order.get("order_id")) %> - FreshFruit Admin</title>
 
     <link rel="stylesheet" href="<%= contextPath %>/css/style.css">
 </head>
@@ -120,13 +146,13 @@
 
     <nav class="nav-actions">
 
-        <a href="<%= contextPath %>/admin/dashboard">📊 Dashboard</a>
+        <a href="<%= contextPath %>/admin/dashboard">📊 Bảng điều khiển</a>
 
-        <a href="<%= contextPath %>/admin/orders">🛒 Orders</a>
+        <a href="<%= contextPath %>/admin/orders">🛒 Đơn hàng</a>
 
-        <a href="<%= contextPath %>/admin/deliveries">🚚 Deliveries</a>
+        <a href="<%= contextPath %>/admin/deliveries">🚚 Giao hàng</a>
 
-        <a href="<%= contextPath %>/logout" class="logout">Logout</a>
+        <a href="<%= contextPath %>/logout" class="logout">Đăng xuất</a>
 
     </nav>
 
@@ -135,15 +161,15 @@
 <section class="dashboard">
 
     <p class="breadcrumb">
-        <a href="<%= contextPath %>/admin/orders">← Order Monitoring</a>
+        <a href="<%= contextPath %>/admin/orders">← Theo dõi đơn hàng</a>
     </p>
 
-    <h1>Order #<%= esc(order.get("order_id")) %></h1>
+    <h1>Đơn hàng #<%= esc(order.get("order_id")) %></h1>
 
     <p class="dashboard-welcome">
-        Placed on <%= esc(order.get("created_at")) %>
+        Đặt lúc <%= esc(order.get("created_at")) %>
         &nbsp;•&nbsp;
-        <span class="pill <%= pillClass(status) %>"><%= esc(status) %></span>
+        <span class="pill <%= pillClass(status) %>"><%= esc(statusLabel(status)) %></span>
     </p>
 
     <!-- ==================== SUMMARY ==================== -->
@@ -151,17 +177,17 @@
     <div class="summary-grid">
 
         <div class="summary-card">
-            <span class="summary-label">Customer</span>
+            <span class="summary-label">Khách hàng</span>
             <span class="summary-value"><%= esc(order.get("customer_name")) %></span>
         </div>
 
         <div class="summary-card">
-            <span class="summary-label">Shop</span>
+            <span class="summary-label">Cửa hàng</span>
             <span class="summary-value"><%= esc(order.get("shop_name")) %></span>
         </div>
 
         <div class="summary-card summary-accent">
-            <span class="summary-label">Total</span>
+            <span class="summary-label">Tổng tiền</span>
             <span class="summary-value"><%= money(order.get("total_amount")) %></span>
         </div>
 
@@ -171,23 +197,23 @@
 
     <div class="panel">
 
-        <h2>👤 Customer &amp; Delivery</h2>
+        <h2>👤 Khách hàng &amp; Giao hàng</h2>
 
         <table class="data-table">
             <tbody>
                 <tr>
-                    <th>Customer</th>
+                    <th>Khách hàng</th>
                     <td>
                         <%= esc(order.get("customer_name")) %>
                         (<%= esc(order.get("customer_email")) %>)
                     </td>
                 </tr>
                 <tr>
-                    <th>Contact phone</th>
+                    <th>SĐT liên hệ</th>
                     <td><%= esc(order.get("customer_phone")) %></td>
                 </tr>
                 <tr>
-                    <th>Recipient</th>
+                    <th>Người nhận</th>
                     <td>
                         <%= esc(order.get("recipient_name")) %>
                         <%= order.get("recipient_phone") == null
@@ -195,20 +221,20 @@
                     </td>
                 </tr>
                 <tr>
-                    <th>Delivery address</th>
+                    <th>Địa chỉ giao hàng</th>
                     <td><%= address.length() == 0 ? "—" : esc(address.toString()) %></td>
                 </tr>
                 <tr>
                     <th>Shipper</th>
                     <td>
                         <% if (delivery == null) { %>
-                            <span class="pill pill-muted">Not assigned</span>
+                            <span class="pill pill-muted">Chưa phân công</span>
                         <% } else { %>
                             <%= esc(delivery.get("staff_name")) %>
                             (<%= esc(delivery.get("staff_phone")) %>)
                             <span class="pill <%= pillClass(delivery.get("status") == null
                                     ? "" : delivery.get("status").toString()) %>">
-                                <%= esc(delivery.get("status")) %>
+                                <%= esc(statusLabel(delivery.get("status"))) %>
                             </span>
                         <% } %>
                     </td>
@@ -222,7 +248,7 @@
 
     <div class="panel">
 
-        <h2>📦 Items</h2>
+        <h2>📦 Sản phẩm trong đơn</h2>
 
         <div class="table-scroll">
 
@@ -230,11 +256,11 @@
 
                 <thead>
                     <tr>
-                        <th>Product</th>
-                        <th>Packaging</th>
-                        <th>Unit price</th>
-                        <th>Quantity</th>
-                        <th>Line total</th>
+                        <th>Sản phẩm</th>
+                        <th>Đóng gói</th>
+                        <th>Đơn giá</th>
+                        <th>Số lượng</th>
+                        <th>Thành tiền</th>
                     </tr>
                 </thead>
 
@@ -242,7 +268,7 @@
                 <% if (items == null || items.isEmpty()) { %>
 
                     <tr>
-                        <td colspan="5">This order has no line items.</td>
+                        <td colspan="5">Đơn hàng này không có sản phẩm nào.</td>
                     </tr>
 
                 <% } else {
@@ -277,7 +303,7 @@
 
                 <tfoot>
                     <tr>
-                        <td colspan="4">Order total</td>
+                        <td colspan="4">Tổng đơn hàng</td>
                         <td><strong><%= money(order.get("total_amount")) %></strong></td>
                     </tr>
                 </tfoot>
@@ -292,7 +318,7 @@
 
     <div class="panel">
 
-        <h2>💳 Payments</h2>
+        <h2>💳 Thanh toán</h2>
 
         <div class="table-scroll">
 
@@ -301,11 +327,11 @@
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th>Method</th>
-                        <th>Amount</th>
-                        <th>Status</th>
-                        <th>Reference</th>
-                        <th>Paid at</th>
+                        <th>Phương thức</th>
+                        <th>Số tiền</th>
+                        <th>Trạng thái</th>
+                        <th>Mã giao dịch</th>
+                        <th>Thời gian thanh toán</th>
                     </tr>
                 </thead>
 
@@ -313,7 +339,7 @@
                 <% if (payments == null || payments.isEmpty()) { %>
 
                     <tr>
-                        <td colspan="6">No payment recorded for this order yet.</td>
+                        <td colspan="6">Chưa ghi nhận thanh toán cho đơn hàng này.</td>
                     </tr>
 
                 <% } else {
@@ -343,7 +369,7 @@
 
     <div class="panel">
 
-        <h2>🕘 Status History</h2>
+        <h2>🕘 Lịch sử trạng thái</h2>
 
         <div class="table-scroll">
 
@@ -351,9 +377,9 @@
 
                 <thead>
                     <tr>
-                        <th>When</th>
-                        <th>Status</th>
-                        <th>Changed by</th>
+                        <th>Thời gian</th>
+                        <th>Trạng thái</th>
+                        <th>Người thay đổi</th>
                     </tr>
                 </thead>
 
@@ -361,7 +387,7 @@
                 <% if (history == null || history.isEmpty()) { %>
 
                     <tr>
-                        <td colspan="3">No status changes recorded.</td>
+                        <td colspan="3">Chưa có thay đổi trạng thái nào.</td>
                     </tr>
 
                 <% } else {
@@ -369,7 +395,7 @@
                 %>
                     <tr>
                         <td><%= esc(entry.getChangedAt()) %></td>
-                        <td><%= esc(entry.getStatus()) %></td>
+                        <td><%= esc(statusLabel(entry.getStatus())) %></td>
                         <td>
                             <%= entry.getChangedByName() == null
                                     ? "#" + entry.getChangedBy()
@@ -392,12 +418,12 @@
 
         <a class="btn-secondary"
            href="<%= contextPath %>/admin/delivery-assign?search=<%= esc(order.get("order_id")) %>">
-            🚚 Manage assignment
+            🚚 Quản lý phân công
         </a>
 
         <a class="btn-secondary"
            href="<%= contextPath %>/admin/order-issues?search=<%= esc(order.get("order_id")) %>">
-            🛠️ Handle as issue
+            🛠️ Xử lý như sự cố
         </a>
 
     </p>

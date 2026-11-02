@@ -43,7 +43,7 @@ public class AdminDeliveryStaffServlet extends HttpServlet {
                     .forward(request, response);
 
         } catch (SQLException e) {
-            throw new ServletException("Cannot load delivery staff", e);
+            throw new ServletException("Không thể tải danh sách nhân viên giao hàng", e);
         }
     }
 
@@ -61,7 +61,7 @@ public class AdminDeliveryStaffServlet extends HttpServlet {
                     + "/admin/delivery-staff?msg=" + message);
 
         } catch (SQLException e) {
-            throw new ServletException("Cannot update delivery staff #" + staffId, e);
+            throw new ServletException("Không thể cập nhật nhân viên giao hàng #" + staffId, e);
         }
     }
 }

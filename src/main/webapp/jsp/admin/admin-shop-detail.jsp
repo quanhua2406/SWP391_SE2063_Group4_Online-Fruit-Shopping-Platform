@@ -16,6 +16,26 @@
                 .replace("'", "&#39;");
     }
 
+    private String statusLabel(String status) {
+        if ("active".equalsIgnoreCase(status)) {
+            return "Hoạt động";
+        }
+
+        if ("suspended".equalsIgnoreCase(status)) {
+            return "Bị khóa";
+        }
+
+        if ("locked".equalsIgnoreCase(status)) {
+            return "Đã khóa";
+        }
+
+        if ("pending".equalsIgnoreCase(status)) {
+            return "Chờ duyệt";
+        }
+
+        return status;
+    }
+
     private String messageText(String code) {
         if (code == null) {
             return "";
@@ -23,17 +43,17 @@
 
         switch (code) {
             case "blocked":
-                return "Shop blocked. The owner is locked and its products are hidden.";
+                return "Đã khóa cửa hàng. Chủ cửa hàng bị khóa và sản phẩm bị ẩn.";
             case "unblocked":
-                return "Shop unblocked. The owner is active and its products are published again.";
+                return "Đã mở khóa cửa hàng. Chủ cửa hàng hoạt động lại và sản phẩm được đăng lại.";
             case "already-blocked":
-                return "This shop is already blocked.";
+                return "Cửa hàng này đã bị khóa.";
             case "not-blocked":
-                return "This shop is not blocked.";
+                return "Cửa hàng này chưa bị khóa.";
             case "notfound":
-                return "Shop not found.";
+                return "Không tìm thấy cửa hàng.";
             case "failed":
-                return "The shop status could not be changed. Please try again.";
+                return "Không thể thay đổi trạng thái cửa hàng. Vui lòng thử lại.";
             default:
                 return "";
         }
@@ -87,7 +107,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Shop Profile - FreshFruit</title>
+    <title>Hồ sơ cửa hàng - FreshFruit</title>
 
     <style>
         * {
@@ -324,19 +344,19 @@
     <div class="logo">🍊 FreshFruit</div>
 
     <nav class="nav-actions">
-        <a href="<%=contextPath%>/admin/dashboard">Dashboard</a>
-        <a href="<%=contextPath%>/admin/shops">Shops</a>
-        <a href="<%=contextPath%>/logout">Logout</a>
+        <a href="<%=contextPath%>/admin/dashboard">Bảng điều khiển</a>
+        <a href="<%=contextPath%>/admin/shops">Cửa hàng</a>
+        <a href="<%=contextPath%>/logout">Đăng xuất</a>
     </nav>
 </header>
 
 <main class="container">
 
     <section class="page-header">
-        <a href="<%=contextPath%>/admin/shops">&larr; Back to shop list</a>
+        <a href="<%=contextPath%>/admin/shops">&larr; Quay lại danh sách cửa hàng</a>
 
-        <h1>Shop Profile</h1>
-        <p>Profile of a registered shop owner store.</p>
+        <h1>Hồ sơ cửa hàng</h1>
+        <p>Thông tin cửa hàng của chủ cửa hàng đã đăng ký.</p>
     </section>
 
     <% if (!message.isEmpty()) { %>
@@ -348,38 +368,38 @@
     <!-- SHOP INFO -->
     <section class="card">
 
-        <h2>Shop Information</h2>
+        <h2>Thông tin cửa hàng</h2>
 
         <div class="info-grid">
 
             <div class="info-item">
-                <span class="label">Shop ID</span>
+                <span class="label">Mã cửa hàng</span>
                 <span class="value">#<%=shop.getShopId()%></span>
             </div>
 
             <div class="info-item">
-                <span class="label">Shop Name</span>
+                <span class="label">Tên cửa hàng</span>
                 <span class="value"><%=escapeHtml(shop.getShopName())%></span>
             </div>
 
             <div class="info-item">
-                <span class="label">Shop Status</span>
+                <span class="label">Trạng thái cửa hàng</span>
                 <span class="value">
                     <span class="status-badge <%=shopStatusClass%>">
                         <%=shopStatus.isBlank()
-                                ? "Unknown"
-                                : escapeHtml(shopStatus)%>
+                                ? "Không rõ"
+                                : escapeHtml(statusLabel(shopStatus))%>
                     </span>
                 </span>
             </div>
 
             <div class="info-item">
-                <span class="label">Created At</span>
+                <span class="label">Ngày tạo</span>
                 <span class="value"><%=escapeHtml(created)%></span>
             </div>
 
             <div class="info-item span-2">
-                <span class="label">Description</span>
+                <span class="label">Mô tả</span>
                 <span class="value">
                     <%=shop.getDescription() == null
                             || shop.getDescription().isBlank()
@@ -389,10 +409,10 @@
             </div>
 
             <div class="info-item">
-                <span class="label">Products</span>
+                <span class="label">Sản phẩm</span>
                 <span class="value">
-                    <%=shop.getPublishedCount()%> published /
-                    <%=shop.getProductCount()%> total
+                    <%=shop.getPublishedCount()%> đã đăng /
+                    <%=shop.getProductCount()%> tổng
                 </span>
             </div>
 
@@ -403,17 +423,17 @@
     <!-- OWNER INFO -->
     <section class="card">
 
-        <h2>Owner Information</h2>
+        <h2>Thông tin chủ cửa hàng</h2>
 
         <div class="info-grid">
 
             <div class="info-item">
-                <span class="label">Owner ID</span>
+                <span class="label">Mã chủ cửa hàng</span>
                 <span class="value">#<%=shop.getOwnerId()%></span>
             </div>
 
             <div class="info-item">
-                <span class="label">Full Name</span>
+                <span class="label">Họ và tên</span>
                 <span class="value"><%=escapeHtml(shop.getOwnerName())%></span>
             </div>
 
@@ -423,12 +443,12 @@
             </div>
 
             <div class="info-item">
-                <span class="label">Account Status</span>
+                <span class="label">Trạng thái tài khoản</span>
                 <span class="value">
                     <span class="status-badge <%=ownerStatusClass%>">
                         <%=ownerStatus.isBlank()
-                                ? "Unknown"
-                                : escapeHtml(ownerStatus)%>
+                                ? "Không rõ"
+                                : escapeHtml(statusLabel(ownerStatus))%>
                     </span>
                 </span>
             </div>
@@ -442,42 +462,42 @@
 
                 <form method="post"
                       action="<%=contextPath%>/admin/shops"
-                      onsubmit="return confirm('Unblock this shop and publish its products again?');">
+                      onsubmit="return confirm('Mở khóa cửa hàng này và đăng lại sản phẩm?');">
 
                     <input type="hidden" name="action" value="unblock">
                     <input type="hidden" name="shopId"
                            value="<%=shop.getShopId()%>">
 
                     <button type="submit" class="btn btn-unblock">
-                        Unblock Shop
+                        Mở khóa cửa hàng
                     </button>
 
                 </form>
 
                 <span class="hint">
-                    Unblocking reactivates the owner and publishes the
-                    products that the block hid.
+                    Mở khóa sẽ kích hoạt lại chủ cửa hàng và đăng lại
+                    các sản phẩm đã bị ẩn do khóa.
                 </span>
 
             <% } else { %>
 
                 <form method="post"
                       action="<%=contextPath%>/admin/shops"
-                      onsubmit="return confirm('Block this shop? Its owner is locked and its products are hidden.');">
+                      onsubmit="return confirm('Khóa cửa hàng này? Chủ cửa hàng sẽ bị khóa và sản phẩm bị ẩn.');">
 
                     <input type="hidden" name="action" value="block">
                     <input type="hidden" name="shopId"
                            value="<%=shop.getShopId()%>">
 
                     <button type="submit" class="btn btn-block">
-                        Block Shop
+                        Khóa cửa hàng
                     </button>
 
                 </form>
 
                 <span class="hint">
-                    Blocking locks the owner account, suspends the shop and
-                    takes every published product off sale.
+                    Khóa sẽ khóa tài khoản chủ cửa hàng, tạm ngưng cửa hàng và
+                    gỡ mọi sản phẩm đang được bán.
                 </span>
 
             <% } %>

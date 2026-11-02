@@ -457,12 +457,12 @@ public class CommissionReportService {
         StringBuilder csv = new StringBuilder();
 
         csv.append('\uFEFF');
-        csv.append("Shop,").append(csv(report.shopName)).append('\n');
+        csv.append("Cửa hàng,").append(csv(report.shopName)).append('\n');
 
         appendFilterLine(csv, report.from, report.to, report.status);
 
-        csv.append("Product,Quantity Sold,Revenue,Commission %,"
-                + "Platform Fee,Shop Earning\n");
+        csv.append("Sản phẩm,Số lượng bán,Doanh thu,Hoa hồng %,"
+                + "Phí nền tảng,Shop nhận\n");
 
         for (Map<String, Object> row : report.productReport) {
             csv.append(csv(row.get("product_name"))).append(',')
@@ -473,7 +473,7 @@ public class CommissionReportService {
                .append(csv(row.get("shop_earning"))).append('\n');
         }
 
-        csv.append("TOTAL,,")
+        csv.append("TỔNG CỘNG,,")
            .append(csv(report.totalRevenue)).append(',')
            .append(',')
            .append(csv(report.totalFee)).append(',')
@@ -482,7 +482,7 @@ public class CommissionReportService {
 
         appendBreakdown(csv, report.totalRevenue, report.totalFee,
                 report.serviceFee, report.breakdown,
-                "Net payout to shop,");
+                "Thực trả cho shop,");
 
         return csv.toString();
     }
@@ -499,8 +499,8 @@ public class CommissionReportService {
 
         appendFilterLine(csv, report.from, report.to, report.status);
 
-        csv.append("Shop,Products,Quantity Sold,Revenue,"
-                + "Avg. Commission %,Platform Fee,Paid To Shop\n");
+        csv.append("Cửa hàng,Số sản phẩm,Số lượng bán,Doanh thu,"
+                + "Hoa hồng TB %,Phí nền tảng,Thực trả cho cửa hàng\n");
 
         for (Map<String, Object> row : report.shopReport) {
             csv.append(csv(row.get("shop_name"))).append(',')
@@ -512,7 +512,7 @@ public class CommissionReportService {
                .append(csv(row.get("shop_earning"))).append('\n');
         }
 
-        csv.append("TOTAL,,,")
+        csv.append("TỔNG CỘNG,,,")
            .append(csv(report.totalRevenue)).append(',')
            .append(',')
            .append(csv(report.totalFee)).append(',')
@@ -521,7 +521,7 @@ public class CommissionReportService {
 
         appendBreakdown(csv, report.totalRevenue, report.totalFee,
                 report.serviceFee, report.breakdown,
-                "Paid to shops (net),");
+                "Thực trả cho các cửa hàng (ròng),");
 
         return csv.toString();
     }
@@ -552,12 +552,12 @@ public class CommissionReportService {
                                          String status) {
 
         if (!from.isEmpty() || !to.isEmpty() || !status.isEmpty()) {
-            csv.append("Filter,\"")
+            csv.append("Bộ lọc,\"")
                .append(from.isEmpty() ? "..." : from)
-               .append(" to ")
+               .append(" đến ")
                .append(to.isEmpty() ? "..." : to)
-               .append("; status: ")
-               .append(status.isEmpty() ? "delivered (fee basis)" : status)
+               .append("; trạng thái: ")
+               .append(status.isEmpty() ? "đã giao (cơ sở tính phí)" : status)
                .append("\"\n");
         }
     }
@@ -570,18 +570,18 @@ public class CommissionReportService {
                                         String netLabel) {
 
         csv.append('\n');
-        csv.append("Fee Breakdown\n");
-        csv.append("Gross sales,").append(csv(breakdown.get("gross_sales"))).append('\n');
-        csv.append("Promotional discount,")
+        csv.append("Chi tiết phí\n");
+        csv.append("Tổng doanh số gộp,").append(csv(breakdown.get("gross_sales"))).append('\n');
+        csv.append("Giảm giá khuyến mãi,")
            .append(csv(breakdown.get("promotional_discount"))).append('\n');
-        csv.append("Refunds (cancelled/failed),")
+        csv.append("Hoàn tiền (đã hủy/thất bại),")
            .append(csv(breakdown.get("refunds"))).append('\n');
-        csv.append("Paid revenue (commission basis),")
+        csv.append("Doanh thu đã thanh toán (cơ sở hoa hồng),")
            .append(csv(totalRevenue)).append('\n');
-        csv.append("Service fee (")
+        csv.append("Phí dịch vụ (")
            .append(CommissionReportDAO.SERVICE_FEE_RATE.toPlainString())
            .append(" %),").append(csv(serviceFee)).append('\n');
-        csv.append("Platform commission,").append(csv(totalFee)).append('\n');
+        csv.append("Hoa hồng nền tảng,").append(csv(totalFee)).append('\n');
         csv.append(netLabel)
            .append(csv(totalRevenue.subtract(serviceFee).subtract(totalFee)))
            .append('\n');

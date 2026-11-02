@@ -236,6 +236,7 @@ public class InventoryDAO {
                        v.unit,
                        v.weight_value,
                        v.packaging_type,
+                       v.quality_grade,
                        v.price,
                        pr.promo_price,
                        pr.start_date AS promo_start,
@@ -295,6 +296,7 @@ public class InventoryDAO {
                            v.unit,
                            v.weight_value,
                            v.packaging_type,
+                           v.quality_grade,
                            v.price,
                            pr.promo_price,
                            pr.start_date AS promo_start,
@@ -352,6 +354,7 @@ public class InventoryDAO {
             item.put("unit", rs.getString("unit"));
             item.put("weight_value", rs.getBigDecimal("weight_value"));
             item.put("packaging_type", rs.getString("packaging_type"));
+            item.put("quality_grade", rs.getString("quality_grade"));
             item.put("price", rs.getBigDecimal("price"));
             item.put("promo_price", rs.getBigDecimal("promo_price"));
             item.put("promo_start", rs.getDate("promo_start"));
@@ -468,6 +471,309 @@ public class InventoryDAO {
                 return rs.next();
             }
         }
+    }
+
+    /**
+     * Writes off an expired batch: its remaining quantity is exported in
+     * the adjustment log, the quantity becomes 0 and the status becomes
+     * {@code expired}, so the batch no longer counts as stock.
+     *
+     * @return {@code discarded}, {@code not-expired}, {@code already-discarded}
+     *         or {@code failed}
+     */
+    public String discardExpiredBatch(int batchId, int userId, String reason)
+            throws SQLException {
+
+        String selectSql =
+                "SELECT quantity, expiry_date, status FROM inventory_batches WITH (UPDLOCK, ROWLOCK) "
+                + "WHERE batch_id = ?";
+
+        Connection conn = null;
+        try {
+            conn = DBConnection.getConnection();
+            conn.setAutoCommit(false);
+
+            BigDecimal quantity;
+            Date expiry;
+            String status;
+
+            try (PreparedStatement ps = conn.prepareStatement(selectSql)) {
+                ps.setInt(1, batchId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) {
+                        conn.rollback();
+                        return "failed";
+                    }
+                    quantity = rs.getBigDecimal("quantity");
+                    expiry = rs.getDate("expiry_date");
+                    status = rs.getString("status");
+                }
+            }
+
+            if (!"active".equals(status)) {
+                conn.rollback();
+                return "already-discarded";
+            }
+
+            if (expiry == null
+                    || !expiry.toLocalDate().isBefore(java.time.LocalDate.now())) {
+                conn.rollback();
+                return "not-expired";
+            }
+
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "UPDATE inventory_batches SET quantity = 0, status = 'expired' WHERE batch_id = ?")) {
+                ps.setInt(1, batchId);
+                ps.executeUpdate();
+            }
+
+            if (quantity.signum() > 0) {
+                try (PreparedStatement ps = conn.prepareStatement("""
+                        INSERT INTO inventory_adjustments
+                            (batch_id, adjustment_type, quantity, reason, created_by, created_at)
+                        VALUES (?, 'export', ?, ?, ?, GETDATE())
+                        """)) {
+                    ps.setInt(1, batchId);
+                    ps.setBigDecimal(2, quantity);
+                    ps.setString(3, reason);
+                    ps.setInt(4, userId);
+                    ps.executeUpdate();
+                }
+            }
+
+            conn.commit();
+            return "discarded";
+
+        } catch (SQLException e) {
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ignored) {
+                }
+            }
+            throw e;
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (SQLException ignored) {
+                }
+            }
+        }
+    }
+
+    /**
+     * Records a request to write off an expired batch. It waits for the
+     * shop owner's approval.
+     *
+     * @return {@code requested}, {@code already-requested},
+     *         {@code already-discarded}, {@code not-expired} or {@code failed}
+     */
+    public String createDiscardRequest(int batchId, int userId) throws SQLException {
+
+        String batchSql = "SELECT status, expiry_date FROM inventory_batches WHERE batch_id = ?";
+
+        try (Connection conn = DBConnection.getConnection()) {
+
+            String status;
+            Date expiry;
+
+            try (PreparedStatement ps = conn.prepareStatement(batchSql)) {
+                ps.setInt(1, batchId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) {
+                        return "failed";
+                    }
+                    status = rs.getString("status");
+                    expiry = rs.getDate("expiry_date");
+                }
+            }
+
+            if (!"active".equals(status)) {
+                return "already-discarded";
+            }
+
+            if (expiry == null
+                    || !expiry.toLocalDate().isBefore(java.time.LocalDate.now())) {
+                return "not-expired";
+            }
+
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT COUNT(*) FROM inventory_discard_requests "
+                    + "WHERE batch_id = ? AND status = 'pending'")) {
+                ps.setInt(1, batchId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next() && rs.getInt(1) > 0) {
+                        return "already-requested";
+                    }
+                }
+            }
+
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "INSERT INTO inventory_discard_requests (batch_id, requested_by) VALUES (?, ?)")) {
+                ps.setInt(1, batchId);
+                ps.setInt(2, userId);
+                ps.executeUpdate();
+            }
+
+            return "requested";
+        }
+    }
+
+    /** Active batches of the owner's shop whose expiry date has passed. */
+    public List<Map<String, Object>> getExpiredBatches(int ownerId) throws SQLException {
+
+        String sql = """
+                SELECT b.batch_id, b.batch_code, p.product_name, v.sku,
+                       b.quantity, b.expiry_date,
+                       CASE WHEN EXISTS (
+                           SELECT 1 FROM inventory_discard_requests r
+                           WHERE r.batch_id = b.batch_id AND r.status = 'pending'
+                       ) THEN 1 ELSE 0 END AS requested
+                FROM inventory_batches b
+                JOIN product_variants v ON v.variant_id = b.variant_id
+                JOIN products p ON p.product_id = v.product_id
+                JOIN shops s ON s.shop_id = p.shop_id
+                WHERE s.owner_id = ?
+                  AND b.status = 'active'
+                  AND b.quantity > 0
+                  AND b.expiry_date < CAST(GETDATE() AS DATE)
+                ORDER BY b.expiry_date ASC, b.batch_id ASC
+                """;
+
+        List<Map<String, Object>> list = new ArrayList<>();
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, ownerId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("batch_id", rs.getInt("batch_id"));
+                    row.put("batch_code", rs.getString("batch_code"));
+                    row.put("product_name", rs.getString("product_name"));
+                    row.put("sku", rs.getString("sku"));
+                    row.put("quantity", rs.getBigDecimal("quantity"));
+                    row.put("expiry_date", rs.getDate("expiry_date"));
+                    row.put("requested", rs.getInt("requested") == 1);
+                    list.add(row);
+                }
+            }
+        }
+
+        return list;
+    }
+
+    public List<Map<String, Object>> getPendingDiscards(int ownerId) throws SQLException {
+
+        String sql = """
+                SELECT r.request_id, b.batch_code, p.product_name, v.sku,
+                       b.quantity, b.expiry_date, r.requested_at
+                FROM inventory_discard_requests r
+                JOIN inventory_batches b ON b.batch_id = r.batch_id
+                JOIN product_variants v ON v.variant_id = b.variant_id
+                JOIN products p ON p.product_id = v.product_id
+                JOIN shops s ON s.shop_id = p.shop_id
+                WHERE s.owner_id = ? AND r.status = 'pending'
+                ORDER BY r.requested_at ASC
+                """;
+
+        List<Map<String, Object>> list = new ArrayList<>();
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, ownerId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("request_id", rs.getInt("request_id"));
+                    row.put("batch_code", rs.getString("batch_code"));
+                    row.put("product_name", rs.getString("product_name"));
+                    row.put("sku", rs.getString("sku"));
+                    row.put("quantity", rs.getBigDecimal("quantity"));
+                    row.put("expiry_date", rs.getDate("expiry_date"));
+                    row.put("requested_at", rs.getTimestamp("requested_at"));
+                    list.add(row);
+                }
+            }
+        }
+
+        return list;
+    }
+
+    /**
+     * The shop owner's decision on a pending request. Approving writes
+     * the batch off; rejecting only closes the request.
+     *
+     * @return {@code approved}, {@code rejected}, {@code already-discarded},
+     *         {@code already-resolved} or {@code forbidden}
+     */
+    public String resolveDiscardRequest(int requestId, int ownerId, boolean approve)
+            throws SQLException {
+
+        String sql = """
+                SELECT r.batch_id, r.status
+                FROM inventory_discard_requests r
+                JOIN inventory_batches b ON b.batch_id = r.batch_id
+                JOIN product_variants v ON v.variant_id = b.variant_id
+                JOIN products p ON p.product_id = v.product_id
+                JOIN shops s ON s.shop_id = p.shop_id
+                WHERE r.request_id = ? AND s.owner_id = ?
+                """;
+
+        int batchId;
+        String status;
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, requestId);
+            ps.setInt(2, ownerId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return "forbidden";
+                }
+                batchId = rs.getInt("batch_id");
+                status = rs.getString("status");
+            }
+        }
+
+        if (!"pending".equals(status)) {
+            return "already-resolved";
+        }
+
+        String result = "rejected";
+        String newStatus = "rejected";
+
+        if (approve) {
+            String discarded = discardExpiredBatch(batchId, ownerId, "Bỏ lô hết hạn (đã duyệt)");
+
+            if ("discarded".equals(discarded) || "already-discarded".equals(discarded)) {
+                newStatus = "approved";
+                result = discarded.equals("discarded") ? "approved" : "already-discarded";
+            } else {
+                return discarded;
+            }
+        }
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "UPDATE inventory_discard_requests "
+                     + "SET status = ?, resolved_by = ?, resolved_at = SYSDATETIME() "
+                     + "WHERE request_id = ?")) {
+            ps.setString(1, newStatus);
+            ps.setInt(2, ownerId);
+            ps.setInt(3, requestId);
+            ps.executeUpdate();
+        }
+
+        return result;
     }
 
     /**
@@ -1031,6 +1337,406 @@ public class InventoryDAO {
             ps.setInt(2, variantId);
 
             return ps.executeUpdate() > 0;
+        }
+    }
+
+    /** One price change of a variant, written together with its history row. */
+    public static class PriceChange {
+
+        private final int variantId;
+        private final BigDecimal oldPrice;
+        private final BigDecimal newPrice;
+
+        public PriceChange(int variantId, BigDecimal oldPrice, BigDecimal newPrice) {
+            this.variantId = variantId;
+            this.oldPrice = oldPrice;
+            this.newPrice = newPrice;
+        }
+
+        public int getVariantId() {
+            return variantId;
+        }
+
+        public BigDecimal getOldPrice() {
+            return oldPrice;
+        }
+
+        public BigDecimal getNewPrice() {
+            return newPrice;
+        }
+    }
+
+    public List<Map<String, Object>> getQualityGrades() throws SQLException {
+
+        String sql = "SELECT grade, label, factor FROM quality_grade_factors ORDER BY grade";
+        List<Map<String, Object>> list = new ArrayList<>();
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                Map<String, Object> grade = new LinkedHashMap<>();
+                grade.put("grade", rs.getString("grade"));
+                grade.put("label", rs.getString("label"));
+                grade.put("factor", rs.getBigDecimal("factor"));
+                list.add(grade);
+            }
+        }
+
+        return list;
+    }
+
+    public boolean productBelongsToOwner(int productId, int ownerId) throws SQLException {
+
+        String sql = """
+                SELECT COUNT(*)
+                FROM products p
+                JOIN shops s ON s.shop_id = p.shop_id
+                WHERE p.product_id = ? AND s.owner_id = ?
+                """;
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, productId);
+            ps.setInt(2, ownerId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
+        }
+    }
+
+    public List<Map<String, Object>> getProductsForPricing(int ownerId) throws SQLException {
+
+        String sql = """
+                SELECT p.product_id, p.product_name, p.price_per_kg
+                FROM products p
+                JOIN shops s ON s.shop_id = p.shop_id
+                WHERE s.owner_id = ?
+                ORDER BY p.product_name ASC
+                """;
+
+        List<Map<String, Object>> list = new ArrayList<>();
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, ownerId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> product = new LinkedHashMap<>();
+                    product.put("product_id", rs.getInt("product_id"));
+                    product.put("product_name", rs.getString("product_name"));
+                    product.put("price_per_kg", rs.getBigDecimal("price_per_kg"));
+                    list.add(product);
+                }
+            }
+        }
+
+        return list;
+    }
+
+    public BigDecimal getProductPricePerKg(int productId) throws SQLException {
+
+        String sql = "SELECT price_per_kg FROM products WHERE product_id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, productId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getBigDecimal("price_per_kg");
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public Map<String, Object> getVariantForPricing(int variantId) throws SQLException {
+
+        String sql = """
+                SELECT v.variant_id, v.product_id, v.weight_value, v.quality_grade,
+                       v.price, p.price_per_kg
+                FROM product_variants v
+                JOIN products p ON p.product_id = v.product_id
+                WHERE v.variant_id = ?
+                """;
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, variantId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return pricingRow(rs);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public List<Map<String, Object>> getVariantsForPricingByProduct(int productId) throws SQLException {
+
+        String sql = """
+                SELECT v.variant_id, v.product_id, v.weight_value, v.quality_grade,
+                       v.price, p.price_per_kg
+                FROM product_variants v
+                JOIN products p ON p.product_id = v.product_id
+                WHERE v.product_id = ?
+                ORDER BY v.variant_id
+                """;
+
+        List<Map<String, Object>> list = new ArrayList<>();
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, productId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(pricingRow(rs));
+                }
+            }
+        }
+
+        return list;
+    }
+
+    private Map<String, Object> pricingRow(ResultSet rs) throws SQLException {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("variant_id", rs.getInt("variant_id"));
+        row.put("product_id", rs.getInt("product_id"));
+        row.put("weight_value", rs.getBigDecimal("weight_value"));
+        row.put("quality_grade", rs.getString("quality_grade"));
+        row.put("price", rs.getBigDecimal("price"));
+        row.put("price_per_kg", rs.getBigDecimal("price_per_kg"));
+        return row;
+    }
+
+    /**
+     * Sets the price/kg of a product and the new prices of its variants,
+     * in one transaction. Every changed price gets a history row.
+     */
+    public boolean saveProductPricePerKg(int productId,
+                                         BigDecimal pricePerKg,
+                                         List<PriceChange> changes,
+                                         int changedBy) throws SQLException {
+
+        try (Connection conn = DBConnection.getConnection()) {
+
+            conn.setAutoCommit(false);
+
+            try {
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "UPDATE products SET price_per_kg = ? WHERE product_id = ?")) {
+                    if (pricePerKg == null) {
+                        ps.setNull(1, java.sql.Types.DECIMAL);
+                    } else {
+                        ps.setBigDecimal(1, pricePerKg);
+                    }
+                    ps.setInt(2, productId);
+                    ps.executeUpdate();
+                }
+
+                for (PriceChange change : changes) {
+                    writePrice(conn, change.getVariantId(), change.getNewPrice());
+                    insertPriceHistory(conn, change.getVariantId(), change.getOldPrice(),
+                            change.getNewPrice(), "price_per_kg", changedBy);
+                }
+
+                conn.commit();
+                return true;
+
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            }
+        }
+    }
+
+    /** Sets one variant price and records it in the history. */
+    public boolean savePriceWithHistory(int variantId,
+                                        BigDecimal newPrice,
+                                        String reason,
+                                        int changedBy) throws SQLException {
+
+        try (Connection conn = DBConnection.getConnection()) {
+
+            conn.setAutoCommit(false);
+
+            try {
+                BigDecimal oldPrice = readPrice(conn, variantId);
+                if (oldPrice == null) {
+                    conn.rollback();
+                    return false;
+                }
+
+                writePrice(conn, variantId, newPrice);
+                insertPriceHistory(conn, variantId, oldPrice, newPrice, reason, changedBy);
+
+                conn.commit();
+                return true;
+
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            }
+        }
+    }
+
+    /**
+     * Sets the quality grade of a variant. When {@code newPrice} is not
+     * null the price is changed too and recorded in the history.
+     */
+    public boolean saveGradeWithHistory(int variantId,
+                                        String grade,
+                                        BigDecimal newPrice,
+                                        int changedBy) throws SQLException {
+
+        try (Connection conn = DBConnection.getConnection()) {
+
+            conn.setAutoCommit(false);
+
+            try {
+                BigDecimal oldPrice = readPrice(conn, variantId);
+                if (oldPrice == null) {
+                    conn.rollback();
+                    return false;
+                }
+
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "UPDATE product_variants SET quality_grade = ? WHERE variant_id = ?")) {
+                    ps.setString(1, grade);
+                    ps.setInt(2, variantId);
+                    ps.executeUpdate();
+                }
+
+                if (newPrice != null && oldPrice.compareTo(newPrice) != 0) {
+                    writePrice(conn, variantId, newPrice);
+                    insertPriceHistory(conn, variantId, oldPrice, newPrice, "grade", changedBy);
+                }
+
+                conn.commit();
+                return true;
+
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            }
+        }
+    }
+
+    /** Records a price change made by another screen (variant form). */
+    public void recordPriceHistory(int variantId,
+                                   BigDecimal oldPrice,
+                                   BigDecimal newPrice,
+                                   String reason,
+                                   int changedBy) throws SQLException {
+
+        try (Connection conn = DBConnection.getConnection()) {
+            insertPriceHistory(conn, variantId, oldPrice, newPrice, reason, changedBy);
+        }
+    }
+
+    public List<Map<String, Object>> getPriceHistoryForOwner(int ownerId, int limit)
+            throws SQLException {
+
+        String sql = """
+                SELECT TOP (?) h.changed_at, p.product_name, v.sku,
+                       h.old_price, h.new_price, h.reason
+                FROM variant_price_history h
+                JOIN product_variants v ON v.variant_id = h.variant_id
+                JOIN products p ON p.product_id = v.product_id
+                JOIN shops s ON s.shop_id = p.shop_id
+                WHERE s.owner_id = ?
+                ORDER BY h.changed_at DESC, h.history_id DESC
+                """;
+
+        List<Map<String, Object>> list = new ArrayList<>();
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, limit);
+            ps.setInt(2, ownerId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("changed_at", rs.getTimestamp("changed_at"));
+                    row.put("product_name", rs.getString("product_name"));
+                    row.put("sku", rs.getString("sku"));
+                    row.put("old_price", rs.getBigDecimal("old_price"));
+                    row.put("new_price", rs.getBigDecimal("new_price"));
+                    row.put("reason", rs.getString("reason"));
+                    list.add(row);
+                }
+            }
+        }
+
+        return list;
+    }
+
+    private BigDecimal readPrice(Connection conn, int variantId) throws SQLException {
+
+        try (PreparedStatement ps = conn.prepareStatement(
+                "SELECT price FROM product_variants WHERE variant_id = ?")) {
+
+            ps.setInt(1, variantId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getBigDecimal("price");
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private void writePrice(Connection conn, int variantId, BigDecimal price) throws SQLException {
+
+        try (PreparedStatement ps = conn.prepareStatement(
+                "UPDATE product_variants SET price = ? WHERE variant_id = ?")) {
+            ps.setBigDecimal(1, price);
+            ps.setInt(2, variantId);
+            ps.executeUpdate();
+        }
+    }
+
+    private void insertPriceHistory(Connection conn,
+                                    int variantId,
+                                    BigDecimal oldPrice,
+                                    BigDecimal newPrice,
+                                    String reason,
+                                    int changedBy) throws SQLException {
+
+        String sql = """
+                INSERT INTO variant_price_history
+                    (variant_id, old_price, new_price, reason, changed_by)
+                VALUES (?, ?, ?, ?, ?)
+                """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, variantId);
+            if (oldPrice == null) {
+                ps.setNull(2, java.sql.Types.DECIMAL);
+            } else {
+                ps.setBigDecimal(2, oldPrice);
+            }
+            ps.setBigDecimal(3, newPrice);
+            ps.setString(4, reason);
+            ps.setInt(5, changedBy);
+            ps.executeUpdate();
         }
     }
 

@@ -322,6 +322,48 @@ public class InventoryService {
     }
 
     /**
+     * Asks to write off an expired batch of the owner's shop. The request
+     * waits for the owner's approval.
+     */
+    public String requestDiscard(int userId, String batchIdRaw) throws SQLException {
+
+        int batchId = parseInt(batchIdRaw, -1);
+
+        if (batchId <= 0) {
+            return "invalid";
+        }
+
+        if (!inventoryDAO.batchBelongsToOwner(batchId, userId)) {
+            return "forbidden";
+        }
+
+        return inventoryDAO.createDiscardRequest(batchId, userId);
+    }
+
+    public List<Map<String, Object>> expiredBatches(int userId) throws SQLException {
+        return inventoryDAO.getExpiredBatches(userId);
+    }
+
+    public List<Map<String, Object>> pendingDiscards(int userId) throws SQLException {
+        return inventoryDAO.getPendingDiscards(userId);
+    }
+
+    /**
+     * The shop owner approves or rejects a pending discard request.
+     */
+    public String resolveDiscard(int userId, String requestIdRaw, boolean approve)
+            throws SQLException {
+
+        int requestId = parseInt(requestIdRaw, -1);
+
+        if (requestId <= 0) {
+            return "invalid";
+        }
+
+        return inventoryDAO.resolveDiscardRequest(requestId, userId, approve);
+    }
+
+    /**
      * Sets a batch quantity to an absolute value.
      */
     public String updateBatch(int userId,

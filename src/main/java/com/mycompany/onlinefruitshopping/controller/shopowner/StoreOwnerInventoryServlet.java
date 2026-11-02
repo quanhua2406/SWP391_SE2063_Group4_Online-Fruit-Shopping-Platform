@@ -71,6 +71,10 @@ public class StoreOwnerInventoryServlet extends HttpServlet {
             return "history";
         }
 
+        if ("/expired".equals(path)) {
+            return "expired";
+        }
+
         return null;
     }
 
@@ -92,6 +96,10 @@ public class StoreOwnerInventoryServlet extends HttpServlet {
             return "/jsp/shopowner/inventory-history.jsp";
         }
 
+        if ("expired".equals(view)) {
+            return "/jsp/shopowner/inventory-expired.jsp";
+        }
+
         return "/jsp/shopowner/inventory.jsp";
     }
 
@@ -107,6 +115,12 @@ public class StoreOwnerInventoryServlet extends HttpServlet {
 
         if ("setThreshold".equals(action) || "notifyLowStock".equals(action)) {
             return "/low-stock";
+        }
+
+        if ("requestDiscard".equals(action)
+                || "approveDiscard".equals(action)
+                || "rejectDiscard".equals(action)) {
+            return "/expired";
         }
 
         return "/update";
@@ -161,6 +175,9 @@ public class StoreOwnerInventoryServlet extends HttpServlet {
             } else if ("history".equals(view)) {
                 loadHistoryView(request, userId);
 
+            } else if ("expired".equals(view)) {
+                loadExpiredView(request, userId);
+
             } else {
                 loadStockView(request, userId);
             }
@@ -169,7 +186,7 @@ public class StoreOwnerInventoryServlet extends HttpServlet {
 
         } catch (SQLException e) {
             throw new ServletException(
-                    "Unable to load your inventory.", e);
+                    "Không tải được tồn kho của bạn.", e);
         }
 
         request.getRequestDispatcher(jspOf(view))
@@ -219,6 +236,15 @@ public class StoreOwnerInventoryServlet extends HttpServlet {
 
         request.setAttribute("threshold", view.getThreshold());
         request.setAttribute("lowStockPage", view.getLowStockPage());
+    }
+
+    private void loadExpiredView(HttpServletRequest request, int userId)
+            throws SQLException {
+
+        request.setAttribute("expiredBatches",
+                inventoryService.expiredBatches(userId));
+        request.setAttribute("pendingDiscards",
+                inventoryService.pendingDiscards(userId));
     }
 
     private void loadHistoryView(HttpServletRequest request, int userId)
@@ -271,6 +297,18 @@ public class StoreOwnerInventoryServlet extends HttpServlet {
             } else if ("notifyLowStock".equals(action)) {
                 result = inventoryService.notifyLowStock(user);
 
+            } else if ("requestDiscard".equals(action)) {
+                result = inventoryService.requestDiscard(
+                        userId, request.getParameter("batchId"));
+
+            } else if ("approveDiscard".equals(action)) {
+                result = inventoryService.resolveDiscard(
+                        userId, request.getParameter("requestId"), true);
+
+            } else if ("rejectDiscard".equals(action)) {
+                result = inventoryService.resolveDiscard(
+                        userId, request.getParameter("requestId"), false);
+
             } else {
                 result = inventoryService.updateBatch(
                         userId,
@@ -281,7 +319,7 @@ public class StoreOwnerInventoryServlet extends HttpServlet {
 
         } catch (SQLException e) {
             throw new ServletException(
-                    "Unable to update your inventory.", e);
+                    "Không cập nhật được tồn kho của bạn.", e);
         }
 
         response.sendRedirect(

@@ -8,12 +8,12 @@
 
 <%!
     private static final String[][] ORDER_STATUSES = {
-        {"pending_confirmation", "Pending confirmation"},
-        {"preparing", "Preparing"},
-        {"shipping", "Shipping"},
-        {"delivered", "Delivered"},
-        {"cancelled", "Cancelled"},
-        {"failed", "Failed"}
+        {"pending_confirmation", "Chờ xác nhận"},
+        {"preparing", "Đang chuẩn bị"},
+        {"shipping", "Đang giao"},
+        {"delivered", "Đã giao"},
+        {"cancelled", "Đã hủy"},
+        {"failed", "Thất bại"}
     };
 
     private String statusLabel(String status) {
@@ -121,7 +121,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Orders - FreshFruit Admin</title>
+    <title>Đơn hàng - FreshFruit Admin</title>
 
     <link rel="stylesheet" href="<%= contextPath %>/css/style.css">
 </head>
@@ -136,13 +136,13 @@
 
     <nav class="nav-actions">
 
-        <a href="<%= contextPath %>/admin/dashboard">📊 Dashboard</a>
+        <a href="<%= contextPath %>/admin/dashboard">📊 Bảng điều khiển</a>
 
-        <a href="<%= contextPath %>/admin/deliveries">🚚 Deliveries</a>
+        <a href="<%= contextPath %>/admin/deliveries">🚚 Giao hàng</a>
 
-        <a href="<%= contextPath %>/admin/order-issues">🛠️ Order Issues</a>
+        <a href="<%= contextPath %>/admin/order-issues">🛠️ Sự cố đơn hàng</a>
 
-        <a href="<%= contextPath %>/logout" class="logout">Logout</a>
+        <a href="<%= contextPath %>/logout" class="logout">Đăng xuất</a>
 
     </nav>
 
@@ -151,20 +151,20 @@
 <section class="dashboard">
 
     <p class="breadcrumb">
-        <a href="<%= contextPath %>/admin/dashboard">← Admin Dashboard</a>
+        <a href="<%= contextPath %>/admin/dashboard">← Bảng điều khiển</a>
     </p>
 
-    <h1>Order Monitoring</h1>
+    <h1>Theo dõi đơn hàng</h1>
 
     <p class="dashboard-welcome">
-        Every order on the platform, across all shops, with its
-        current status and delivery assignment.
+        Tất cả đơn hàng trên hệ thống, trên mọi cửa hàng, kèm
+        trạng thái hiện tại và phân công giao hàng.
     </p>
 
     <% if ("notfound".equals(msg)) { %>
-        <div class="error-message">Order not found.</div>
+        <div class="error-message">Không tìm thấy đơn hàng.</div>
     <% } else if ("badorder".equals(msg)) { %>
-        <div class="error-message">Invalid order id.</div>
+        <div class="error-message">Mã đơn hàng không hợp lệ.</div>
     <% } %>
 
     <!-- ==================== STATUS COUNTS ==================== -->
@@ -188,16 +188,16 @@
 
     <form method="get" action="<%= contextPath %>/admin/orders" class="filter-form">
 
-        <label for="search">Search</label>
+        <label for="search">Tìm kiếm</label>
 
         <input class="filter-input" type="text" id="search" name="search"
-               placeholder="Order id, customer, email, phone, shop"
+               placeholder="Mã đơn, khách hàng, email, SĐT, cửa hàng"
                value="<%= esc(search) %>">
 
-        <label for="status">Status</label>
+        <label for="status">Trạng thái</label>
 
         <select class="filter-input" id="status" name="status">
-            <option value=""<%= status.isEmpty() ? " selected" : "" %>>All statuses</option>
+            <option value=""<%= status.isEmpty() ? " selected" : "" %>>Tất cả trạng thái</option>
             <% for (String[] s : ORDER_STATUSES) { %>
                 <option value="<%= s[0] %>"<%= s[0].equals(status) ? " selected" : "" %>>
                     <%= s[1] %>
@@ -205,9 +205,9 @@
             <% } %>
         </select>
 
-        <button type="submit" class="btn-sm">Apply</button>
+        <button type="submit" class="btn-sm">Áp dụng</button>
 
-        <a class="filter-clear" href="<%= contextPath %>/admin/orders">Clear</a>
+        <a class="filter-clear" href="<%= contextPath %>/admin/orders">Xóa lọc</a>
 
     </form>
 
@@ -215,10 +215,10 @@
 
     <div class="panel">
 
-        <h2>🛒 Orders</h2>
+        <h2>🛒 Đơn hàng</h2>
 
         <p class="panel-hint">
-            <%= orders == null ? 0 : orders.getTotal() %> order(s) matched.
+            <%= orders == null ? 0 : orders.getTotal() %> đơn hàng phù hợp.
         </p>
 
         <div class="table-scroll">
@@ -228,14 +228,14 @@
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th>Customer</th>
-                        <th>Shop</th>
-                        <th>Placed</th>
-                        <th>Items</th>
-                        <th>Total</th>
-                        <th>Status</th>
+                        <th>Khách hàng</th>
+                        <th>Cửa hàng</th>
+                        <th>Ngày đặt</th>
+                        <th>Số món</th>
+                        <th>Tổng tiền</th>
+                        <th>Trạng thái</th>
                         <th>Shipper</th>
-                        <th>Actions</th>
+                        <th>Thao tác</th>
                     </tr>
                 </thead>
 
@@ -243,7 +243,7 @@
                 <% if (orders == null || orders.isEmpty()) { %>
 
                     <tr>
-                        <td colspan="9">No orders matched the filters.</td>
+                        <td colspan="9">Không có đơn hàng nào phù hợp bộ lọc.</td>
                     </tr>
 
                 <% } else {
@@ -278,7 +278,7 @@
                         <td>
                             <a class="btn-sm-info"
                                href="<%= contextPath %>/admin/order-detail?orderId=<%= esc(row.get("order_id")) %>">
-                                View
+                                Xem
                             </a>
                         </td>
                     </tr>

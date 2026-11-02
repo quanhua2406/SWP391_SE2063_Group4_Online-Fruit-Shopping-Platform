@@ -22,7 +22,7 @@
 
     <meta charset="UTF-8">
 
-    <title>Edit Profile - FreshFruit</title>
+    <title>Chỉnh sửa hồ sơ - FreshFruit</title>
 
     <style>
 
@@ -275,11 +275,11 @@
         <div class="profile-header">
 
             <h1>
-                Edit Profile
+                Chỉnh sửa hồ sơ
             </h1>
 
             <p>
-                Update your personal information
+                Cập nhật thông tin cá nhân của bạn
             </p>
 
         </div>
@@ -328,7 +328,7 @@
             <div class="form-group">
 
                 <label for="fullName">
-                    Full Name
+                    Họ và tên
                 </label>
 
                 <input
@@ -338,7 +338,7 @@
                     value="<%= user.getFullName() != null
                             ? user.getFullName()
                             : "" %>"
-                    placeholder="Enter your full name"
+                    placeholder="Nhập họ và tên"
                     maxlength="100">
 
 
@@ -375,7 +375,7 @@
             <div class="form-group">
 
                 <label for="phone">
-                    Phone Number
+                    Số điện thoại
                 </label>
 
                 <input
@@ -385,7 +385,7 @@
                     value="<%= user.getPhone() != null
                             ? user.getPhone()
                             : "" %>"
-                    placeholder="Enter your phone number"
+                    placeholder="Nhập số điện thoại"
                     maxlength="11">
 
 
@@ -399,7 +399,7 @@
             <div class="form-group">
 
                 <label for="role">
-                    Role
+                    Vai trò
                 </label>
 
                 <input
@@ -424,7 +424,7 @@
                     class="cancel-button"
                     href="<%= request.getContextPath() %>/profile">
 
-                    Cancel
+                    Hủy
 
                 </a>
 
@@ -433,7 +433,7 @@
                     type="submit"
                     class="save-button">
 
-                    Save Changes
+                    Lưu thay đổi
 
                 </button>
 
@@ -486,7 +486,7 @@ function validateProfileForm() {
     if (fullName === "" && phone === "") {
 
         error.innerHTML =
-            "Full name and phone number cannot be empty.";
+            "Họ tên và số điện thoại không được để trống.";
 
         error.style.display = "block";
 
@@ -501,7 +501,7 @@ function validateProfileForm() {
     if (fullName === "") {
 
         error.innerHTML =
-            "Full name cannot be empty.";
+            "Họ tên không được để trống.";
 
         error.style.display = "block";
 
@@ -516,7 +516,7 @@ function validateProfileForm() {
     if (fullName.length < 2) {
 
         error.innerHTML =
-            "Full name must contain at least 2 characters.";
+            "Họ tên phải có ít nhất 2 ký tự.";
 
         error.style.display = "block";
 
@@ -527,7 +527,7 @@ function validateProfileForm() {
     if (fullName.length > 100) {
 
         error.innerHTML =
-            "Full name cannot exceed 100 characters.";
+            "Họ tên không được vượt quá 100 ký tự.";
 
         error.style.display = "block";
 
@@ -542,7 +542,7 @@ function validateProfileForm() {
     if (!/\p{L}/u.test(fullName)) {
 
         error.innerHTML =
-            "Full name must contain letters.";
+            "Họ tên phải chứa chữ cái.";
 
         error.style.display = "block";
 
@@ -557,7 +557,7 @@ function validateProfileForm() {
     if (!/^[\p{L}\s]+$/u.test(fullName)) {
 
         error.innerHTML =
-            "Full name can contain only letters and spaces.";
+            "Họ tên chỉ được chứa chữ cái và khoảng trắng.";
 
         error.style.display = "block";
 
@@ -572,7 +572,7 @@ function validateProfileForm() {
     if (phone === "") {
 
         error.innerHTML =
-            "Phone number cannot be empty.";
+            "Số điện thoại không được để trống.";
 
         error.style.display = "block";
 
@@ -587,7 +587,7 @@ function validateProfileForm() {
     if (!/^[0-9]+$/.test(phone)) {
 
         error.innerHTML =
-            "Phone number can contain only digits.";
+            "Số điện thoại chỉ được chứa chữ số.";
 
         error.style.display = "block";
 
@@ -603,7 +603,7 @@ function validateProfileForm() {
         phone.length > 11) {
 
         error.innerHTML =
-            "Phone number must contain 9 to 11 digits.";
+            "Số điện thoại phải có từ 9 đến 11 chữ số.";
 
         error.style.display = "block";
 

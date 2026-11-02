@@ -1,6 +1,8 @@
 package com.mycompany.onlinefruitshopping.controller;
 
 import com.mycompany.onlinefruitshopping.dao.ProductDAO;
+import com.mycompany.onlinefruitshopping.service.pricing.PricingService;
+import com.mycompany.onlinefruitshopping.service.product.ProductVariantService;
 import com.mycompany.onlinefruitshopping.dao.ProductVariantDAO;
 import com.mycompany.onlinefruitshopping.model.Product;
 import com.mycompany.onlinefruitshopping.model.ProductVariant;
@@ -14,16 +16,19 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.List;
 
-@WebServlet(urlPatterns = {"/store-owner/variants", "/admin/variants"})
+@WebServlet("/store-owner/variants")
 public class ProductVariantServlet extends HttpServlet {
 
     private final ProductVariantDAO variantDAO = new ProductVariantDAO();
     private final ProductDAO productDAO = new ProductDAO();
+    private final PricingService pricingService = new PricingService();
+    private final ProductVariantService variantService = new ProductVariantService();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -90,7 +95,7 @@ public class ProductVariantServlet extends HttpServlet {
 
         String productIdStr = request.getParameter("productId");
         if (productIdStr == null || productIdStr.isBlank()) {
-            response.sendRedirect(request.getContextPath() + "/store-owner/products?error=invalid_id");
+            showShopVariants(request, response);
             return;
         }
 
@@ -98,13 +103,13 @@ public class ProductVariantServlet extends HttpServlet {
         try {
             productId = Integer.parseInt(productIdStr);
         } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath() + "/store-owner/products?error=invalid_id");
+            redirectInvalid(request, response, "Mã sản phẩm hoặc quy cách không hợp lệ.");
             return;
         }
 
         Product product = productDAO.getProductById(productId);
         if (product == null) {
-            response.sendRedirect(request.getContextPath() + "/store-owner/products?error=notfound");
+            redirectInvalid(request, response, "Không tìm thấy sản phẩm.");
             return;
         }
 
@@ -112,6 +117,21 @@ public class ProductVariantServlet extends HttpServlet {
 
         request.setAttribute("product", product);
         request.setAttribute("variants", variants);
+        request.setAttribute("qualityGrades", variantService.qualityGrades());
+        request.getRequestDispatcher("/product-variants.jsp").forward(request, response);
+    }
+
+    // =========================================================
+    // 1b. SHOP-LEVEL VARIANT LIST (NOT TIED TO ONE PRODUCT)
+    // =========================================================
+    private void showShopVariants(HttpServletRequest request, HttpServletResponse response)
+            throws SQLException, ServletException, IOException {
+
+        int ownerId = currentUserId(request);
+
+        request.setAttribute("variants", variantService.shopVariants(ownerId));
+        request.setAttribute("shopProducts", variantService.shopProducts(ownerId));
+        request.setAttribute("qualityGrades", variantService.qualityGrades());
         request.getRequestDispatcher("/product-variants.jsp").forward(request, response);
     }
 
@@ -133,7 +153,7 @@ public class ProductVariantServlet extends HttpServlet {
         try {
             productId = Integer.parseInt(productIdStr);
         } catch (Exception e) {
-            response.sendRedirect(request.getContextPath() + "/store-owner/products?error=invalid_id");
+            redirectInvalid(request, response, "Mã sản phẩm hoặc quy cách không hợp lệ.");
             return;
         }
 
@@ -208,8 +228,12 @@ public class ProductVariantServlet extends HttpServlet {
             }
         }
 
+        String grade = pricingService.normalizeGrade(request.getParameter("qualityGrade"));
+        price = pricingService.resolveVariantPrice(productId, weightValue, grade, price).doubleValue();
+
         ProductVariant v = new ProductVariant();
         v.setProductId(productId);
+        v.setQualityGrade(grade);
         v.setSku(trimmedSku);
         v.setPackagingType(trimmedPackaging);
         v.setUnit(unit);
@@ -241,7 +265,7 @@ public class ProductVariantServlet extends HttpServlet {
             variantId = Integer.parseInt(variantIdStr);
             productId = Integer.parseInt(productIdStr);
         } catch (Exception e) {
-            response.sendRedirect(request.getContextPath() + "/store-owner/products?error=invalid_id");
+            redirectInvalid(request, response, "Mã sản phẩm hoặc quy cách không hợp lệ.");
             return;
         }
 
@@ -305,8 +329,14 @@ public class ProductVariantServlet extends HttpServlet {
             }
         }
 
+        String grade = pricingService.normalizeGrade(request.getParameter("qualityGrade"));
+        price = pricingService.resolveVariantPrice(productId, weightValue, grade, price).doubleValue();
+
+        ProductVariant before = variantDAO.getVariantById(variantId);
+
         ProductVariant v = new ProductVariant();
         v.setVariantId(variantId);
+        v.setQualityGrade(grade);
         v.setProductId(productId);
         v.setSku(trimmedSku);
         v.setPackagingType(packagingType.trim());
@@ -315,6 +345,10 @@ public class ProductVariantServlet extends HttpServlet {
         v.setPrice(price);
 
         variantDAO.updateVariant(v, stock);
+
+        if (before != null) {
+            pricingService.recordVariantPriceChange(variantId, before.getPrice(), price, currentUserId(request));
+        }
         response.sendRedirect(request.getRequestURI() + "?productId=" + productId + "&success=updated");
     }
 
@@ -333,7 +367,7 @@ public class ProductVariantServlet extends HttpServlet {
             variantId = Integer.parseInt(variantIdStr);
             productId = Integer.parseInt(productIdStr);
         } catch (Exception e) {
-            response.sendRedirect(request.getContextPath() + "/store-owner/products?error=invalid_id");
+            redirectInvalid(request, response, "Mã sản phẩm hoặc quy cách không hợp lệ.");
             return;
         }
 
@@ -354,10 +388,21 @@ public class ProductVariantServlet extends HttpServlet {
         response.sendRedirect(request.getRequestURI() + "?productId=" + productId + "&success=deleted");
     }
 
+    private void redirectInvalid(HttpServletRequest request, HttpServletResponse response, String message)
+            throws IOException {
+        String encoded = URLEncoder.encode(message, StandardCharsets.UTF_8);
+        response.sendRedirect(request.getContextPath() + "/store-owner/variants?errorMsg=" + encoded);
+    }
+
     private void redirectWithError(HttpServletRequest request, HttpServletResponse response, int productId, String message)
             throws IOException {
         String encoded = URLEncoder.encode(message, StandardCharsets.UTF_8);
         response.sendRedirect(request.getRequestURI() + "?productId=" + productId + "&errorMsg=" + encoded);
+    }
+
+    private int currentUserId(HttpServletRequest request) {
+        User user = (User) request.getSession(false).getAttribute("user");
+        return user.getUserID();
     }
 
     private User getAuthenticatedUser(HttpServletRequest request, HttpServletResponse response)

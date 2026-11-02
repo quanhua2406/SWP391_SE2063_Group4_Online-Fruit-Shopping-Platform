@@ -62,7 +62,7 @@ public class AddressServlet extends HttpServlet {
         } catch (SQLException e) {
 
             throw new ServletException(
-                    "Unable to load addresses.",
+                    "Không thể tải danh sách địa chỉ.",
                     e
             );
         }
@@ -137,7 +137,7 @@ public class AddressServlet extends HttpServlet {
         } catch (SQLException e) {
 
             throw new ServletException(
-                    "Address operation failed.",
+                    "Thao tác địa chỉ thất bại.",
                     e
             );
         }
@@ -393,66 +393,66 @@ public class AddressServlet extends HttpServlet {
 
         // Recipient name
         if (recipientName.isEmpty()) {
-            return "Recipient name cannot be empty.";
+            return "Tên người nhận không được để trống.";
         }
 
         if (recipientName.length() < 2
                 || recipientName.length() > 100) {
 
-            return "Recipient name must be between 2 and 100 characters.";
+            return "Tên người nhận phải từ 2 đến 100 ký tự.";
         }
 
         if (!recipientName.matches(
                 "^[\\p{L}][\\p{L}\\s'.-]*$")) {
 
-            return "Recipient name contains invalid characters.";
+            return "Tên người nhận chứa ký tự không hợp lệ.";
         }
 
         // Phone
         if (phone.isEmpty()) {
-            return "Phone number cannot be empty.";
+            return "Số điện thoại không được để trống.";
         }
 
         if (!phone.matches("^0\\d{9,10}$")) {
-            return "Phone number must contain 10 or 11 digits and start with 0.";
+            return "Số điện thoại phải gồm 10 hoặc 11 chữ số và bắt đầu bằng số 0.";
         }
 
         // Address
         if (addressLine.isEmpty()) {
-            return "Address cannot be empty.";
+            return "Địa chỉ không được để trống.";
         }
 
         if (addressLine.length() < 5
                 || addressLine.length() > 255) {
 
-            return "Address must be between 5 and 255 characters.";
+            return "Địa chỉ phải từ 5 đến 255 ký tự.";
         }
 
         // Ward
         if (ward.isEmpty()) {
-            return "Ward cannot be empty.";
+            return "Phường/xã không được để trống.";
         }
 
         if (ward.length() > 100) {
-            return "Ward cannot exceed 100 characters.";
+            return "Phường/xã không được vượt quá 100 ký tự.";
         }
 
         // District
         if (district.isEmpty()) {
-            return "District cannot be empty.";
+            return "Quận/huyện không được để trống.";
         }
 
         if (district.length() > 100) {
-            return "District cannot exceed 100 characters.";
+            return "Quận/huyện không được vượt quá 100 ký tự.";
         }
 
         // Province
         if (province.isEmpty()) {
-            return "Province cannot be empty.";
+            return "Tỉnh/thành phố không được để trống.";
         }
 
         if (province.length() > 100) {
-            return "Province cannot exceed 100 characters.";
+            return "Tỉnh/thành phố không được vượt quá 100 ký tự.";
         }
 
         return null;

@@ -34,7 +34,7 @@ public final class LowStockNotifier {
 
     /** Mail subject; kept fixed so it can be filtered server-side. */
     public static final String SUBJECT =
-            "FreshFruit - Low Stock Alert";
+            "FreshFruit - Cảnh báo sắp hết hàng";
 
     private LowStockNotifier() {
     }
@@ -122,14 +122,14 @@ public final class LowStockNotifier {
 
         StringBuilder body = new StringBuilder();
 
-        body.append("Hello,\n\n");
+        body.append("Xin chào,\n\n");
 
-        body.append("The following products of ")
+        body.append("Các sản phẩm sau của ")
             .append(shopName == null || shopName.isBlank()
-                    ? "your shop" : shopName)
-            .append(" are at or below the safety threshold of ")
+                    ? "cửa hàng của bạn" : shopName)
+            .append(" đang ở mức bằng hoặc thấp hơn ngưỡng an toàn ")
             .append(number(threshold))
-            .append(" units:\n\n");
+            .append(" đơn vị:\n\n");
 
         for (Map<String, Object> row : rows) {
             body.append(" - ")
@@ -139,13 +139,13 @@ public final class LowStockNotifier {
                         row.get("weight_value"), row.get("unit")))
                 .append("] - SKU ")
                 .append(row.get("sku"))
-                .append(" - stock: ")
+                .append(" - tồn kho: ")
                 .append(number(row.get("stock")))
                 .append('\n');
         }
 
-        body.append("\nPlease restock soon to keep selling.\n\n");
-        body.append("FreshFruit Team");
+        body.append("\nVui lòng nhập thêm hàng sớm để tiếp tục bán hàng.\n\n");
+        body.append("Đội ngũ FreshFruit");
 
         return body.toString();
     }

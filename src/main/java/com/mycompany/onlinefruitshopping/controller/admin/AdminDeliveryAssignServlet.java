@@ -52,7 +52,7 @@ public class AdminDeliveryAssignServlet extends HttpServlet {
                     .forward(request, response);
 
         } catch (SQLException e) {
-            throw new ServletException("Cannot load assignments", e);
+            throw new ServletException("Không thể tải danh sách phân công", e);
         }
     }
 
@@ -74,7 +74,7 @@ public class AdminDeliveryAssignServlet extends HttpServlet {
                     + "/admin/delivery-assign?msg=" + message);
 
         } catch (SQLException e) {
-            throw new ServletException("Cannot update assignment for order #" + orderId, e);
+            throw new ServletException("Không thể cập nhật phân công cho đơn hàng #" + orderId, e);
         }
     }
 }

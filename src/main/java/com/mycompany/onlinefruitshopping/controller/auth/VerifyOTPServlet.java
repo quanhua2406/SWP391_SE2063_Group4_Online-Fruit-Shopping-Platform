@@ -76,14 +76,14 @@ public class VerifyOTPServlet extends HttpServlet {
 
         if (otp.isEmpty()) {
 
-            showError(request, response, "OTP cannot be empty.");
+            showError(request, response, "OTP không được để trống.");
             return;
         }
 
         if (!RegistrationService.isValidOtp(otp)) {
 
             showError(request, response,
-                    "OTP must contain exactly 6 digits.");
+                    "OTP phải gồm đúng 6 chữ số.");
             return;
         }
 
@@ -95,7 +95,7 @@ public class VerifyOTPServlet extends HttpServlet {
             if (!verified) {
 
                 showError(request, response,
-                        "Invalid or expired OTP.");
+                        "OTP không hợp lệ hoặc đã hết hạn.");
                 return;
             }
 
@@ -112,7 +112,7 @@ public class VerifyOTPServlet extends HttpServlet {
         } catch (SQLException e) {
 
             throw new ServletException(
-                    "Unable to verify OTP.",
+                    "Không thể xác minh OTP.",
                     e
             );
         }

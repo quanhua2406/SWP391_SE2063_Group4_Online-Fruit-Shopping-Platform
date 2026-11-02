@@ -34,10 +34,10 @@
 
 <div class="panel">
 
-    <h2>📦 View Stock Quantity</h2>
+    <h2>📦 Xem số lượng tồn kho</h2>
 
     <p class="panel-hint">
-        Total active stock per product variant.
+        Tổng tồn kho đang hoạt động của từng biến thể sản phẩm.
     </p>
 
     <form method="get"
@@ -46,10 +46,10 @@
 
         <input type="text" class="filter-input" name="vq"
                value="<%= esc(vq) %>"
-               placeholder="Search product or SKU...">
+               placeholder="Tìm sản phẩm hoặc SKU...">
 
         <select class="filter-select" name="vweight">
-            <option value="">All weights</option>
+            <option value="">Tất cả khối lượng</option>
             <% if (weightOptions != null) {
                    for (String w : weightOptions) { %>
                 <option value="<%= esc(w) %>"
@@ -60,10 +60,10 @@
                } %>
         </select>
 
-        <button type="submit" class="btn-sm">Filter</button>
+        <button type="submit" class="btn-sm">Lọc</button>
 
         <a class="filter-clear"
-           href="<%= contextPath %>/store-owner/inventory">Clear</a>
+           href="<%= contextPath %>/store-owner/inventory">Xóa lọc</a>
 
     </form>
 
@@ -71,12 +71,12 @@
 
         <thead>
             <tr>
-                <th>Product</th>
+                <th>Sản phẩm</th>
                 <th>SKU</th>
-                <th>Weight</th>
-                <th>Packaging</th>
-                <th>Price</th>
-                <th>Stock</th>
+                <th>Khối lượng</th>
+                <th>Đóng gói</th>
+                <th>Giá</th>
+                <th>Tồn kho</th>
             </tr>
         </thead>
 
@@ -85,7 +85,7 @@
 
             <tr>
                 <td colspan="6">
-                    No product variants in your shop yet.
+                    Chưa có biến thể sản phẩm nào trong cửa hàng.
                 </td>
             </tr>
 

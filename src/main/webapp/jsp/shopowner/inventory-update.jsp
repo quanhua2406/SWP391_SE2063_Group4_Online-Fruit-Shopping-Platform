@@ -1,6 +1,25 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@ include file="inventory-common.jspf" %>
 
+<%!
+    private String batchStatusLabel(Object value) {
+        if (value == null) {
+            return "";
+        }
+
+        switch (value.toString()) {
+            case "active":
+                return "Đang hoạt động";
+            case "expired":
+                return "Hết hạn";
+            case "depleted":
+                return "Đã hết";
+            default:
+                return value.toString();
+        }
+    }
+%>
+
 <%
     String activePage = "update";
 
@@ -30,14 +49,14 @@
 
 <div class="panel">
 
-    <h2>✏️ Update Stock Quantity</h2>
+    <h2>✏️ Cập nhật số lượng tồn kho</h2>
 
     <p class="panel-hint">
-        Adjust the quantity of a specific stock batch. Every
-        change is recorded in the
+        Điều chỉnh số lượng của một lô hàng cụ thể. Mọi thay đổi đều được ghi
+        lại tại trang
         <a href="<%= contextPath %>/store-owner/inventory/history">
-            Inventory History
-        </a> page.
+            Lịch sử kho
+        </a>.
     </p>
 
     <form method="get"
@@ -46,19 +65,19 @@
 
         <input type="text" class="filter-input" name="bq"
                value="<%= esc(bq) %>"
-               placeholder="Search batch, product or SKU...">
+               placeholder="Tìm lô hàng, sản phẩm hoặc SKU...">
 
         <select class="filter-select" name="bstatus">
-            <option value="">All statuses</option>
-            <option value="active" <%= "active".equals(bstatus) ? "selected" : "" %>>active</option>
-            <option value="expired" <%= "expired".equals(bstatus) ? "selected" : "" %>>expired</option>
-            <option value="depleted" <%= "depleted".equals(bstatus) ? "selected" : "" %>>depleted</option>
+            <option value="">Tất cả trạng thái</option>
+            <option value="active" <%= "active".equals(bstatus) ? "selected" : "" %>>Đang hoạt động</option>
+            <option value="expired" <%= "expired".equals(bstatus) ? "selected" : "" %>>Hết hạn</option>
+            <option value="depleted" <%= "depleted".equals(bstatus) ? "selected" : "" %>>Đã hết</option>
         </select>
 
-        <button type="submit" class="btn-sm">Filter</button>
+        <button type="submit" class="btn-sm">Lọc</button>
 
         <a class="filter-clear"
-           href="<%= contextPath %>/store-owner/inventory/update">Clear</a>
+           href="<%= contextPath %>/store-owner/inventory/update">Xóa lọc</a>
 
     </form>
 
@@ -66,14 +85,14 @@
 
         <thead>
             <tr>
-                <th>Batch</th>
-                <th>Product</th>
+                <th>Lô hàng</th>
+                <th>Sản phẩm</th>
                 <th>SKU</th>
-                <th>Quantity</th>
-                <th>Expiry</th>
-                <th>Received</th>
-                <th>Status</th>
-                <th>Update</th>
+                <th>Số lượng</th>
+                <th>Hạn sử dụng</th>
+                <th>Ngày nhập</th>
+                <th>Trạng thái</th>
+                <th>Cập nhật</th>
             </tr>
         </thead>
 
@@ -82,7 +101,7 @@
 
             <tr>
                 <td colspan="8">
-                    No stock batches yet.
+                    Chưa có lô hàng nào.
                 </td>
             </tr>
 
@@ -99,7 +118,7 @@
                 <td>
                     <span class="pill <%= "active".equals(b.get("status"))
                             ? "pill-ok" : "pill-danger" %>">
-                        <%= esc(b.get("status")) %>
+                        <%= esc(batchStatusLabel(b.get("status"))) %>
                     </span>
                 </td>
                 <td>
@@ -117,13 +136,14 @@
 
                         <input class="qty-input" type="text"
                                name="reason" maxlength="255"
-                               placeholder="Reason">
+                               placeholder="Lý do">
 
                         <button type="submit" class="btn-sm">
-                            Save
+                            Lưu
                         </button>
 
                     </form>
+
                 </td>
             </tr>
         <%
@@ -133,7 +153,6 @@
         </tbody>
 
     </table>
-
     <%= Pager.render(batchesPage, batchUrl, "bpage") %>
 
 </div>

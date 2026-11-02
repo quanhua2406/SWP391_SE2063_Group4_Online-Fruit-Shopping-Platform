@@ -47,7 +47,7 @@ public class RoleManagementServlet extends HttpServlet {
         } catch (SQLException e) {
 
             throw new ServletException(
-                    "Unable to load role management page.",
+                    "Không thể tải trang quản lý vai trò.",
                     e
             );
         }
@@ -132,7 +132,7 @@ public class RoleManagementServlet extends HttpServlet {
         } catch (SQLException e) {
 
             throw new ServletException(
-                    "Role management operation failed.",
+                    "Thao tác quản lý vai trò thất bại.",
                     e
             );
         }
