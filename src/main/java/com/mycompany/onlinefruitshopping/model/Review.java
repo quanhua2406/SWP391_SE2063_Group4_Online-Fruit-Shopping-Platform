@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.Date;
 import java.sql.Timestamp;
 
-
 public class Review implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -26,7 +25,8 @@ public class Review implements Serializable {
     private String  productImage;
     private boolean editable;
     private long    remainingDays;
-
+    private int     reportCount;     // Số lượng báo cáo của review
+    private String  evidenceUrls;    // Ảnh bằng chứng báo cáo vi phạm
 
     public Review() {
     }
@@ -42,7 +42,6 @@ public class Review implements Serializable {
         this.created_at  = created_at;
     }
 
-
     public Review(int review_id, int user_id, int product_id, int order_id,
                   Integer rating, String title, String comment, Date created_at) {
         this.review_id   = review_id;
@@ -54,7 +53,6 @@ public class Review implements Serializable {
         this.comment     = comment;
         this.created_at  = created_at;
     }
-
 
     public boolean isEditable() {
         return editable;
@@ -118,9 +116,14 @@ public class Review implements Serializable {
     public Timestamp getDeletedAt()   { return deletedAt; }
     public void setDeletedAt(Timestamp deletedAt) { this.deletedAt = deletedAt; }
 
+    public int getReportCount() { return reportCount; }
+    public void setReportCount(int reportCount) { this.reportCount = reportCount; }
+
+    public String getEvidenceUrls() { return evidenceUrls; }
+    public void setEvidenceUrls(String evidenceUrls) { this.evidenceUrls = evidenceUrls; }
+
     /** Tiện ích: kiểm tra review có đang bị ẩn không */
     public boolean isHidden() {
         return "rejected".equals(status) || "deleted".equals(status);
     }
 }
-

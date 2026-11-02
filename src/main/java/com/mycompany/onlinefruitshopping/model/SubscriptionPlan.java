@@ -6,24 +6,24 @@ import java.sql.Timestamp;
 import java.util.List;
 
 /**
- * Model ánh xạ bảng subscription_plans.
- * Mỗi plan = 1 combo gói đăng ký do Shop Owner tạo.
+ * Model anh xa bang subscription_plans.
+ * Moi plan = 1 combo goi dang ky do Shop Owner tao.
  */
 public class SubscriptionPlan implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    // ── Hằng số status ──────────────────────────────────────────────────
+    // Constants status
     public static final String STATUS_DRAFT    = "draft";
     public static final String STATUS_ACTIVE   = "active";
     public static final String STATUS_INACTIVE = "inactive";
 
-    // ── Hằng số billing cycle ───────────────────────────────────────────
+    // Constants billing cycle
     public static final String CYCLE_WEEKLY    = "weekly";
     public static final String CYCLE_MONTHLY   = "monthly";
     public static final String CYCLE_QUARTERLY = "quarterly";
     public static final String CYCLE_YEARLY    = "yearly";
 
-    // ── Trường DB ───────────────────────────────────────────────────────
+    // Database fields
     private int        planId;
     private int        shopId;
     private String     name;
@@ -38,16 +38,16 @@ public class SubscriptionPlan implements Serializable {
     private Timestamp  updatedAt;
     private Timestamp  deletedAt;
 
-    // ── Trường phụ – JOIN ───────────────────────────────────────────────
+    // Join fields
     private String shopName;
     private String createdByName;
-    private int    subscriberCount;      // số subscriber đang active
-    private List<SubscriptionPlanItem> items; // danh sách sản phẩm trong combo
+    private int    subscriberCount;      // so subscriber dang active
+    private List<SubscriptionPlanItem> items; // danh sach san pham trong combo
 
-    // ── Constructors ─────────────────────────────────────────────────────
+    // Constructors
     public SubscriptionPlan() {}
 
-    // ── Getters & Setters ─────────────────────────────────────────────────
+    // Getters & Setters
     public int getPlanId()                        { return planId; }
     public void setPlanId(int planId)             { this.planId = planId; }
 
@@ -100,36 +100,36 @@ public class SubscriptionPlan implements Serializable {
     public void setItems(List<SubscriptionPlanItem> items) { this.items = items; }
     public int getItemCount()                     { return items != null ? items.size() : 0; }
 
-    // ── Tiện ích ─────────────────────────────────────────────────────────
+    // Helpers
     public boolean isActive()   { return STATUS_ACTIVE.equals(status); }
     public boolean isDraft()    { return STATUS_DRAFT.equals(status); }
     public boolean isDeleted()  { return deletedAt != null; }
     public boolean hasActiveSubscribers() { return subscriberCount > 0; }
 
-    /** Nhãn tiếng Việt cho billing cycle */
+    /** Nhan tieng Viet cho billing cycle */
     public String getBillingCycleLabel() {
         if (billingCycle == null) return "";
         switch (billingCycle) {
-            case CYCLE_WEEKLY:    return "Hàng tuần";
-            case CYCLE_MONTHLY:   return "Hàng tháng";
-            case CYCLE_QUARTERLY: return "Hàng quý (3 tháng)";
-            case CYCLE_YEARLY:    return "Hàng năm";
+            case CYCLE_WEEKLY:    return "H\u00e0ng tu\u1ea7n";
+            case CYCLE_MONTHLY:   return "H\u00e0ng th\u00e1ng";
+            case CYCLE_QUARTERLY: return "H\u00e0ng qu\u00fd (3 th\u00e1ng)";
+            case CYCLE_YEARLY:    return "H\u00e0ng n\u0103m";
             default: return billingCycle;
         }
     }
 
-    /** Nhãn tiếng Việt cho status */
+    /** Nhan tieng Viet cho status */
     public String getStatusLabel() {
         if (status == null) return "";
         switch (status) {
-            case STATUS_DRAFT:    return "Bản nháp";
-            case STATUS_ACTIVE:   return "Đang hoạt động";
-            case STATUS_INACTIVE: return "Ngừng hoạt động";
+            case STATUS_DRAFT:    return "B\u1ea3n nh\u00e1p";
+            case STATUS_ACTIVE:   return "\u0110ang ho\u1ea1t \u0111\u1ed9ng";
+            case STATUS_INACTIVE: return "Ng\u1eebng ho\u1ea1t \u0111\u1ed9ng";
             default: return status;
         }
     }
 
-    /** Validate billing cycle hợp lệ */
+    /** Validate billing cycle hop le */
     public static boolean isValidCycle(String cycle) {
         return CYCLE_WEEKLY.equals(cycle) || CYCLE_MONTHLY.equals(cycle)
             || CYCLE_QUARTERLY.equals(cycle) || CYCLE_YEARLY.equals(cycle);

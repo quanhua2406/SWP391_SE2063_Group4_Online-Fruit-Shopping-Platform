@@ -2,6 +2,7 @@ package com.mycompany.onlinefruitshopping.service;
 
 import com.mycompany.onlinefruitshopping.dao.review.ReviewDAO;
 import com.mycompany.onlinefruitshopping.model.Review;
+import com.mycompany.onlinefruitshopping.model.PendingReviewItem;
 
 import java.io.File;
 import java.util.List;
@@ -319,5 +320,24 @@ public class ReviewService {
                 }
             }
         }
+    }
+
+    // ----------------------------------------------------------------
+    // 5. NGHIỆP VỤ CUSTOMER DASHBOARD - MY REVIEWS
+    // ----------------------------------------------------------------
+
+    public List<Review> getReviewsByUser(int userId, int page, int pageSize) {
+        if (userId <= 0) return new java.util.ArrayList<>();
+        return reviewDAO.getReviewsByUserId(userId, page, pageSize);
+    }
+
+    public int countReviewsByUser(int userId) {
+        if (userId <= 0) return 0;
+        return reviewDAO.countReviewsByUserId(userId);
+    }
+
+    public List<PendingReviewItem> getPendingReviewsByUser(int userId) {
+        if (userId <= 0) return new java.util.ArrayList<>();
+        return reviewDAO.getPendingReviewsByUserId(userId);
     }
 }

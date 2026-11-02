@@ -1,0 +1,284 @@
+/* CSS riêng cho giao diện shipper. */
+
+.shipper-page {
+    background: #f5f7f4;
+}
+
+.shipper-page .container {
+    width: 92%;
+    max-width: 1180px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.shipper-page .page-heading {
+    margin-bottom: 28px;
+}
+
+.shipper-page .page-heading h1 {
+    margin-bottom: 10px;
+}
+
+/* Dashboard */
+
+.shipper-page .shipper-overview {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 26px;
+}
+
+.shipper-page .shipper-shortcut {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 24px;
+    border: 1px solid #dfe8dc;
+    border-radius: 16px;
+    background: #fff;
+    color: #263d29;
+    text-decoration: none;
+    box-shadow: 0 4px 14px rgba(35, 65, 38, 0.04);
+}
+
+.shipper-page .shipper-shortcut:hover {
+    border-color: #78a871;
+    background: #fafff8;
+}
+
+.shipper-page .shipper-shortcut-label {
+    margin-bottom: 14px;
+    color: #687565;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+
+.shipper-page .shipper-shortcut h2 {
+    margin-bottom: 10px;
+    font-size: 21px;
+}
+
+.shipper-page .shipper-shortcut p {
+    flex: 1;
+    margin-bottom: 20px;
+    color: #657263;
+    font-size: 14px;
+    line-height: 1.65;
+}
+
+.shipper-page .shipper-shortcut-link {
+    color: #2e6b32;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+/* Danh sách giao hàng */
+
+.shipper-page .shipper-delivery-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.shipper-page .shipper-delivery-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 24px;
+    border: 1px solid #dfe8dc;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 4px 14px rgba(35, 65, 38, 0.04);
+}
+
+.shipper-page .shipper-card-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-bottom: 18px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid #edf1eb;
+}
+
+.shipper-page .shipper-card-heading h2 {
+    margin-bottom: 4px;
+    font-size: 21px;
+}
+
+.shipper-page .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.shipper-page .shipper-delivery-info {
+    display: grid;
+    grid-template-columns: 100px minmax(0, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+.shipper-page .shipper-delivery-info dd {
+    color: #2d3e2f;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+
+/* Tiền COD trên thẻ */
+
+.shipper-page .shipper-payment {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 15px 16px;
+    margin-top: auto;
+    border: 1px solid #dbead5;
+    border-radius: 10px;
+    background: #f0f7ec;
+}
+
+.shipper-page .shipper-payment span {
+    color: #4c6448;
+    font-size: 14px;
+}
+
+.shipper-page .shipper-payment strong {
+    color: #275d2a;
+    font-size: 23px;
+}
+
+.shipper-page .shipper-payment-note {
+    margin: 10px 0 18px;
+    color: #687565;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.shipper-page .shipper-detail-link {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 46px;
+}
+
+.shipper-page .shipper-empty {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+/* Bộ lọc */
+
+.shipper-page .delivery-filters {
+    padding: 20px;
+    border-radius: 14px;
+    background: #fff;
+}
+
+.shipper-page .filter-field input,
+.shipper-page .filter-field select {
+    box-sizing: border-box;
+    min-height: 44px;
+}
+
+/* Trang chi tiết */
+
+.shipper-page .shipper-progress {
+    border-top: 4px solid #3d8b40;
+}
+
+.shipper-page .shipper-progress .narrow {
+    max-width: 100%;
+}
+
+.shipper-page .shipper-progress textarea {
+    box-sizing: border-box;
+}
+
+.shipper-page .shipper-progress button {
+    min-height: 46px;
+}
+
+.shipper-page .shipper-progress .check {
+    display: flex;
+    align-items: flex-start;
+    padding: 14px;
+    border: 1px solid #dbead5;
+    border-radius: 10px;
+    background: #f0f7ec;
+    line-height: 1.6;
+}
+
+.shipper-page .shipper-progress .check input {
+    margin-top: 3px;
+}
+
+.shipper-page .shipper-cod-value {
+    color: #275d2a;
+    font-size: 25px;
+    font-weight: 700;
+}
+
+/* Tablet */
+
+@media (max-width: 1000px) {
+    .shipper-page .shipper-overview {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Điện thoại */
+
+@media (max-width: 760px) {
+    .shipper-page .container {
+        width: 92%;
+    }
+
+    .shipper-page .shipper-delivery-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .shipper-page .shipper-delivery-card,
+    .shipper-page .shipper-shortcut {
+        padding: 18px;
+    }
+
+    .shipper-page .shipper-delivery-info {
+        grid-template-columns: 88px minmax(0, 1fr);
+        font-size: 14px;
+    }
+
+    .shipper-page .shipper-progress button {
+        width: 100%;
+    }
+
+    .shipper-page .page-heading > .button {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .shipper-page .filter-footer .actions {
+        width: 100%;
+    }
+
+    .shipper-page .filter-footer .actions > * {
+        flex: 1;
+    }
+}
+
+@media (max-width: 480px) {
+    .shipper-page .shipper-overview {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .shipper-page .shipper-payment strong {
+        font-size: 21px;
+    }
+}

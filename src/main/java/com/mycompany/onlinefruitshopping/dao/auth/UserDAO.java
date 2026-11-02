@@ -11,6 +11,35 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class UserDAO {
+    private final com.mycompany.onlinefruitshopping.utils.ConnectionProvider connections;
+
+    public UserDAO() { this(DBConnection::getConnection); }
+
+    UserDAO(com.mycompany.onlinefruitshopping.utils.ConnectionProvider connections) {
+        this.connections = java.util.Objects.requireNonNull(connections);
+    }
+
+    /** Revalidate the principal for the delivery/coupon/promotion module. */
+    public boolean isActiveWithRole(int userId, String roleName) throws SQLException {
+        String role = com.mycompany.onlinefruitshopping.utils.ValidationUtil.normalizeRoleName(roleName);
+        if (userId <= 0 || role.isEmpty()) return false;
+        String sql = """
+            SELECT 1
+            FROM users u
+            JOIN user_roles ur ON ur.user_id = u.user_id
+            JOIN roles r ON r.role_id = ur.role_id
+            WHERE u.user_id = ? AND LOWER(u.status) = 'active'
+              AND REPLACE(REPLACE(UPPER(r.role_name), ' ', ''), '_', '') = ?
+            """;
+        try (Connection connection = connections.open();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, userId);
+            statement.setString(2, role);
+            try (ResultSet result = statement.executeQuery()) {
+                return result.next();
+            }
+        }
+    }
 
     // =========================================================
     // CHECK EMAIL EXISTS
