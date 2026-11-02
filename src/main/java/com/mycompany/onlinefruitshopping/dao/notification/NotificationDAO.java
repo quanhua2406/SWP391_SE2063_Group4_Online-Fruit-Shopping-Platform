@@ -9,11 +9,11 @@ import com.mycompany.onlinefruitshopping.model.Notification;
 public class NotificationDAO {
     // Nhận Connection từ DAO giao hàng: thông báo và trạng thái cùng commit/rollback.
     public void insert(Connection c, int userId, String title, String message) throws SQLException {
-        String sql = "INSERT INTO notifications(user_id, title, content, is_read, channel, created_at) VALUES (?, ?, ?, 0, 'in_app', GETDATE())";
+        String sql = "INSERT INTO notifications(user_id, title, content, is_read) VALUES (?, ?, ?, 0)";
         try (PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, userId);
             ps.setNString(2, title);
-            ps.setNString(3, message != null && message.length() > 255 ? message.substring(0, 255) : message);
+            ps.setNString(3, message != null && message.length() > 500 ? message.substring(0, 500) : message);
             ps.executeUpdate();
         }
     }

@@ -3,7 +3,7 @@ package com.mycompany.onlinefruitshopping.controller.order;
 import com.mycompany.onlinefruitshopping.model.Address;
 import com.mycompany.onlinefruitshopping.model.CartItem;
 import com.mycompany.onlinefruitshopping.model.User;
-import com.mycompany.onlinefruitshopping.model.Voucher;
+import com.mycompany.onlinefruitshopping.model.Coupon;
 import com.mycompany.onlinefruitshopping.service.OrderService;
 
 import jakarta.servlet.ServletException;
@@ -14,7 +14,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +25,7 @@ import java.util.Map;
  * Tuân thủ mô hình 3 tầng:
  * - Servlet điều phối và gọi OrderService xử lý logic.
  */
-@WebServlet(urlPatterns = {"/checkout", "/checkout/apply-voucher", "/checkout/place"})
+@WebServlet(urlPatterns = {"/checkout", "/checkout/apply-coupon", "/checkout/apply-voucher", "/checkout/place"})
 public class CheckoutServlet extends HttpServlet {
 
     private final OrderService orderService;
@@ -61,17 +60,34 @@ public class CheckoutServlet extends HttpServlet {
                 deliveryMethod = "standard";
             }
 
-            String voucherCode = request.getParameter("voucherCode");
-
-            Map<String, Object> summary = orderService.calculateOrderSummary(cartItems, deliveryMethod, voucherCode);
-            List<Voucher> activeVouchers = orderService.getActiveVouchers();
+            String couponCode = request.getParameter("couponCode");
+            Map<String,Object> summary;
+            try {
+                summary=orderService.calculateOrderSummary(user.getUserID(),cartItems,deliveryMethod,couponCode);
+            } catch(IllegalArgumentException invalid) {
+                request.setAttribute("errorMessage",invalid.getMessage());
+                try {
+                    summary=orderService.calculateOrderSummary(user.getUserID(),cartItems,deliveryMethod,null);
+                } catch(IllegalArgumentException mixedShops) {
+                    // Do not show a misleading total for carts spanning multiple shops.
+                    response.sendRedirect(request.getContextPath()+"/cart?error=multiple_shops");
+                    return;
+                }
+            }
+            List<Coupon> activeCoupons;
+            try {
+                activeCoupons=orderService.getCheckoutCoupons(user.getUserID(),cartItems);
+            } catch(IllegalArgumentException invalid) {
+                activeCoupons=List.of();
+                request.setAttribute("errorMessage",invalid.getMessage());
+            }
 
             request.setAttribute("cartItems", cartItems);
             request.setAttribute("addresses", addresses);
             request.setAttribute("defaultAddress", defaultAddress);
             request.setAttribute("summary", summary);
             request.setAttribute("deliveryMethod", deliveryMethod);
-            request.setAttribute("activeVouchers", activeVouchers);
+            request.setAttribute("activeCoupons", activeCoupons);
 
             request.getRequestDispatcher("/jsp/order/checkout.jsp").forward(request, response);
 
@@ -91,7 +107,7 @@ public class CheckoutServlet extends HttpServlet {
         String action = request.getParameter("action");
         if (action == null) {
             String path = request.getServletPath();
-            if (path.endsWith("apply-voucher")) action = "apply-voucher";
+            if (path.endsWith("apply-voucher") || path.endsWith("apply-coupon")) action = "apply-voucher";
             else if (path.endsWith("place")) action = "place";
             else action = "place";
         }
@@ -115,26 +131,27 @@ public class CheckoutServlet extends HttpServlet {
             throws SQLException, IOException {
 
         response.setContentType("application/json;charset=UTF-8");
-        String code = request.getParameter("voucherCode");
-        String deliveryMethod = request.getParameter("deliveryMethod");
-
-        List<CartItem> cartItems = orderService.getActiveCartItems(userId);
-        Map<String, Object> summary = orderService.calculateOrderSummary(cartItems, deliveryMethod, code);
-
-        Voucher v = (Voucher) summary.get("voucher");
-        double discount = (double) summary.get("discount");
-        double totalAmount = (double) summary.get("totalAmount");
-        double shippingFee = (double) summary.get("shippingFee");
-        String message = (String) summary.get("voucherMessage");
-
-        PrintWriter out = response.getWriter();
-        if (v != null) {
-            out.print(String.format("{\"success\":true,\"discount\":%.0f,\"totalAmount\":%.0f,\"shippingFee\":%.0f,\"message\":\"%s\",\"code\":\"%s\"}",
-                    discount, totalAmount, shippingFee, escapeJson(message), escapeJson(v.getCode())));
-        } else {
-            out.print(String.format("{\"success\":false,\"discount\":0,\"totalAmount\":%.0f,\"shippingFee\":%.0f,\"message\":\"%s\"}",
-                    totalAmount, shippingFee, escapeJson(message != null ? message : "Mã không hợp lệ")));
+        String code=request.getParameter("couponCode");
+        String deliveryMethod=request.getParameter("deliveryMethod");
+        List<CartItem> cartItems=orderService.getActiveCartItems(userId);
+        Map<String,Object> summary;
+        boolean success=code!=null && !code.isBlank();
+        String message;
+        try {
+            summary=orderService.calculateOrderSummary(userId,cartItems,deliveryMethod,code);
+            message=(String)summary.get("couponMessage");
+        } catch(IllegalArgumentException invalid) {
+            success=false;
+            message=invalid.getMessage();
+            summary=orderService.calculateOrderSummary(userId,cartItems,deliveryMethod,null);
         }
+        double discount=(double)summary.get("discount");
+        double totalAmount=(double)summary.get("totalAmount");
+        double shippingFee=(double)summary.get("shippingFee");
+        String json=String.format(java.util.Locale.ROOT,
+            "{\"success\":%s,\"discount\":%.0f,\"totalAmount\":%.0f,\"shippingFee\":%.0f,\"message\":\"%s\"}",
+            success,discount,totalAmount,shippingFee,escapeJson(message));
+        response.getWriter().print(json);
     }
 
     private void handlePlaceOrder(HttpServletRequest request, HttpServletResponse response, int userId)
@@ -171,7 +188,7 @@ public class CheckoutServlet extends HttpServlet {
 
         String deliveryMethod = request.getParameter("deliveryMethod");
         String paymentMethod = request.getParameter("paymentMethod");
-        String voucherCode = request.getParameter("voucherCode");
+        String voucherCode = request.getParameter("couponCode");
         String note = request.getParameter("orderNote");
 
         try {
@@ -198,6 +215,6 @@ public class CheckoutServlet extends HttpServlet {
 
     private String escapeJson(String s) {
         if (s == null) return "";
-        return s.replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "");
+        return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "");
     }
 }

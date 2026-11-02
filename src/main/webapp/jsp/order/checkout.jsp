@@ -438,7 +438,7 @@
         </div>
 
         <c:if test="${not empty errorMessage}">
-            <div class="alert-error">${errorMessage}</div>
+            <div class="alert-error" role="alert"><c:out value="${errorMessage}"/></div>
         </c:if>
 
         <form id="checkoutForm" action="${pageContext.request.contextPath}/checkout" method="POST">
@@ -650,27 +650,27 @@
 
                         <!-- Áp dụng mã giảm giá (Task 5: Apply Promotion) -->
                         <div class="voucher-section">
-                            <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px;">Mã Giảm Giá / Voucher (Apply Promotion)</label>
+                            <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px;">Mã giảm giá của cửa hàng</label>
                             <div class="voucher-input-group">
-                                <input type="text" id="voucherInput" name="voucherCode" class="form-control"
-                                       placeholder="Nhập mã voucher (VD: FRUIT10)" value="${param.voucherCode}">
+                                <input type="text" id="voucherInput" name="couponCode" class="form-control"
+                                       placeholder="Nhập mã của shop (VD: SHOP20K)" value="<c:out value='${param.couponCode}'/>">
                                 <button type="button" class="btn-apply-voucher" onclick="applyVoucherAJAX()">Áp Dụng</button>
                             </div>
                             <div id="voucherStatusMsg" style="font-size:12px; margin-top:6px; color:var(--primary-dark); font-weight:500;">
-                                ${summary.voucherMessage}
+                                <c:out value="${summary.couponMessage}"/>
                             </div>
 
-                            <c:if test="${not empty activeVouchers}">
+                            <c:if test="${not empty activeCoupons}">
                                 <div style="font-size:11px; color:var(--text-muted); margin-top:8px;">Gợi ý mã khuyến mãi dành cho bạn:</div>
                                 <div class="voucher-tags">
-                                    <c:forEach var="v" items="${activeVouchers}">
-                                        <span class="voucher-tag" onclick="quickApplyVoucher('${v.code}')">
+                                    <c:forEach var="v" items="${activeCoupons}">
+                                        <button type="button" class="voucher-tag" data-code="<c:out value='${v.code}'/>" onclick="quickApplyVoucher(this.dataset.code)">
                                             ${v.code}
                                             <c:choose>
-                                                <c:when test="${v.discountType == 'percent'}">(-${v.discountValue}%)</c:when>
+                                                <c:when test="${v.discountType == 'PERCENT'}">(-${v.discountValue}%)</c:when>
                                                 <c:otherwise>(-<fmt:formatNumber value="${v.discountValue}" type="number" maxFractionDigits="0"/>₫)</c:otherwise>
                                             </c:choose>
-                                        </span>
+                                        </button>
                                     </c:forEach>
                                 </div>
                             </c:if>
@@ -694,7 +694,7 @@
                                 </span>
                             </div>
                             <div class="summary-row" id="rowDiscount" style="${summary.discount > 0 ? '' : 'display:none;'}">
-                                <span style="color: #dc2626;">Giảm giá Voucher:</span>
+                                <span style="color: #dc2626;">Giảm giá cửa hàng:</span>
                                 <span style="color: #dc2626; font-weight:600;" id="displayDiscount">
                                     -<fmt:formatNumber value="${summary.discount}" type="number" groupingUsed="true" maxFractionDigits="0"/> ₫
                                 </span>
@@ -771,19 +771,22 @@
             applyVoucherAJAX();
         }
 
+        let couponPreviewSequence = 0;
+
         function quickApplyVoucher(code) {
             document.getElementById('voucherInput').value = code;
             applyVoucherAJAX();
         }
 
         function applyVoucherAJAX() {
+            const sequence = ++couponPreviewSequence;
             const code = document.getElementById('voucherInput').value.trim();
             const methodRadio = document.querySelector('input[name="deliveryMethod"]:checked');
             const deliveryMethod = methodRadio ? methodRadio.value : 'standard';
 
-            const url = '${pageContext.request.contextPath}/checkout/apply-voucher';
+            const url = '${pageContext.request.contextPath}/checkout/apply-coupon';
             const params = new URLSearchParams();
-            params.append('voucherCode', code);
+            params.append('couponCode', code);
             params.append('deliveryMethod', deliveryMethod);
 
             fetch(url, {
@@ -791,8 +794,9 @@
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
                 body: params.toString()
             })
-            .then(res => res.json())
+            .then(res => { if (!res.ok) throw new Error('Không thể kiểm tra mã lúc này.'); return res.json(); })
             .then(data => {
+                if (sequence !== couponPreviewSequence) return;
                 const msgEl = document.getElementById('voucherStatusMsg');
                 msgEl.innerText = data.message;
                 msgEl.style.color = data.success ? 'var(--primary-dark)' : 'var(--danger)';
@@ -814,7 +818,11 @@
                 document.getElementById('displayTotal').innerText = new Intl.NumberFormat('vi-VN').format(data.totalAmount) + ' ₫';
             })
             .catch(err => {
-                console.error("Voucher calculation error:", err);
+                if (sequence !== couponPreviewSequence) return;
+                const msgEl = document.getElementById('voucherStatusMsg');
+                msgEl.innerText = 'Không kiểm tra được mã lúc này. Hãy thử lại.';
+                msgEl.style.color = 'var(--danger)';
+                console.error('Coupon preview error:', err);
             });
         }
     </script>

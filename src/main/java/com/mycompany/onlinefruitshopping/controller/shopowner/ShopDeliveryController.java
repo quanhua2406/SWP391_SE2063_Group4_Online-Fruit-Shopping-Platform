@@ -37,7 +37,12 @@ public class ShopDeliveryController extends HttpServlet {
             int orderId = WebUtil.positiveId(request.getParameter("orderId"));
             int shipperId = WebUtil.positiveId(request.getParameter("shipperId"));
             // ownerId lấy từ session; người dùng không tự chọn quyền sở hữu bằng form.
-            deliveryService.assign(WebUtil.user(request), orderId, shipperId);
+            deliveryService.assign(
+                    WebUtil.user(request),
+                    orderId,
+                    shipperId,
+                    request.getParameter("pickupAddress")
+            );
             WebUtil.flash(request, "success", "Đã phân công và tạo thông báo cho shipper.");
         } catch (IllegalArgumentException e) {
             WebUtil.flash(request, "error", e.getMessage());

@@ -14,6 +14,12 @@ class AccessPolicyTest {
         "/store-owner/products,POST,Customer,false",
         "/customer/dashboard,GET,Customer,true",
         "/delivery/dashboard,GET,DeliveryStaff,true",
+        "/delivery/team,GET,DeliveryStaff,true",
+        "/delivery/team,GET,ShopOwner,false",
+        "/delivery/team/apply,POST,DeliveryStaff,true",
+        "/delivery/team/apply,POST,ShopOwner,false",
+        "/shopowner/shop/shipper-team,GET,ShopOwner,true",
+        "/shopowner/shop/shipper-team,POST,DeliveryStaff,false",
         "/shopowner/shop/coupons,POST,Shop Owner,true",
         "/shopowner/shop/coupons,POST,Customer,false",
         "/shopowner/shop/deliveries,POST,DeliveryStaff,false",
@@ -57,6 +63,13 @@ class AccessPolicyTest {
         assertFalse(AccessPolicy.isPublic("/subscription/subscribe", "POST"));
         assertFalse(AccessPolicy.isPublic("/shopowner/delivery/list", "GET"));
         assertFalse(AccessPolicy.isPublic("/products", "POST"));
+    }
+
+
+    @Test void shipperTeamPostRequiresCsrf() {
+        assertTrue(AccessPolicy.requiresCsrf("/delivery/team/apply", "POST"));
+        assertTrue(AccessPolicy.requiresCsrf("/delivery/team/leave", "POST"));
+        assertFalse(AccessPolicy.requiresCsrf("/delivery/team", "GET"));
     }
 
     @Test void javascriptOrJspUnderAnUploadDirectoryIsNotAnImage() {

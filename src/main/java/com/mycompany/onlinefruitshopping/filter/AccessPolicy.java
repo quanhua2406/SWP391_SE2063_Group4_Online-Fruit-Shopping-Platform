@@ -28,7 +28,7 @@ final class AccessPolicy {
             "/cart", "/cart/add", "/cart/update", "/cart/remove", "/cart/clear");
 
     static boolean isModulePath(String path) {
-        return path.equals("/shopowner") || path.startsWith("/shopowner/") || isInternalView(path);
+        return path.equals("/shopowner") || path.startsWith("/shopowner/") || path.equals("/delivery/team") || path.startsWith("/delivery/team/") || isInternalView(path);
     }
 
     static boolean isRead(String method) {
@@ -71,6 +71,8 @@ final class AccessPolicy {
         if (path.equals("/shopowner/delivery/update")) {
             return "POST".equals(method) ? Set.of("DELIVERYSTAFF") : Set.of();
         }
+        if (path.equals("/delivery/team")) return isRead(method) ? Set.of("DELIVERYSTAFF") : Set.of();
+        if (path.startsWith("/delivery/team/")) return "POST".equals(method) ? Set.of("DELIVERYSTAFF") : Set.of();
         if (path.startsWith("/shopowner/shop/")) return Set.of("SHOPOWNER");
         if (path.startsWith("/shopowner/customer/")) return Set.of("CUSTOMER");
         if (path.equals("/shopowner/notifications")) return DELIVERY_READERS;
@@ -101,6 +103,7 @@ final class AccessPolicy {
     /** Retains the former module's CSRF boundary and covers the shared POST logout. */
     static boolean requiresCsrf(String path, String method) {
         return !isRead(method) && (path.equals("/logout")
-                || (path.startsWith("/shopowner/") && !path.equals("/shopowner/login")));
+                || (path.startsWith("/shopowner/") && !path.equals("/shopowner/login"))
+                || path.startsWith("/delivery/team/"));
     }
 }

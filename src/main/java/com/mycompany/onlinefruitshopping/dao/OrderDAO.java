@@ -607,6 +607,14 @@ public class OrderDAO {
                            String deliveryMethod, String paymentMethod,
                            double totalAmount, double shippingFee, double discountAmount,
                            List<CartItem> items, String note) throws SQLException {
+        return createOrder(userId,shopId,addressId,voucherId,deliveryMethod,paymentMethod,
+                           totalAmount,shippingFee,discountAmount,items,note,null);
+    }
+
+    public int createOrder(int userId, int shopId, int addressId, Integer voucherId,
+                           String deliveryMethod, String paymentMethod,
+                           double totalAmount, double shippingFee, double discountAmount,
+                           List<CartItem> items, String note, String couponCode) throws SQLException {
         Connection conn = null;
         try {
             conn = DBConnection.getConnection();
@@ -690,6 +698,13 @@ public class OrderDAO {
                 }
             }
 
+            // Coupon of this shop is applied atomically before the order is committed.
+            // If code, quota, eligibility or amount changes, rollback the whole checkout.
+            if(couponCode!=null && !couponCode.isBlank()) {
+                new com.mycompany.onlinefruitshopping.dao.coupon.CouponApplicationDAO()
+                    .applyDuringCheckout(conn,userId,orderId,couponCode);
+            }
+
             // 6. Xóa các sản phẩm đã mua khỏi giỏ hàng
             String clearCartSql = "DELETE ci FROM cart_items ci "
                     + "INNER JOIN carts c ON ci.cart_id = c.cart_id "
@@ -702,7 +717,7 @@ public class OrderDAO {
             conn.commit();
             return orderId;
 
-        } catch (SQLException e) {
+        } catch (SQLException | RuntimeException e) {
             if (conn != null) {
                 try {
                     conn.rollback();
