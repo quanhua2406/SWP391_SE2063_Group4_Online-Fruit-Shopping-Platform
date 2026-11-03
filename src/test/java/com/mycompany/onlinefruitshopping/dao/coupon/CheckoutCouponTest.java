@@ -41,6 +41,7 @@ class CheckoutCouponTest {
         assertEquals(0,new BigDecimal("70000").compareTo(new BigDecimal(db.scalar("SELECT total_amount FROM orders WHERE order_id=103"))));
         assertEquals(0,new BigDecimal("70000").compareTo(new BigDecimal(db.scalar("SELECT amount FROM payments WHERE order_id=103"))));
         assertEquals(1,db.count("SELECT COUNT(*) FROM coupon_usages WHERE usage_status='Applied'"));
+        assertEquals(1,db.count("SELECT COUNT(*) FROM orders WHERE order_id=103 AND coupon_id IS NOT NULL AND coupon_subtotal=75000 AND coupon_discount=5000"));
         assertTrue(checkout.availableForShop(1,30,new BigDecimal("50000")).isEmpty());
     }
 }

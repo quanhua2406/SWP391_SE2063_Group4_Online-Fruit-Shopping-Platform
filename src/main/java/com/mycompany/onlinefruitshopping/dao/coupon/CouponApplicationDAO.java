@@ -22,8 +22,8 @@ public class CouponApplicationDAO {
     private static final String ORDER_FIELDS = """
         SELECT o.order_id,o.shop_id,o.voucher_id,o.total_amount,s.shop_name,
             o.status AS order_status,pay.status AS payment_status,
-            usage.coupon_id,usage.code_snapshot AS coupon_code,
-            COALESCE(usage.discount_amount,0) AS coupon_discount,usage.subtotal AS coupon_subtotal
+            o.coupon_id,usage.code_snapshot AS coupon_code,
+            o.coupon_discount,o.coupon_subtotal
         FROM orders o
         """;
     private static final String ORDER_JOINS = """
@@ -82,7 +82,7 @@ public class CouponApplicationDAO {
                 quote.setDiscountAmount(discount); quote.setFinalAmount(order.getTotalAmount().subtract(discount));
 
                 if (save) {
-                    updateTotal(c,customerId,orderId,order.getTotalAmount(),quote.getFinalAmount());
+                    updateTotal(c,customerId,orderId,order.getTotalAmount(),quote.getFinalAmount(),coupon.getId(),order.getTotalAmount(),discount);
                     String insert = """
                         INSERT INTO coupon_usages(coupon_id, shop_id, order_id, customer_id, code_snapshot,
                             subtotal, discount_amount, final_amount, used_at, usage_status)
@@ -104,6 +104,7 @@ public class CouponApplicationDAO {
 
     /** Called by OrderDAO before committing order + payment + cart updates. */
     public CouponQuote applyDuringCheckout(Connection c, int customerId, int orderId, String code) throws SQLException {
+        prepareWrite(c);
         CouponOrder order=lockOrder(c,customerId,orderId);
         requireEditable(order);
         requirePendingPayment(c,orderId);
@@ -118,7 +119,7 @@ public class CouponApplicationDAO {
         BigDecimal discount=CouponRules.discount(coupon,subtotal);
         if(discount.signum()==0) throw new IllegalArgumentException("Mã không tạo được giá trị giảm hợp lệ.");
         BigDecimal finalAmount=order.getTotalAmount().subtract(discount);
-        updateTotal(c,customerId,orderId,order.getTotalAmount(),finalAmount);
+        updateTotal(c,customerId,orderId,order.getTotalAmount(),finalAmount,coupon.getId(),order.getTotalAmount(),discount);
         try(PreparedStatement ps=c.prepareStatement("""
             INSERT INTO coupon_usages(coupon_id,shop_id,order_id,customer_id,code_snapshot,
                 subtotal,discount_amount,final_amount,used_at,usage_status)
@@ -156,7 +157,7 @@ public class CouponApplicationDAO {
                 }
                 if(order.getCouponSubtotal().subtract(order.getCouponDiscount()).compareTo(order.getTotalAmount())!=0)
                     throw new IllegalArgumentException("Tổng đơn đã đổi sau khi dùng mã; cần kiểm tra trước khi gỡ.");
-                updateTotal(c,customerId,orderId,order.getTotalAmount(),order.getCouponSubtotal());
+                updateTotal(c,customerId,orderId,order.getTotalAmount(),order.getCouponSubtotal(),null,null,BigDecimal.ZERO);
                 c.commit();
             } catch (SQLException | RuntimeException e) { c.rollback(); throw e; }
         }
@@ -214,15 +215,20 @@ public class CouponApplicationDAO {
         }
     }
 
-    private void updateTotal(Connection c,int customerId,int orderId,BigDecimal oldAmount,BigDecimal newAmount) throws SQLException {
-        // orders.total_amount / payments.amount are decimal(12,2), narrower than coupon values.
+    private void updateTotal(Connection c,int customerId,int orderId,BigDecimal oldAmount,BigDecimal newAmount,
+                             Integer couponId,BigDecimal subtotal,BigDecimal discount) throws SQLException {
+        // orders.total_amount is decimal(18,2); payments.amount is still decimal(12,2).
         if(newAmount.signum()<0 || newAmount.compareTo(new BigDecimal("9999999999.99"))>0 || newAmount.scale()>2)
             throw new IllegalArgumentException("Tổng tiền vượt giới hạn của database nhóm.");
         try(PreparedStatement ps=c.prepareStatement("""
-            UPDATE orders SET total_amount=? WHERE order_id=? AND user_id=?
+            UPDATE orders SET total_amount=?,coupon_id=?,coupon_subtotal=?,coupon_discount=?
+            WHERE order_id=? AND user_id=?
               AND status=N'pending_confirmation' AND voucher_id IS NULL AND total_amount=?
             """)) {
-            ps.setBigDecimal(1,newAmount);ps.setInt(2,orderId);ps.setInt(3,customerId);ps.setBigDecimal(4,oldAmount);
+            ps.setBigDecimal(1,newAmount);
+            if(couponId==null) ps.setNull(2,Types.INTEGER); else ps.setInt(2,couponId);
+            if(subtotal==null) ps.setNull(3,Types.DECIMAL); else ps.setBigDecimal(3,subtotal);
+            ps.setBigDecimal(4,discount);ps.setInt(5,orderId);ps.setInt(6,customerId);ps.setBigDecimal(7,oldAmount);
             if(ps.executeUpdate()!=1) throw new SQLException("Đơn đã thay đổi.");
         }
         try(PreparedStatement ps=c.prepareStatement("""

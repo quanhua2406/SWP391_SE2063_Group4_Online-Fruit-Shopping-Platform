@@ -1,0 +1,183 @@
+{
+  "command": "mvn -B clean verify",
+  "date": "2026-11-03",
+  "result": "BUILD SUCCESS",
+  "database": "H2 MSSQLServer mode; table DDL from supplied SQL",
+  "sql_server_live_test": false,
+  "totals": {
+    "tests": 161,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "test_suites": [
+    {
+      "name": "com.mycompany.onlinefruitshopping.dao.auth.UserSessionValidationTest",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.mycompany.onlinefruitshopping.dao.coupon.CheckoutCouponTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.mycompany.onlinefruitshopping.dao.coupon.CouponDatabaseTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.mycompany.onlinefruitshopping.dao.delivery.DeliveryOwnershipTest",
+      "tests": "7",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.mycompany.onlinefruitshopping.dao.delivery.DeliveryTransactionTest",
+      "tests": "12",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.mycompany.onlinefruitshopping.dao.delivery.MergedDeliverySchemaTest",
+      "tests": "6",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.mycompany.onlinefruitshopping.dao.delivery.ShipperShopAddressTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.mycompany.onlinefruitshopping.dao.delivery.ShipperTeamDatabaseTest",
+      "tests": "8",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.mycompany.onlinefruitshopping.dao.promotion.PromotionDatabaseTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.mycompany.onlinefruitshopping.filter.AccessPolicyTest",
+      "tests": "43",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.mycompany.onlinefruitshopping.filter.AuthorizationFilterTest",
+      "tests": "17",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.mycompany.onlinefruitshopping.model.DeliveryCompatibilityTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.mycompany.onlinefruitshopping.service.coupon.CouponApplicationServiceTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.mycompany.onlinefruitshopping.service.coupon.CouponServiceTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.mycompany.onlinefruitshopping.service.delivery.DeliveryReadServiceTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.mycompany.onlinefruitshopping.service.delivery.DeliveryServiceTest",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.mycompany.onlinefruitshopping.service.notification.NotificationServiceTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.mycompany.onlinefruitshopping.service.promotion.CampaignPromotionServiceTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.mycompany.onlinefruitshopping.utils.CouponRulesTest",
+      "tests": "9",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.mycompany.onlinefruitshopping.utils.DeliveryFilterTest",
+      "tests": "7",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.mycompany.onlinefruitshopping.utils.DeliveryRulesTest",
+      "tests": "8",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.mycompany.onlinefruitshopping.utils.PromotionRulesTest",
+      "tests": "9",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.mycompany.onlinefruitshopping.utils.UserSessionTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.mycompany.onlinefruitshopping.view.JspCompilationTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    }
+  ]
+}

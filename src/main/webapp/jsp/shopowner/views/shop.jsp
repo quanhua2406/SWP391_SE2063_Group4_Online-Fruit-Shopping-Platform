@@ -28,21 +28,20 @@
                         <input
                             type="text"
                             name="pickupAddress"
-                            maxlength="1000"
-                            required
-                            placeholder="Địa chỉ lấy hàng tại shop"
+                            maxlength="500"
+                            placeholder="Để trống để dùng địa chỉ của shop"
                             aria-label="Địa chỉ lấy hàng">
                         <select name="shipperId" required aria-label="Nhân viên giao đơn ${o.id}">
                             <option value="">Chọn nhân viên</option>
                             <c:forEach var="s" items="${staff}">
                                 <c:if test="${s.shopId == o.shopId}">
                                     <c:set var="hasStaff" value="true"/>
-                                    <option value="${s.id}"><c:out value="${s.fullName}"/></option>
+                                    <option value="${s.id}"><c:out value="${s.fullName}"/> (${s.openDeliveryCount}/3 đơn)</option>
                                 </c:if>
                             </c:forEach>
                         </select>
                         <c:if test="${hasStaff}"><button type="submit">Phân công</button></c:if>
-                        <c:if test="${not hasStaff}"><span class="muted">Shop chưa có nhân viên hoạt động.</span></c:if>
+                        <c:if test="${not hasStaff}"><span class="muted">Shop chưa có shipper đủ điều kiện nhận đơn.</span></c:if>
                     </form>
                 </td>
             </tr>

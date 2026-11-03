@@ -129,6 +129,7 @@ public class PromotionDAO {
         // CampaignPromotionService đã kiểm tra đầu vào và loại sản phẩm trùng.
         // Các kiểm tra phụ thuộc dữ liệu hiện tại vẫn thực hiện sau khi khóa bên dưới.
         try (Connection c = connections.open()) {
+            com.mycompany.onlinefruitshopping.utils.ModuleSql.prepare(c);
             c.setAutoCommit(false);
             try {
                 lockShop(c, ownerId, p.getShopId());
@@ -212,6 +213,7 @@ public class PromotionDAO {
     private void changeState(int ownerId, int id, int version, boolean active, boolean deleted)
             throws SQLException {
         try (Connection c = connections.open()) {
+            com.mycompany.onlinefruitshopping.utils.ModuleSql.prepare(c);
             c.setAutoCommit(false);
             try {
                 Promotion p = requireOwned(c, ownerId, id, version);

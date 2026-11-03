@@ -21,7 +21,7 @@ class DeliveryOwnershipTest {
         try (Connection connection = DriverManager.getConnection(url); Statement sql = connection.createStatement()) {
             sql.execute("CREATE TABLE users(user_id INT PRIMARY KEY, full_name VARCHAR(100))");
             sql.execute("CREATE TABLE shops(shop_id INT PRIMARY KEY, owner_id INT, shop_name VARCHAR(100), status VARCHAR(20))");
-            sql.execute("CREATE TABLE orders(order_id INT PRIMARY KEY, shop_id INT, user_id INT, total_amount DECIMAL(12,2), status VARCHAR(30))");
+            sql.execute("CREATE TABLE orders(order_id INT PRIMARY KEY, shop_id INT, user_id INT, total_amount DECIMAL(12,2), status VARCHAR(30), note VARCHAR(1000))");
             sql.execute("CREATE TABLE deliveries(delivery_id INT PRIMARY KEY, order_id INT, staff_id INT, status VARCHAR(30))");
             sql.execute("CREATE TABLE shop_delivery_staff(shop_id INT, shipper_id INT, status VARCHAR(20))");
             sql.execute("CREATE TABLE products(product_id INT PRIMARY KEY, product_name VARCHAR(100))");
