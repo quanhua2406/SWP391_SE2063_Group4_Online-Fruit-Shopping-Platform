@@ -62,6 +62,7 @@ public class CouponDAO {
         // CouponService đã chuẩn hóa mã và kiểm tra đầu vào.
         // Quota/lịch sử/quyền sở hữu vẫn được kiểm tra trong transaction.
         try (Connection c = connections.open()) {
+            com.mycompany.onlinefruitshopping.utils.ModuleSql.prepare(c);
             c.setAutoCommit(false);
             try {
                 lockShop(c, ownerId, p.getShopId());
@@ -120,6 +121,7 @@ public class CouponDAO {
 
     public void changeState(int ownerId, int id, int version, boolean active, boolean deleted) throws SQLException {
         try (Connection c = connections.open()) {
+            com.mycompany.onlinefruitshopping.utils.ModuleSql.prepare(c);
             c.setAutoCommit(false);
             try {
                 Coupon before = requireOwned(c, ownerId, id, version);

@@ -16,18 +16,20 @@ class CouponDatabaseTest {
  }
  @Test void previewApplyRemoveKeepFeeAndSynchronizePayment() throws Exception {
   CouponQuote preview=applications.preview(30,103,"TEST10");
-  assertMoney("70000",preview.getFinalAmount()); // 0.5 * 100000 goods + 25000 fee - 5000 discount
+  assertMoney("70000",preview.getFinalAmount()); // 1 * 50000 goods + 25000 fee - 5000 discount
   assertEquals(0,db.count("SELECT COUNT(*) FROM coupon_usages"));
   assertMoney("75000",new BigDecimal(db.scalar("SELECT amount FROM payments WHERE order_id=103")));
   applications.apply(30,103,"TEST10");
   assertMoney("70000",new BigDecimal(db.scalar("SELECT total_amount FROM orders WHERE order_id=103")));
   assertMoney("70000",new BigDecimal(db.scalar("SELECT amount FROM payments WHERE order_id=103")));
   assertEquals(couponId,applications.findOrders(30).stream().filter(o->o.getId()==103).findFirst().orElseThrow().getCouponId());
+  assertEquals(1,db.count("SELECT COUNT(*) FROM orders WHERE order_id=103 AND coupon_id="+couponId+" AND coupon_subtotal=75000 AND coupon_discount=5000"));
   assertEquals(1,coupons.findAll(10).get(0).getUsedCount());
   assertEquals(1,coupons.findUsage(10,couponId).size());
   assertThrows(IllegalArgumentException.class,()->applications.apply(30,103,"TEST10"));
   applications.remove(30,103);
   assertEquals("Removed",db.scalar("SELECT usage_status FROM coupon_usages"));
+  assertEquals(1,db.count("SELECT COUNT(*) FROM orders WHERE order_id=103 AND coupon_id IS NULL AND coupon_subtotal IS NULL AND coupon_discount=0"));
   assertMoney("75000",new BigDecimal(db.scalar("SELECT total_amount FROM orders WHERE order_id=103")));
   assertMoney("75000",new BigDecimal(db.scalar("SELECT amount FROM payments WHERE order_id=103")));
   assertEquals(0,coupons.findAll(10).get(0).getUsedCount());
@@ -35,6 +37,7 @@ class CouponDatabaseTest {
  @Test void usageFailureRollsBackBothAmounts() throws Exception {
   db.exec("ALTER TABLE coupon_usages ADD CONSTRAINT fail_insert CHECK(discount_amount=0)");
   assertThrows(SQLException.class,()->applications.apply(30,103,"TEST10"));
+  assertEquals(1,db.count("SELECT COUNT(*) FROM orders WHERE order_id=103 AND coupon_id IS NULL AND coupon_subtotal IS NULL AND coupon_discount=0"));
   assertMoney("75000",new BigDecimal(db.scalar("SELECT total_amount FROM orders WHERE order_id=103")));
   assertMoney("75000",new BigDecimal(db.scalar("SELECT amount FROM payments WHERE order_id=103")));
  }

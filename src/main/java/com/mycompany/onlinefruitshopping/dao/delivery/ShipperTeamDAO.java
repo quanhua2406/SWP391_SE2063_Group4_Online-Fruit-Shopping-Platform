@@ -39,6 +39,18 @@ public class ShipperTeamDAO {
         AssignmentDAO.requireActor(c, shipperId, "DeliveryStaff");
     }
 
+    /** Settings are separate because the merged membership table has only four columns. */
+    private static void ensureSettings(Connection c,int shipperId) throws SQLException {
+        try(PreparedStatement ps=c.prepareStatement("""
+            INSERT INTO shop_delivery_settings(shop_id,shipper_id)
+            SELECT t.shop_id,t.shipper_id FROM shop_delivery_staff t
+            WHERE t.shipper_id=? AND NOT EXISTS(SELECT 1 FROM shop_delivery_settings cfg
+                WHERE cfg.shop_id=t.shop_id AND cfg.shipper_id=t.shipper_id)
+            """)) {
+            ps.setInt(1,shipperId);ps.executeUpdate();
+        }
+    }
+
     public List<ShopOption> findActiveShops() throws SQLException {
     List<ShopOption> list = new ArrayList<>();
 
@@ -159,6 +171,7 @@ public class ShipperTeamDAO {
             c.setAutoCommit(false);
             try {
                 lockShipper(c, shipperId);
+                ensureSettings(c, shipperId);
                 int ownerId;
                 try (PreparedStatement ps = c.prepareStatement("SELECT owner_id FROM shops WITH (UPDLOCK,HOLDLOCK) WHERE shop_id=? AND status=N'active'")) {
                     ps.setInt(1, shopId);
@@ -205,6 +218,7 @@ public class ShipperTeamDAO {
             c.setAutoCommit(false);
             try {
                 lockShipper(c, shipperId);
+                ensureSettings(c, shipperId);
                 try (PreparedStatement ps = c.prepareStatement(
                         "UPDATE shop_delivery_requests SET status=N'Withdrawn' WHERE request_id=? AND shipper_id=? AND status=N'Pending'")) {
                     ps.setInt(1, requestId);
@@ -227,7 +241,8 @@ public class ShipperTeamDAO {
             c.setAutoCommit(false);
             try {
                 lockShipper(c, shipperId);
-                try (PreparedStatement ps = c.prepareStatement("UPDATE shop_delivery_staff SET is_available=? WHERE shipper_id=? AND status=N'Active' AND leave_requested=0")) {
+                ensureSettings(c, shipperId);
+                try (PreparedStatement ps = c.prepareStatement("UPDATE shop_delivery_settings SET is_available=? WHERE shipper_id=? AND leave_requested=0 AND EXISTS(SELECT 1 FROM shop_delivery_staff t WHERE t.shop_id=shop_delivery_settings.shop_id AND t.shipper_id=shop_delivery_settings.shipper_id AND t.status=N'Active')")) {
                     ps.setBoolean(1, available);
                     ps.setInt(2, shipperId);
                     if (ps.executeUpdate() != 1) {
@@ -248,8 +263,9 @@ public class ShipperTeamDAO {
             c.setAutoCommit(false);
             try {
                 lockShipper(c, shipperId);
+                ensureSettings(c, shipperId);
                 int shopId;
-                try (PreparedStatement ps = c.prepareStatement("SELECT shop_id FROM shop_delivery_staff WITH (UPDLOCK,HOLDLOCK) WHERE shipper_id=? AND status=N'Active' AND leave_requested=0")) {
+                try (PreparedStatement ps = c.prepareStatement("SELECT t.shop_id FROM shop_delivery_staff t WITH (UPDLOCK,HOLDLOCK) JOIN shop_delivery_settings cfg ON cfg.shop_id=t.shop_id AND cfg.shipper_id=t.shipper_id WHERE t.shipper_id=? AND t.status=N'Active' AND cfg.leave_requested=0")) {
                     ps.setInt(1, shipperId);
                     try (ResultSet rs = ps.executeQuery()) {
                         if (!rs.next()) {
@@ -258,7 +274,7 @@ public class ShipperTeamDAO {
                         shopId = rs.getInt(1);
                     }
                 }
-                try (PreparedStatement ps = c.prepareStatement("UPDATE shop_delivery_staff SET leave_requested=1,is_available=0,assignment_enabled=0 WHERE shipper_id=? AND status=N'Active' AND leave_requested=0")) {
+                try (PreparedStatement ps = c.prepareStatement("UPDATE shop_delivery_settings SET leave_requested=1,is_available=0,assignment_enabled=0 WHERE shipper_id=? AND leave_requested=0 AND EXISTS(SELECT 1 FROM shop_delivery_staff t WHERE t.shop_id=shop_delivery_settings.shop_id AND t.shipper_id=shop_delivery_settings.shipper_id AND t.status=N'Active')")) {
                     ps.setInt(1, shipperId);
                     ps.executeUpdate();
                 }
@@ -289,8 +305,11 @@ public class ShipperTeamDAO {
     public static void finalizeLeaveIfNoOpenAttempt(Connection c, int shipperId) throws SQLException {
         try (PreparedStatement ps = c.prepareStatement("""
             UPDATE shop_delivery_staff SET status=N'Inactive'
-            WHERE shipper_id=? AND status=N'Active' AND leave_requested=1
-              AND NOT EXISTS(SELECT 1 FROM delivery_attempts a WHERE a.shipper_id=? AND a.closed_at IS NULL)
+            WHERE shipper_id=? AND status=N'Active'
+              AND EXISTS(SELECT 1 FROM shop_delivery_settings cfg WHERE cfg.shop_id=shop_delivery_staff.shop_id
+                  AND cfg.shipper_id=shop_delivery_staff.shipper_id AND cfg.leave_requested=1)
+              AND NOT EXISTS(SELECT 1 FROM deliveries d WHERE COALESCE(d.shipper_id,d.staff_id)=?
+                  AND d.status IN(N'assigned',N'accepted',N'picked_up',N'delivering'))
             """)) {
             ps.setInt(1, shipperId);
             ps.setInt(2, shipperId);
@@ -306,7 +325,7 @@ public class ShipperTeamDAO {
         r.shipper_id,
         r.shop_id,
         r.status,
-        r.requested_at,
+        r.requested_at,s.shop_name,r.reviewed_at,r.review_note,
 
         u.full_name,
         u.email,
@@ -344,6 +363,12 @@ public class ShipperTeamDAO {
                     r.setStatus(rs.getString("status"));
                     r.setRequestedAt(rs.getTimestamp("requested_at"));
                     r.setShipperName(rs.getString("full_name"));
+                    r.setShopName(rs.getString("shop_name"));
+                    r.setShipperEmail(rs.getString("email"));
+                    r.setShipperPhone(rs.getString("phone"));
+                    r.setAccountStatus(rs.getString("account_status"));
+                    r.setReviewedAt(rs.getTimestamp("reviewed_at"));
+                    r.setReviewNote(rs.getString("review_note"));
                     list.add(r);
                 }
             }
@@ -354,11 +379,15 @@ public class ShipperTeamDAO {
     public List<Staff> getTeamMembers(int ownerId) throws SQLException {
         List<Staff> list = new ArrayList<>();
         String sql = """
-            SELECT t.shipper_id,t.shop_id,t.status,t.leave_requested,t.is_available,t.assignment_enabled,u.full_name,
-                (SELECT COUNT(*) FROM delivery_attempts a WHERE a.shipper_id=t.shipper_id AND a.closed_at IS NULL) AS open_delivery_count,
-                (SELECT TOP (1) d.order_id FROM delivery_attempts a JOIN deliveries d ON d.delivery_id=a.delivery_id
-                 WHERE a.shipper_id=t.shipper_id AND a.closed_at IS NULL ORDER BY a.attempt_id DESC) AS current_order_id
-            FROM shop_delivery_staff t JOIN shops s ON s.shop_id=t.shop_id JOIN users u ON u.user_id=t.shipper_id
+            SELECT t.shipper_id,t.shop_id,t.status,COALESCE(cfg.leave_requested,0) AS leave_requested,
+                COALESCE(cfg.is_available,1) AS is_available,COALESCE(cfg.assignment_enabled,1) AS assignment_enabled,u.full_name,
+                (SELECT COUNT(*) FROM deliveries d WHERE COALESCE(d.shipper_id,d.staff_id)=t.shipper_id
+                 AND d.status IN(N'assigned',N'accepted',N'picked_up',N'delivering')) AS open_delivery_count,
+                (SELECT TOP (1) d.order_id FROM deliveries d WHERE COALESCE(d.shipper_id,d.staff_id)=t.shipper_id
+                 AND d.status IN(N'assigned',N'accepted',N'picked_up',N'delivering') ORDER BY d.delivery_id DESC) AS current_order_id
+            FROM shop_delivery_staff t
+            LEFT JOIN shop_delivery_settings cfg ON cfg.shop_id=t.shop_id AND cfg.shipper_id=t.shipper_id
+            JOIN shops s ON s.shop_id=t.shop_id JOIN users u ON u.user_id=t.shipper_id
             WHERE s.owner_id=? AND t.status<>N'Inactive' ORDER BY u.full_name
             """;
         try (Connection c = connections.open(); PreparedStatement ps = c.prepareStatement(sql)) {
@@ -385,12 +414,16 @@ public class ShipperTeamDAO {
 
     public Staff getMyMembership(int shipperId) throws SQLException {
         String sql = """
-            SELECT TOP (1) t.shipper_id,t.shop_id,t.status,t.leave_requested,t.is_available,t.assignment_enabled,
+            SELECT TOP (1) t.shipper_id,t.shop_id,t.status,COALESCE(cfg.leave_requested,0) AS leave_requested,
+                COALESCE(cfg.is_available,1) AS is_available,COALESCE(cfg.assignment_enabled,1) AS assignment_enabled,
                 s.shop_name,
-                (SELECT COUNT(*) FROM delivery_attempts a WHERE a.shipper_id=t.shipper_id AND a.closed_at IS NULL) AS open_delivery_count,
-                (SELECT TOP (1) d.order_id FROM delivery_attempts a JOIN deliveries d ON d.delivery_id=a.delivery_id
-                 WHERE a.shipper_id=t.shipper_id AND a.closed_at IS NULL ORDER BY a.attempt_id DESC) AS current_order_id
-            FROM shop_delivery_staff t JOIN shops s ON s.shop_id=t.shop_id
+                (SELECT COUNT(*) FROM deliveries d WHERE COALESCE(d.shipper_id,d.staff_id)=t.shipper_id
+                 AND d.status IN(N'assigned',N'accepted',N'picked_up',N'delivering')) AS open_delivery_count,
+                (SELECT TOP (1) d.order_id FROM deliveries d WHERE COALESCE(d.shipper_id,d.staff_id)=t.shipper_id
+                 AND d.status IN(N'assigned',N'accepted',N'picked_up',N'delivering') ORDER BY d.delivery_id DESC) AS current_order_id
+            FROM shop_delivery_staff t
+            LEFT JOIN shop_delivery_settings cfg ON cfg.shop_id=t.shop_id AND cfg.shipper_id=t.shipper_id
+            JOIN shops s ON s.shop_id=t.shop_id
             WHERE t.shipper_id=? AND t.status<>N'Inactive'
             ORDER BY t.shipper_id
             """;
@@ -410,6 +443,7 @@ public class ShipperTeamDAO {
                 x.setAssignmentEnabled(rs.getBoolean("assignment_enabled"));
                 x.setOpenDeliveryCount(rs.getInt("open_delivery_count"));
                 x.setBusy(x.getOpenDeliveryCount() >= 3);
+                x.setCurrentOrderId(rs.getInt("current_order_id"));
                 return x;
             }
         }
@@ -498,6 +532,9 @@ public List<ShopDeliveryRequest> getMyRequests(int shipperId)
                     rs.getString("account_status")
                 );
 
+                r.setShopName(rs.getString("shop_name"));
+                r.setReviewedAt(rs.getTimestamp("reviewed_at"));
+                r.setReviewNote(rs.getString("review_note"));
                 list.add(r);
             }
         }
@@ -533,7 +570,8 @@ public List<ShopDeliveryRequest> getMyRequests(int shipperId)
                     }
                 }
                 lockShipper(c, shipperId);
-                try (PreparedStatement ps = c.prepareStatement("SELECT request_id FROM shop_delivery_requests r WITH (UPDLOCK,HOLDLOCK) JOIN shops s ON s.shop_id=r.shop_id WHERE r.request_id=? AND r.shop_id=? AND s.owner_id=? AND r.status=N'Pending'")) {
+                ensureSettings(c, shipperId);
+                try (PreparedStatement ps = c.prepareStatement("SELECT request_id FROM shop_delivery_requests r WITH (UPDLOCK,HOLDLOCK) JOIN shops s ON s.shop_id=r.shop_id WHERE r.request_id=? AND r.shop_id=? AND s.owner_id=? AND s.status=N'active' AND r.status=N'Pending'")) {
                     ps.setInt(1, requestId);
                     ps.setInt(2, shopId);
                     ps.setInt(3, ownerId);
@@ -552,10 +590,18 @@ public List<ShopDeliveryRequest> getMyRequests(int shipperId)
                             }
                         }
                     }
-                    try (PreparedStatement ps = c.prepareStatement("INSERT INTO shop_delivery_staff(shop_id,shipper_id,status,is_available,assignment_enabled) VALUES(?,?,N'Active',1,1)")) {
-                        ps.setInt(1, shopId);
-                        ps.setInt(2, shipperId);
-                        ps.executeUpdate();
+                    int changed;
+                    try(PreparedStatement ps=c.prepareStatement("UPDATE shop_delivery_staff SET status=N'Active',joined_at=SYSDATETIME() WHERE shop_id=? AND shipper_id=? AND status=N'Inactive'")) {
+                        ps.setInt(1,shopId);ps.setInt(2,shipperId);changed=ps.executeUpdate();
+                    }
+                    if(changed==0) {
+                        try(PreparedStatement ps=c.prepareStatement("INSERT INTO shop_delivery_staff(shop_id,shipper_id,status) VALUES(?,?,N'Active')")) {
+                            ps.setInt(1,shopId);ps.setInt(2,shipperId);ps.executeUpdate();
+                        }
+                    }
+                    ensureSettings(c,shipperId);
+                    try(PreparedStatement ps=c.prepareStatement("UPDATE shop_delivery_settings SET is_available=1,assignment_enabled=1,leave_requested=0 WHERE shop_id=? AND shipper_id=?")) {
+                        ps.setInt(1,shopId);ps.setInt(2,shipperId);ps.executeUpdate();
                     }
                 }
                 try (PreparedStatement ps = c.prepareStatement("UPDATE shop_delivery_requests SET status=?,reviewed_at=SYSDATETIME(),reviewed_by=?,review_note=? WHERE request_id=? AND status=N'Pending'")) {
@@ -590,10 +636,13 @@ public List<ShopDeliveryRequest> getMyRequests(int shipperId)
                         }
                     }
                 }
+                ensureSettings(c,shipperId);
                 try (PreparedStatement ps = c.prepareStatement("""
-                    UPDATE t SET assignment_enabled=? FROM shop_delivery_staff t
-                    JOIN shops s ON s.shop_id=t.shop_id
-                    WHERE s.owner_id=? AND t.shipper_id=? AND t.status=N'Active' AND t.leave_requested=0
+                    UPDATE shop_delivery_settings SET assignment_enabled=?
+                    WHERE EXISTS(SELECT 1 FROM shop_delivery_staff t JOIN shops s ON s.shop_id=t.shop_id
+                        WHERE s.owner_id=? AND t.shipper_id=shop_delivery_settings.shipper_id
+                          AND t.shop_id=shop_delivery_settings.shop_id AND t.status=N'Active')
+                      AND shipper_id=? AND leave_requested=0
                     """)) {
                     ps.setBoolean(1, enabled);
                     ps.setInt(2, ownerId);
@@ -624,10 +673,13 @@ public List<ShopDeliveryRequest> getMyRequests(int shipperId)
                         }
                     }
                 }
+                ensureSettings(c,shipperId);
                 try (PreparedStatement ps = c.prepareStatement("""
-                    UPDATE t SET leave_requested=1,is_available=0,assignment_enabled=0
-                    FROM shop_delivery_staff t JOIN shops s ON s.shop_id=t.shop_id
-                    WHERE s.owner_id=? AND t.shipper_id=? AND t.status=N'Active' AND t.leave_requested=0
+                    UPDATE shop_delivery_settings SET leave_requested=1,is_available=0,assignment_enabled=0
+                    WHERE EXISTS(SELECT 1 FROM shop_delivery_staff t JOIN shops s ON s.shop_id=t.shop_id
+                        WHERE s.owner_id=? AND t.shipper_id=shop_delivery_settings.shipper_id
+                          AND t.shop_id=shop_delivery_settings.shop_id AND t.status=N'Active')
+                      AND shipper_id=? AND leave_requested=0
                     """)) {
                     ps.setInt(1, ownerId);
                     ps.setInt(2, shipperId);

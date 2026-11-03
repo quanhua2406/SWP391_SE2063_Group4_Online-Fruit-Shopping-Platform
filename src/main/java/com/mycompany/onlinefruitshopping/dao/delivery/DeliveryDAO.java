@@ -31,7 +31,7 @@ public class DeliveryDAO {
             o.total_amount,o.status AS order_status,
             UPPER(pay.method) AS payment_method,
             CASE WHEN pay.status=N'paid' THEN N'Paid' ELSE N'Unpaid' END AS payment_status,
-            CAST(NULL AS nvarchar(255)) AS order_note
+            o.note AS order_note
         FROM delivery_attempts da
         JOIN deliveries d ON d.delivery_id=da.delivery_id
         JOIN orders o ON o.order_id=d.order_id
@@ -139,7 +139,7 @@ public class DeliveryDAO {
                     SELECT a.delivery_id,a.delivery_status,a.version,d.status
                     FROM deliveries d WITH(UPDLOCK,HOLDLOCK)
                     JOIN delivery_attempts a WITH(UPDLOCK,HOLDLOCK) ON a.delivery_id=d.delivery_id
-                    WHERE a.attempt_id=? AND a.shipper_id=? AND a.closed_at IS NULL AND d.staff_id=a.shipper_id
+                    WHERE a.attempt_id=? AND a.shipper_id=? AND a.closed_at IS NULL AND COALESCE(d.shipper_id,d.staff_id)=a.shipper_id
                       AND a.attempt_id=(SELECT MAX(x.attempt_id) FROM delivery_attempts x WHERE x.delivery_id=d.delivery_id)
                     """)) {
                     ps.setInt(1,attemptId);ps.setInt(2,shipperId);
@@ -177,6 +177,11 @@ public class DeliveryDAO {
                         }
                     }
                 }
+                if("Delivered".equals(next)) {
+                    try(PreparedStatement ps=c.prepareStatement("UPDATE orders SET payment_status=N'paid',payment_method=(SELECT method FROM payments WHERE order_id=?) WHERE order_id=?")) {
+                        ps.setInt(1,orderId);ps.setInt(2,orderId);ps.executeUpdate();
+                    }
+                }
                 try(PreparedStatement ps=c.prepareStatement("""
                     UPDATE delivery_attempts SET delivery_status=?,note=?,version=version+1,
                         accepted_at=CASE WHEN ?=N'Accepted' THEN SYSDATETIME() ELSE accepted_at END,
@@ -190,14 +195,21 @@ public class DeliveryDAO {
                     if(ps.executeUpdate()!=1) throw new SQLException("Lần giao vừa thay đổi.");
                 }
                 try(PreparedStatement ps=c.prepareStatement("""
-                    UPDATE deliveries SET status=?,note=?,staff_id=CASE WHEN ?=N'Rejected' THEN NULL ELSE staff_id END
-                    WHERE delivery_id=? AND staff_id=?
+                    UPDATE deliveries SET status=?,delivery_status=?,note=?,shop_id=?,
+                        staff_id=CASE WHEN ?=N'Rejected' THEN NULL ELSE ? END,
+                        shipper_id=CASE WHEN ?=N'Rejected' THEN NULL ELSE ? END,
+                        pickup_time=CASE WHEN ?=N'PickedUp' THEN SYSDATETIME() ELSE pickup_time END,
+                        delivered_time=CASE WHEN ?=N'Delivered' THEN SYSDATETIME() ELSE delivered_time END
+                    WHERE delivery_id=? AND COALESCE(shipper_id,staff_id)=? AND status=?
                     """)) {
-                    ps.setNString(1,baseStatus(next));ps.setNString(2,note);ps.setNString(3,next);ps.setInt(4,deliveryId);ps.setInt(5,shipperId);
+                    ps.setNString(1,baseStatus(next));ps.setNString(2,next);ps.setNString(3,note);ps.setInt(4,shopId);
+                    ps.setNString(5,next);ps.setInt(6,shipperId);ps.setNString(7,next);ps.setInt(8,shipperId);
+                    ps.setNString(9,next);ps.setNString(10,next);ps.setInt(11,deliveryId);ps.setInt(12,shipperId);ps.setNString(13,baseStatus);
                     if(ps.executeUpdate()!=1) throw new SQLException("Người giao đã thay đổi.");
                 }
-                try(PreparedStatement ps=c.prepareStatement("UPDATE orders SET status=? WHERE order_id=? AND status=?")) {
-                    ps.setNString(1,DeliveryRules.canonicalOrderStatus(next));ps.setInt(2,orderId);ps.setNString(3,orderStatus);
+                try(PreparedStatement ps=c.prepareStatement("UPDATE orders SET status=?,order_status=? WHERE order_id=? AND status=?")) {
+                    ps.setNString(1,DeliveryRules.canonicalOrderStatus(next));ps.setNString(2,DeliveryRules.canonicalOrderStatus(next));
+                    ps.setInt(3,orderId);ps.setNString(4,orderStatus);
                     if(ps.executeUpdate()!=1) throw new SQLException("Đơn hàng đã thay đổi.");
                 }
                 try(PreparedStatement ps=c.prepareStatement("INSERT INTO order_status_history(order_id,status,changed_by) VALUES(?,?,?)")) {
@@ -220,7 +232,9 @@ public class DeliveryDAO {
 
     private static String baseStatus(String state) {
         return switch(state) {
-            case "Assigned","Accepted","Rejected" -> "assigned";
+            case "Assigned" -> "assigned";
+            case "Accepted" -> "accepted";
+            case "Rejected" -> "rejected";
             case "PickedUp" -> "picked_up";
             case "Delivering" -> "delivering";
             case "Delivered" -> "delivered";
