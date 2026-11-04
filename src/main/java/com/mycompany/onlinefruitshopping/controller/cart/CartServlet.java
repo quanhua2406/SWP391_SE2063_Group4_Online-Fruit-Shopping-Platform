@@ -121,8 +121,21 @@ public class CartServlet extends HttpServlet {
             throws IOException {
 
         int variantId = parseInt(request.getParameter("variantId"), 0);
+        int productId = parseInt(request.getParameter("productId"), 0);
         int quantity = parseInt(request.getParameter("quantity"), 1);
         boolean buyNow = "true".equalsIgnoreCase(request.getParameter("buyNow"));
+
+        // Fallback: nếu variantId <= 0 nhưng có productId thì tự động lấy biến thể đầu tiên của sản phẩm
+        if (variantId <= 0 && productId > 0) {
+            try {
+                com.mycompany.onlinefruitshopping.service.ProductService ps = new com.mycompany.onlinefruitshopping.service.ProductService();
+                java.util.List<com.mycompany.onlinefruitshopping.model.ProductVariant> vars = ps.getProductVariants(productId);
+                if (vars != null && !vars.isEmpty()) {
+                    variantId = vars.get(0).getVariantId();
+                }
+            } catch (SQLException ignored) {
+            }
+        }
 
         List<CartItem> sessionCart = getSessionCart(session);
 
@@ -132,7 +145,11 @@ public class CartServlet extends HttpServlet {
             session.setAttribute("cartCount", result.getCartItemCount());
 
             if (buyNow && result.isSuccess()) {
-                response.sendRedirect(request.getContextPath() + "/cart");
+                if (currentUser != null) {
+                    response.sendRedirect(request.getContextPath() + "/checkout");
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/cart");
+                }
                 return;
             }
 

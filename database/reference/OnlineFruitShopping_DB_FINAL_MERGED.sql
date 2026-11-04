@@ -124,6 +124,7 @@ CREATE TABLE dbo.[products] (
     [created_at] datetime2 NOT NULL CONSTRAINT DF_products_created_at DEFAULT (getdate()),
     [commission_rate] decimal(5,2) NOT NULL CONSTRAINT DF_products_commission_rate DEFAULT (0),
     [hidden_by_admin] bit NOT NULL CONSTRAINT DF_products_hidden_by_admin DEFAULT (0),
+    [price_per_kg] decimal(12,2) NULL,
     CONSTRAINT PK_products PRIMARY KEY ([product_id]),
     CONSTRAINT FK_products_shop_id FOREIGN KEY ([shop_id]) REFERENCES dbo.[shops]([shop_id]),
     CONSTRAINT FK_products_category_id FOREIGN KEY ([category_id]) REFERENCES dbo.[categories]([category_id]),
@@ -147,6 +148,7 @@ CREATE TABLE dbo.[product_variants] (
     [unit] nvarchar(10) NOT NULL,
     [weight_value] decimal(10,2) NULL,
     [packaging_type] nvarchar(50) NULL,
+    [quality_grade] varchar(5) NOT NULL CONSTRAINT DF_product_variants_quality_grade DEFAULT ('1'),
     [price] decimal(12,2) NOT NULL,
     [created_at] datetime2 NOT NULL CONSTRAINT DF_product_variants_created_at DEFAULT (getdate()),
     CONSTRAINT PK_product_variants PRIMARY KEY ([variant_id]),
@@ -583,3 +585,26 @@ BEGIN CATCH
     THROW;
 END CATCH;
 GO
+
+CREATE TABLE dbo.[quality_grade_factors] (
+    [grade] varchar(5) NOT NULL CONSTRAINT PK_quality_grade_factors PRIMARY KEY,
+    [label] nvarchar(50) NOT NULL,
+    [factor] decimal(4,2) NOT NULL,
+    CONSTRAINT CK_quality_grade_factors_factor CHECK (factor > 0 AND factor <= 1.5)
+);
+
+INSERT INTO dbo.[quality_grade_factors] (grade, label, factor) VALUES
+('1', N'Loại 1 (Xuất khẩu / Tuyệt hảo)', 1.00),
+('2', N'Loại 2 (Tiêu chuẩn / Phổ thông)', 0.85),
+('3', N'Loại 3 (Tiết kiệm)', 0.70);
+
+CREATE TABLE dbo.[variant_price_history] (
+    [history_id] int IDENTITY(1,1) NOT NULL CONSTRAINT PK_variant_price_history PRIMARY KEY,
+    [variant_id] int NOT NULL,
+    [old_price] decimal(12,2) NOT NULL,
+    [new_price] decimal(12,2) NOT NULL,
+    [changed_at] datetime2 NOT NULL CONSTRAINT DF_variant_price_history_changed_at DEFAULT (getdate()),
+    [changed_by] int NULL,
+    CONSTRAINT FK_variant_price_history_variant_id FOREIGN KEY ([variant_id]) REFERENCES dbo.[product_variants]([variant_id]) ON DELETE CASCADE,
+    CONSTRAINT FK_variant_price_history_changed_by FOREIGN KEY ([changed_by]) REFERENCES dbo.[users]([user_id])
+);

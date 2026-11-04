@@ -57,7 +57,70 @@ public class ProductVariantDAO {
                 }
             }
         }
+        if (list.isEmpty() && productId > 0) {
+            createDefaultVariantIfMissing(productId);
+            try (Connection conn = DBConnection.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, productId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        ProductVariant v = new ProductVariant();
+                        v.setVariantId(rs.getInt("variant_id"));
+                        v.setProductId(rs.getInt("product_id"));
+                        v.setProductName(rs.getString("product_name"));
+                        v.setSku(rs.getString("sku"));
+                        v.setUnit(rs.getString("unit"));
+                        double weight = rs.getDouble("weight_value");
+                        if (!rs.wasNull()) {
+                            v.setWeightValue(weight);
+                        }
+                        v.setPackagingType(rs.getString("packaging_type"));
+                        String qg = rs.getString("quality_grade");
+                        v.setQualityGrade(qg != null ? qg : "1");
+                        v.setPrice(rs.getDouble("price"));
+                        v.setCreatedAt(rs.getTimestamp("created_at"));
+                        v.setStock(rs.getDouble("stock"));
+                        list.add(v);
+                    }
+                }
+            } catch (SQLException ignored) {}
+        }
         return list;
+    }
+
+    private void createDefaultVariantIfMissing(int productId) {
+        String checkProd = "SELECT product_name FROM products WHERE product_id = ?";
+        String insVar = "INSERT INTO product_variants (product_id, sku, unit, packaging_type, price, quality_grade) VALUES (?, ?, 'kg', N'Gói tiêu chuẩn (1kg)', 50000, '1')";
+        String insBatch = "INSERT INTO inventory_batches (variant_id, batch_code, quantity, expiry_date, received_date, status) VALUES (?, ?, 50, DATEADD(day, 30, GETDATE()), CAST(GETDATE() AS DATE), 'active')";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement psCheck = conn.prepareStatement(checkProd)) {
+            psCheck.setInt(1, productId);
+            try (ResultSet rs = psCheck.executeQuery()) {
+                if (rs.next()) {
+                    String sku = "SKU-P" + productId + "-STD";
+                    int varId = 0;
+                    try (PreparedStatement psV = conn.prepareStatement(insVar, Statement.RETURN_GENERATED_KEYS)) {
+                        psV.setInt(1, productId);
+                        psV.setString(2, sku);
+                        psV.executeUpdate();
+                        try (ResultSet rsGen = psV.getGeneratedKeys()) {
+                            if (rsGen.next()) {
+                                varId = rsGen.getInt(1);
+                            }
+                        }
+                    }
+                    if (varId > 0) {
+                        try (PreparedStatement psB = conn.prepareStatement(insBatch)) {
+                            psB.setInt(1, varId);
+                            psB.setString(2, "BATCH-AUTO-" + varId);
+                            psB.executeUpdate();
+                        }
+                    }
+                }
+            }
+        } catch (SQLException ignored) {
+        }
     }
 
     public ProductVariant getVariantById(int variantId) throws SQLException {

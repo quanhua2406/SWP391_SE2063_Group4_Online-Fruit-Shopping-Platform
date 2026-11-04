@@ -171,19 +171,34 @@ public class ProductImageServlet extends HttpServlet {
             throws SQLException, IOException {
 
         String imageIdStr = request.getParameter("id");
+        if (imageIdStr == null || imageIdStr.isBlank()) {
+            imageIdStr = request.getParameter("imageId");
+        }
         String productIdStr = request.getParameter("productId");
 
-        if (imageIdStr == null || productIdStr == null) {
-            response.sendRedirect(request.getContextPath() + "/store-owner/products?error=invalid_id");
+        int productId = 0;
+        if (productIdStr != null && !productIdStr.isBlank()) {
+            try { productId = Integer.parseInt(productIdStr); } catch (NumberFormatException ignored) {}
+        }
+
+        if (imageIdStr == null || imageIdStr.isBlank()) {
+            if (productId > 0) {
+                redirectWithError(request, response, productId, "Mã hình ảnh không hợp lệ!");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/store-owner/products?error=invalid_id");
+            }
             return;
         }
 
-        int imageId, productId;
+        int imageId;
         try {
             imageId = Integer.parseInt(imageIdStr);
-            productId = Integer.parseInt(productIdStr);
         } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath() + "/store-owner/products?error=invalid_id");
+            if (productId > 0) {
+                redirectWithError(request, response, productId, "Mã hình ảnh không hợp lệ!");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/store-owner/products?error=invalid_id");
+            }
             return;
         }
 
@@ -202,25 +217,40 @@ public class ProductImageServlet extends HttpServlet {
             throws SQLException, IOException {
 
         String imageIdStr = request.getParameter("id");
+        if (imageIdStr == null || imageIdStr.isBlank()) {
+            imageIdStr = request.getParameter("imageId");
+        }
         String productIdStr = request.getParameter("productId");
 
-        if (imageIdStr == null || productIdStr == null) {
-            response.sendRedirect(request.getContextPath() + "/store-owner/products?error=invalid_id");
+        int productId = 0;
+        if (productIdStr != null && !productIdStr.isBlank()) {
+            try { productId = Integer.parseInt(productIdStr); } catch (NumberFormatException ignored) {}
+        }
+
+        if (imageIdStr == null || imageIdStr.isBlank()) {
+            if (productId > 0) {
+                redirectWithError(request, response, productId, "Mã hình ảnh không hợp lệ!");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/store-owner/products?error=invalid_id");
+            }
             return;
         }
 
-        int imageId, productId;
+        int imageId;
         try {
             imageId = Integer.parseInt(imageIdStr);
-            productId = Integer.parseInt(productIdStr);
         } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath() + "/store-owner/products?error=invalid_id");
+            if (productId > 0) {
+                redirectWithError(request, response, productId, "Mã hình ảnh không hợp lệ!");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/store-owner/products?error=invalid_id");
+            }
             return;
         }
 
         try {
             productService.setPrimaryImage(productId, imageId);
-            response.sendRedirect(request.getRequestURI() + "?productId=" + productId + "&success=setprimary");
+            response.sendRedirect(request.getRequestURI() + "?productId=" + productId + "&success=primary");
         } catch (IllegalArgumentException e) {
             redirectWithError(request, response, productId, e.getMessage());
         }

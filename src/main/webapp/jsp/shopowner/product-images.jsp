@@ -178,7 +178,7 @@
             <span>Đã thêm hình ảnh mới vào bộ sưu tập sản phẩm thành công!</span>
         </div>
     </c:if>
-    <c:if test="${param.success == 'primary'}">
+    <c:if test="${param.success == 'primary' || param.success == 'setprimary'}">
         <div class="alert-box alert-success">
             <span>Đã đặt hình ảnh làm ảnh đại diện chính thành công!</span>
         </div>
@@ -293,13 +293,13 @@
 
                                     <div style="display: flex; gap: 6px; margin-top: 6px;">
                                         <c:if test="${img.sortOrder != 1}">
-                                            <a href="${pageContext.request.contextPath}/store-owner/product-images?action=setPrimary&imageId=${img.imageId}&productId=${product.productId}" 
+                                            <a href="${pageContext.request.contextPath}/store-owner/product-images?action=setPrimary&id=${img.imageId}&productId=${product.productId}" 
                                                class="btn-sm" style="flex: 1; text-align: center; justify-content: center; background: #e8f5e9; color: #2e7d32; font-size: 11px; padding: 5px 8px;"
                                                title="Đặt làm ảnh đại diện chính của sản phẩm">
                                                 Đặt chính
                                             </a>
                                         </c:if>
-                                        <a href="${pageContext.request.contextPath}/store-owner/product-images?action=delete&imageId=${img.imageId}&productId=${product.productId}" 
+                                        <a href="${pageContext.request.contextPath}/store-owner/product-images?action=delete&id=${img.imageId}&productId=${product.productId}" 
                                            class="btn-sm btn-delete" style="flex: 1; text-align: center; justify-content: center; font-size: 11px; padding: 5px 8px;"
                                            onclick="return confirm('Bạn có chắc chắn muốn xóa ảnh này khỏi bộ sưu tập?');"
                                            title="Xóa hình ảnh">

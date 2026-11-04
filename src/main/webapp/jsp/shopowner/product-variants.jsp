@@ -1,6 +1,7 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="jakarta.tags.core"%>
 <%@taglib prefix="fmt" uri="jakarta.tags.fmt"%>
+<%@taglib prefix="fn" uri="jakarta.tags.functions"%>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -275,25 +276,26 @@
                                             </span>
                                         </td>
                                         <td style="text-align: center;">
-                                            <button type="button" class="btn-sm btn-edit"
-                                                    onclick="openDetail(${v.variantId})">
-                                                Chi tiết
-                                            </button>
-
-                                            <template id="detail-${v.variantId}">
-                                                <h3 class="detail-title">${v.sku} - ${v.packagingType}</h3>
-                                                <div class="action-btns detail-actions">
-                                                    <button type="button" class="btn-sm btn-edit"
-                                                            onclick="closeDetail(); editVariant(${v.variantId}, '${v.sku}', '${v.packagingType}', '${v.unit}', '${v.weightValue}', ${v.price}, ${v.stock}, '${v.qualityGrade}', ${v.productId});">
-                                                        Sửa
-                                                    </button>
-                                                    <a href="${pageContext.request.contextPath}/store-owner/variants?action=delete&variantId=${v.variantId}&productId=${v.productId}"
-                                                       class="btn-sm btn-delete"
-                                                       onclick="event.preventDefault(); closeDetail(); askConfirm(this.href, 'Xóa biến thể ${v.sku} - ${v.packagingType}? Sản phẩm phải có ít nhất 1 biến thể.');">
-                                                        Xóa
-                                                    </a>
-                                                </div>
-                                            </template>
+                                            <div style="display: flex; gap: 6px; justify-content: center;">
+                                                <button type="button" class="btn-sm btn-edit"
+                                                        data-id="${v.variantId}"
+                                                        data-sku="${fn:escapeXml(v.sku)}"
+                                                        data-pkg="${fn:escapeXml(v.packagingType)}"
+                                                        data-unit="${fn:escapeXml(v.unit)}"
+                                                        data-weight="${v.weightValue}"
+                                                        data-price="${v.price}"
+                                                        data-stock="${v.stock}"
+                                                        data-grade="${v.qualityGrade}"
+                                                        data-product-id="${v.productId}"
+                                                        onclick="handleEditBtn(this)">
+                                                    Sửa
+                                                </button>
+                                                <a href="${pageContext.request.contextPath}/store-owner/variants?action=delete&variantId=${v.variantId}&productId=${v.productId}"
+                                                   class="btn-sm btn-delete"
+                                                   onclick="return confirm('Bạn có chắc muốn xóa biến thể ${fn:escapeXml(v.sku)} - ${fn:escapeXml(v.packagingType)}? Sản phẩm phải có ít nhất 1 biến thể.');">
+                                                    Xóa
+                                                </a>
+                                            </div>
                                         </td>
                                     </tr>
                                 </c:forEach>
@@ -309,6 +311,19 @@
 </section>
 
 <script>
+        function handleEditBtn(btn) {
+        var id = btn.getAttribute('data-id');
+        var sku = btn.getAttribute('data-sku');
+        var pkg = btn.getAttribute('data-pkg');
+        var unit = btn.getAttribute('data-unit');
+        var weight = btn.getAttribute('data-weight');
+        var price = btn.getAttribute('data-price');
+        var stock = btn.getAttribute('data-stock');
+        var grade = btn.getAttribute('data-grade');
+        var productId = btn.getAttribute('data-product-id');
+        editVariant(id, sku, pkg, unit, weight, price, stock, grade, productId);
+    }
+
     function editVariant(id, sku, pkg, unit, weight, price, stock, grade, productId) {
         var productSelect = document.getElementById('productSelect');
         if (productSelect) {

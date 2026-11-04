@@ -1224,7 +1224,7 @@
     }
 
     // Dynamic Variant selector
-    let currentMaxStock = ${initialStock};
+    let currentMaxStock = ${not empty initialStock ? initialStock : 0};
 
     function selectVariant(btn) {
         document.querySelectorAll('.variant-btn').forEach(b => b.classList.remove('active'));
@@ -1308,6 +1308,7 @@
             const formData = new URLSearchParams();
             formData.append('action', 'add');
             formData.append('variantId', variantId);
+            formData.append('productId', '${product.productId}');
             formData.append('quantity', qty);
 
             fetch('${pageContext.request.contextPath}/cart', {

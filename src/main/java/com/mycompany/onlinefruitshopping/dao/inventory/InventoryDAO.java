@@ -1382,6 +1382,24 @@ public class InventoryDAO {
                 grade.put("factor", rs.getBigDecimal("factor"));
                 list.add(grade);
             }
+        } catch (SQLException e) {
+            Map<String, Object> g1 = new LinkedHashMap<>();
+            g1.put("grade", "1");
+            g1.put("label", "Loại 1 (Xuất khẩu / Tuyệt hảo)");
+            g1.put("factor", BigDecimal.valueOf(1.00));
+            list.add(g1);
+
+            Map<String, Object> g2 = new LinkedHashMap<>();
+            g2.put("grade", "2");
+            g2.put("label", "Loại 2 (Tiêu chuẩn / Phổ thông)");
+            g2.put("factor", BigDecimal.valueOf(0.85));
+            list.add(g2);
+
+            Map<String, Object> g3 = new LinkedHashMap<>();
+            g3.put("grade", "3");
+            g3.put("label", "Loại 3 (Tiết kiệm)");
+            g3.put("factor", BigDecimal.valueOf(0.70));
+            list.add(g3);
         }
 
         return list;

@@ -310,25 +310,43 @@ public class ProductVariantServlet extends HttpServlet {
         }
         String productIdStr = request.getParameter("productId");
 
-        if (variantIdStr == null || productIdStr == null) {
-            redirectInvalid(request, response, "Mã biến thể hoặc sản phẩm không hợp lệ.");
+        if (variantIdStr == null) {
+            redirectInvalid(request, response, "Mã biến thể không hợp lệ.");
             return;
         }
 
-        int variantId, productId;
+        int variantId;
         try {
             variantId = Integer.parseInt(variantIdStr);
-            productId = Integer.parseInt(productIdStr);
         } catch (NumberFormatException e) {
-            redirectInvalid(request, response, "Mã biến thể hoặc sản phẩm không hợp lệ.");
+            redirectInvalid(request, response, "Mã biến thể không hợp lệ.");
             return;
+        }
+
+        int productId = 0;
+        if (productIdStr != null && !productIdStr.isBlank()) {
+            try { productId = Integer.parseInt(productIdStr); } catch (NumberFormatException ignored) {}
+        }
+        if (productId <= 0) {
+            ProductVariant existing = productService.getVariantById(variantId);
+            if (existing != null) {
+                productId = existing.getProductId();
+            }
         }
 
         try {
             productService.deleteVariant(variantId, productId);
-            response.sendRedirect(request.getRequestURI() + "?productId=" + productId + "&success=deleted");
+            if (productId > 0) {
+                response.sendRedirect(request.getRequestURI() + "?productId=" + productId + "&success=deleted");
+            } else {
+                response.sendRedirect(request.getRequestURI() + "?success=deleted");
+            }
         } catch (IllegalArgumentException | IllegalStateException e) {
-            redirectWithError(request, response, productId, e.getMessage());
+            if (productId > 0) {
+                redirectWithError(request, response, productId, e.getMessage());
+            } else {
+                redirectInvalid(request, response, e.getMessage());
+            }
         }
     }
 

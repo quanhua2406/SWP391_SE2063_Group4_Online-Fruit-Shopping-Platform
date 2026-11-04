@@ -3,7 +3,6 @@ package com.mycompany.onlinefruitshopping.service.product;
 import com.mycompany.onlinefruitshopping.dao.inventory.InventoryDAO;
 import com.mycompany.onlinefruitshopping.model.ProductVariant;
 
-import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,21 +23,28 @@ public class ProductVariantService {
         for (Map<String, Object> row : inventoryDAO.getVariantsForOwner(ownerId)) {
 
             ProductVariant v = new ProductVariant();
-            v.setVariantId((Integer) row.get("variant_id"));
-            v.setProductId((Integer) row.get("product_id"));
+            Object varIdObj = row.get("variant_id");
+            if (varIdObj instanceof Number n) {
+                v.setVariantId(n.intValue());
+            }
+            Object prodIdObj = row.get("product_id");
+            if (prodIdObj instanceof Number n) {
+                v.setProductId(n.intValue());
+            }
             v.setProductName((String) row.get("product_name"));
             v.setSku((String) row.get("sku"));
             v.setUnit((String) row.get("unit"));
 
-            BigDecimal weight = (BigDecimal) row.get("weight_value");
-            if (weight != null) {
-                v.setWeightValue(weight.doubleValue());
+            Object weight = row.get("weight_value");
+            if (weight instanceof Number n) {
+                v.setWeightValue(n.doubleValue());
             }
 
             v.setPackagingType((String) row.get("packaging_type"));
-            v.setQualityGrade((String) row.get("quality_grade"));
-            v.setPrice(((BigDecimal) row.get("price")).doubleValue());
-            v.setStock(((BigDecimal) row.get("stock")).doubleValue());
+            Object grade = row.get("quality_grade");
+            v.setQualityGrade(grade != null ? grade.toString() : "1");
+            v.setPrice(toDouble(row.get("price")));
+            v.setStock(toDouble(row.get("stock")));
             list.add(v);
         }
 
@@ -51,5 +57,12 @@ public class ProductVariantService {
 
     public List<Map<String, Object>> qualityGrades() throws SQLException {
         return inventoryDAO.getQualityGrades();
+    }
+
+    private double toDouble(Object obj) {
+        if (obj instanceof Number n) {
+            return n.doubleValue();
+        }
+        return 0.0;
     }
 }
