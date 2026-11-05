@@ -11,69 +11,164 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
     <style>
         .variant-layout {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 20px;
-            align-items: start;
+            display: block;
         }
         .variant-layout .panel {
             margin-bottom: 0;
         }
-        .variant-form .form-field {
-            margin-bottom: 14px;
-        }
-        .variant-form .form-field small {
-            display: block;
-            margin-top: 4px;
-            color: #888;
-            font-size: 12px;
-        }
-        .variant-form .form-actions {
-            margin-top: 6px;
-        }
-        .detail-modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.35);
-            display: flex;
+        .modal-overlay {
+            position: fixed !important;
+            inset: 0 !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: rgba(15, 23, 42, 0.75) !important;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            display: flex !important;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
+            z-index: 99999 !important;
+            padding: 16px;
+            box-sizing: border-box;
         }
-        .detail-modal[hidden] {
-            display: none;
+        .modal-overlay[hidden] {
+            display: none !important;
         }
-        .detail-box {
-            background: #ffffff;
-            border-radius: 12px;
-            padding: 20px 22px;
-            min-width: 300px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        .modal-card {
+            background-color: #ffffff !important;
+            color: #1e293b !important;
+            border-radius: 16px;
+            padding: 24px 28px;
+            width: 100%;
+            max-width: 480px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+            border: 1px solid #e2e8f0;
+            position: relative;
+            z-index: 100000;
         }
-        .detail-head {
+        .modal-card-sm {
+            max-width: 380px;
+        }
+        .modal-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #234d25;
+            margin: 0 0 4px 0;
+        }
+        .modal-subtitle {
+            font-size: 13px;
+            color: #64748b;
+            margin: 0;
+        }
+        .modal-close {
+            background: transparent;
+            border: none;
+            font-size: 24px;
+            line-height: 1;
+            color: #64748b;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 6px;
+            margin-left: 12px;
+        }
+        .modal-close:hover {
+            color: #0f172a;
+            background: #f1f5f9;
+        }
+        .modal-card .form-field {
             margin-bottom: 14px;
         }
-        .detail-title {
-            font-size: 16px;
-            color: #234d25;
-            margin: 0 0 14px;
+        .modal-card .form-field label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
         }
-        .detail-actions {
-            justify-content: flex-start;
+        .modal-card .form-field input,
+        .modal-card .form-field select {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+            background-color: #ffffff;
+            color: #0f172a;
+            box-sizing: border-box;
         }
-        .detail-close {
-            background: none;
-            border: none;
-            font-size: 22px;
-            cursor: pointer;
-            color: #666;
+        .modal-card .form-field input:focus,
+        .modal-card .form-field select:focus {
+            outline: none;
+            border-color: #2e7d32;
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.15);
         }
-        @media (max-width: 900px) {
-            .variant-layout {
-                grid-template-columns: 1fr;
+        .modal-card .form-field small {
+            display: block;
+            margin-top: 4px;
+            color: #64748b;
+            font-size: 12px;
+        }
+        .modal-card .form-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .modal-card .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 14px;
+            border-top: 1px solid #f1f5f9;
+        }
+        @media (prefers-color-scheme: dark) {
+            .modal-card {
+                background-color: #1e293b !important;
+                color: #f8fafc !important;
+                border-color: #334155 !important;
+            }
+            .modal-header {
+                border-bottom-color: #334155 !important;
+            }
+            .modal-title {
+                color: #4ade80 !important;
+            }
+            .modal-subtitle {
+                color: #94a3b8 !important;
+            }
+            .modal-close {
+                color: #94a3b8 !important;
+            }
+            .modal-close:hover {
+                color: #f8fafc !important;
+                background: #334155 !important;
+            }
+            .modal-card .form-field label {
+                color: #cbd5e1 !important;
+            }
+            .modal-card .form-field input,
+            .modal-card .form-field select {
+                background-color: #0f172a !important;
+                color: #f8fafc !important;
+                border-color: #475569 !important;
+            }
+            .modal-card .form-field small {
+                color: #94a3b8 !important;
+            }
+            .modal-card .form-actions {
+                border-top-color: #334155 !important;
             }
         }
     </style>
@@ -129,12 +224,104 @@
 
     <div class="variant-layout">
 
-        <!-- FORM ADD / EDIT (opened in a card) -->
-        <div id="formModal" class="detail-modal" hidden
-             onclick="if (event.target === this) closeForm();">
-        <div class="panel variant-form" style="margin-bottom: 0; min-width: 340px; max-width: 420px;">
-            <h2 id="formTitle">Thêm biến thể mới</h2>
-            <p class="panel-hint">Mỗi biến thể là một gói bán riêng (hộp, túi, thùng...).</p>
+        <!-- TABLE -->
+        <div class="panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h2>Danh sách biến thể (${variants.size()})</h2>
+                <button type="button" class="btn-primary" onclick="openAddForm()">+ Thêm biến thể</button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th>SKU</th>
+                            <th>Quy cách</th>
+                            <th>Phẩm cấp</th>
+                            <th>Đơn vị</th>
+                            <th>Khối lượng</th>
+                            <th>Giá bán</th>
+                            <th style="text-align: center;">Tồn kho</th>
+                            <th style="text-align: center;">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <c:choose>
+                            <c:when test="${empty variants}">
+                                <tr>
+                                    <td colspan="9">Chưa có biến thể nào.</td>
+                                </tr>
+                            </c:when>
+                            <c:otherwise>
+                                <c:forEach var="v" items="${variants}">
+                                    <tr>
+                                        <td>${v.productName}</td>
+                                        <td><strong>${v.sku}</strong></td>
+                                        <td>${v.packagingType}</td>
+                                        <td>Loại ${v.qualityGrade}</td>
+                                        <td>${v.unit}</td>
+                                        <td>
+                                            <c:choose>
+                                                <c:when test="${v.weightValue != null && v.weightValue > 0}">
+                                                    ${v.weightValue} kg
+                                                </c:when>
+                                                <c:otherwise>-</c:otherwise>
+                                            </c:choose>
+                                        </td>
+                                        <td>
+                                            <fmt:formatNumber value="${v.price}" pattern="#,###"/> đ
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <span class="stock-badge ${v.stock <= 5 ? 'stock-low' : ''}">
+                                                <fmt:formatNumber value="${v.stock}" pattern="#,###"/>
+                                            </span>
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <div style="display: flex; gap: 6px; justify-content: center;">
+                                                <button type="button" class="btn-sm btn-edit"
+                                                        data-id="${v.variantId}"
+                                                        data-sku="${fn:escapeXml(v.sku)}"
+                                                        data-pkg="${fn:escapeXml(v.packagingType)}"
+                                                        data-unit="${fn:escapeXml(v.unit)}"
+                                                        data-weight="${v.weightValue}"
+                                                        data-price="<fmt:formatNumber value="${v.price}" pattern="0"/>"
+                                                        data-stock="<fmt:formatNumber value="${v.stock}" pattern="0"/>"
+                                                        data-grade="${v.qualityGrade}"
+                                                        data-product-id="${v.productId}"
+                                                        onclick="handleEditBtn(this)">
+                                                    Sửa
+                                                </button>
+                                                <a href="${pageContext.request.contextPath}/store-owner/variants?action=delete&variantId=${v.variantId}&productId=${v.productId}"
+                                                   class="btn-sm btn-delete"
+                                                   onclick="return confirm('Bạn có chắc muốn xóa biến thể ${fn:escapeXml(v.sku)} - ${fn:escapeXml(v.packagingType)}? Sản phẩm phải có ít nhất 1 biến thể.');">
+                                                    Xóa
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </c:forEach>
+                            </c:otherwise>
+                        </c:choose>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+</section>
+
+    <!-- MODAL ADD / EDIT VARIANT -->
+    <div id="formModal" class="modal-overlay" hidden onclick="if (event.target === this) closeForm();">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div>
+                    <h2 id="formTitle" class="modal-title">Thêm biến thể mới</h2>
+                    <p class="modal-subtitle">Mỗi biến thể là một quy cách đóng gói (hộp, túi, thùng...).</p>
+                </div>
+                <button type="button" class="modal-close" onclick="closeForm()" title="Đóng">&times;</button>
+            </div>
 
             <form id="variantForm" action="${pageContext.request.contextPath}/store-owner/variants" method="POST">
                 <input type="hidden" id="actionInput" name="action" value="add">
@@ -199,7 +386,7 @@
                         <label for="price">Giá bán (đ) *</label>
                         <input type="number" step="1" min="0" id="price" name="price"
                                placeholder="VD: 220000" required>
-                        <small>Nếu sản phẩm đã đặt giá/kg và biến thể có khối lượng, giá được tính tự động.</small>
+                        <small>Nếu sản phẩm có giá/kg, giá tính tự động.</small>
                     </div>
 
                     <div class="form-field">
@@ -220,190 +407,125 @@
                 </div>
             </form>
         </div>
-        </div>
-
-        <!-- TABLE -->
-        <div class="panel">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <h2>Danh sách biến thể (${variants.size()})</h2>
-                <button type="button" class="btn-primary" onclick="openAddForm()">+ Thêm biến thể</button>
-            </div>
-
-            <div class="table-responsive">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Sản phẩm</th>
-                            <th>SKU</th>
-                            <th>Quy cách</th>
-                            <th>Phẩm cấp</th>
-                            <th>Đơn vị</th>
-                            <th>Khối lượng</th>
-                            <th>Giá bán</th>
-                            <th style="text-align: center;">Tồn kho</th>
-                            <th style="text-align: center;">Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <c:choose>
-                            <c:when test="${empty variants}">
-                                <tr>
-                                    <td colspan="9">Chưa có biến thể nào.</td>
-                                </tr>
-                            </c:when>
-                            <c:otherwise>
-                                <c:forEach var="v" items="${variants}">
-                                    <tr>
-                                        <td>${v.productName}</td>
-                                        <td><strong>${v.sku}</strong></td>
-                                        <td>${v.packagingType}</td>
-                                        <td>Loại ${v.qualityGrade}</td>
-                                        <td>${v.unit}</td>
-                                        <td>
-                                            <c:choose>
-                                                <c:when test="${v.weightValue != null && v.weightValue > 0}">
-                                                    ${v.weightValue} kg
-                                                </c:when>
-                                                <c:otherwise>-</c:otherwise>
-                                            </c:choose>
-                                        </td>
-                                        <td>
-                                            <fmt:formatNumber value="${v.price}" pattern="#,###"/> đ
-                                        </td>
-                                        <td style="text-align: center;">
-                                            <span class="stock-badge ${v.stock <= 5 ? 'stock-low' : ''}">
-                                                <fmt:formatNumber value="${v.stock}" pattern="#,###"/>
-                                            </span>
-                                        </td>
-                                        <td style="text-align: center;">
-                                            <div style="display: flex; gap: 6px; justify-content: center;">
-                                                <button type="button" class="btn-sm btn-edit"
-                                                        data-id="${v.variantId}"
-                                                        data-sku="${fn:escapeXml(v.sku)}"
-                                                        data-pkg="${fn:escapeXml(v.packagingType)}"
-                                                        data-unit="${fn:escapeXml(v.unit)}"
-                                                        data-weight="${v.weightValue}"
-                                                        data-price="${v.price}"
-                                                        data-stock="${v.stock}"
-                                                        data-grade="${v.qualityGrade}"
-                                                        data-product-id="${v.productId}"
-                                                        onclick="handleEditBtn(this)">
-                                                    Sửa
-                                                </button>
-                                                <a href="${pageContext.request.contextPath}/store-owner/variants?action=delete&variantId=${v.variantId}&productId=${v.productId}"
-                                                   class="btn-sm btn-delete"
-                                                   onclick="return confirm('Bạn có chắc muốn xóa biến thể ${fn:escapeXml(v.sku)} - ${fn:escapeXml(v.packagingType)}? Sản phẩm phải có ít nhất 1 biến thể.');">
-                                                    Xóa
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </c:forEach>
-                            </c:otherwise>
-                        </c:choose>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
     </div>
 
-</section>
-
-<script>
-        function handleEditBtn(btn) {
-        var id = btn.getAttribute('data-id');
-        var sku = btn.getAttribute('data-sku');
-        var pkg = btn.getAttribute('data-pkg');
-        var unit = btn.getAttribute('data-unit');
-        var weight = btn.getAttribute('data-weight');
-        var price = btn.getAttribute('data-price');
-        var stock = btn.getAttribute('data-stock');
-        var grade = btn.getAttribute('data-grade');
-        var productId = btn.getAttribute('data-product-id');
-        editVariant(id, sku, pkg, unit, weight, price, stock, grade, productId);
-    }
-
-    function editVariant(id, sku, pkg, unit, weight, price, stock, grade, productId) {
-        var productSelect = document.getElementById('productSelect');
-        if (productSelect) {
-            productSelect.value = productId;
-        }
-        document.getElementById('formTitle').innerText = 'Sửa biến thể: ' + sku;
-        document.getElementById('actionInput').value = 'edit';
-        document.getElementById('variantIdInput').value = id;
-        document.getElementById('sku').value = sku;
-        document.getElementById('packagingType').value = pkg;
-        document.getElementById('unit').value = unit;
-        document.getElementById('weightValue').value = (weight && weight !== 'null') ? weight : '';
-        document.getElementById('price').value = price;
-        document.getElementById('stock').value = stock;
-        document.getElementById('qualityGrade').value = grade || '1';
-
-        document.getElementById('submitBtn').innerText = 'Lưu thay đổi';
-        document.getElementById('cancelEditBtn').style.display = 'inline-block';
-        document.getElementById('formModal').hidden = false;
-        document.getElementById('packagingType').focus();
-    }
-
-    function openAddForm() {
-        resetVariantForm();
-        document.getElementById('formModal').hidden = false;
-        document.getElementById('packagingType').focus();
-    }
-
-    function closeForm() {
-        resetVariantForm();
-        document.getElementById('formModal').hidden = true;
-    }
-
-    function resetVariantForm() {
-        document.getElementById('formTitle').innerText = 'Thêm biến thể mới';
-        document.getElementById('actionInput').value = 'add';
-        document.getElementById('variantIdInput').value = '';
-        document.getElementById('sku').value = '';
-        document.getElementById('packagingType').value = '';
-        document.getElementById('unit').value = 'kg';
-        document.getElementById('weightValue').value = '';
-        document.getElementById('price').value = '';
-        document.getElementById('stock').value = '0';
-        document.getElementById('qualityGrade').value = '1';
-        document.getElementById('submitBtn').innerText = 'Thêm biến thể';
-        document.getElementById('cancelEditBtn').style.display = 'none';
-    }
-</script>
-
-    <div id="confirmModal" class="detail-modal" hidden
+    <!-- CONFIRM MODAL -->
+    <div id="confirmModal" class="modal-overlay" hidden
          onclick="if (event.target === this) closeConfirm();">
-        <div class="detail-box">
-            <div class="detail-head">
-                <span>Xác nhận</span>
-                <button type="button" class="detail-close" onclick="closeConfirm()">×</button>
+        <div class="modal-card modal-card-sm">
+            <div class="modal-header">
+                <h3 class="modal-title">Xác nhận</h3>
+                <button type="button" class="modal-close" onclick="closeConfirm()">&times;</button>
             </div>
-            <p id="confirmMessage" class="panel-hint"></p>
-            <div class="action-btns detail-actions">
+            <p id="confirmMessage" class="modal-subtitle" style="margin-bottom: 16px;"></p>
+            <div class="form-actions" style="margin-top: 12px; padding-top: 10px;">
                 <button type="button" class="btn-secondary" onclick="closeConfirm()">Hủy</button>
-                <a id="confirmOk" href="#" class="btn-sm btn-delete">Xóa</a>
+                <a id="confirmOk" href="#" class="btn-sm btn-delete" style="text-decoration: none; padding: 6px 14px; border-radius: 6px;">Xóa</a>
             </div>
         </div>
     </div>
 
-    <div id="detailModal" class="detail-modal" hidden
+    <!-- DETAIL MODAL -->
+    <div id="detailModal" class="modal-overlay" hidden
          onclick="if (event.target === this) closeDetail();">
-        <div class="detail-box">
-            <div class="detail-head">
-                <span>Hành động biến thể</span>
-                <button type="button" class="detail-close" onclick="closeDetail()">×</button>
+        <div class="modal-card modal-card-sm">
+            <div class="modal-header">
+                <h3 class="modal-title">Hành động biến thể</h3>
+                <button type="button" class="modal-close" onclick="closeDetail()">&times;</button>
             </div>
             <div id="detailBody"></div>
         </div>
     </div>
 
     <script>
+        function handleEditBtn(btn) {
+            var id = btn.getAttribute('data-id');
+            var sku = btn.getAttribute('data-sku');
+            var pkg = btn.getAttribute('data-pkg');
+            var unit = btn.getAttribute('data-unit');
+            var weight = btn.getAttribute('data-weight');
+            var price = btn.getAttribute('data-price');
+            var stock = btn.getAttribute('data-stock');
+            var grade = btn.getAttribute('data-grade');
+            var productId = btn.getAttribute('data-product-id');
+            editVariant(id, sku, pkg, unit, weight, price, stock, grade, productId);
+        }
+
+        function editVariant(id, sku, pkg, unit, weight, price, stock, grade, productId) {
+            var productSelect = document.getElementById('productSelect');
+            if (productSelect) {
+                productSelect.value = productId;
+            }
+            document.getElementById('formTitle').innerText = 'Sửa biến thể: ' + sku;
+            document.getElementById('actionInput').value = 'edit';
+            document.getElementById('variantIdInput').value = id;
+            document.getElementById('sku').value = sku;
+            document.getElementById('packagingType').value = pkg;
+            document.getElementById('unit').value = unit;
+
+            if (weight && weight !== 'null' && weight !== '') {
+                var w = parseFloat(weight);
+                document.getElementById('weightValue').value = isNaN(w) ? '' : w;
+            } else {
+                document.getElementById('weightValue').value = '';
+            }
+
+            if (price !== undefined && price !== null && price !== '') {
+                var p = parseFloat(price);
+                document.getElementById('price').value = isNaN(p) ? '' : Math.round(p);
+            } else {
+                document.getElementById('price').value = '';
+            }
+
+            if (stock !== undefined && stock !== null && stock !== '') {
+                var s = parseFloat(stock);
+                document.getElementById('stock').value = isNaN(s) ? '0' : Math.round(s);
+            } else {
+                document.getElementById('stock').value = '0';
+            }
+
+            document.getElementById('qualityGrade').value = grade || '1';
+
+            document.getElementById('submitBtn').innerText = 'Lưu thay đổi';
+            var cancelBtn = document.getElementById('cancelEditBtn');
+            if (cancelBtn) cancelBtn.style.display = 'inline-block';
+            document.getElementById('formModal').hidden = false;
+            document.getElementById('packagingType').focus();
+        }
+
+        function openAddForm() {
+            resetVariantForm();
+            document.getElementById('formModal').hidden = false;
+            document.getElementById('packagingType').focus();
+        }
+
+        function closeForm() {
+            resetVariantForm();
+            document.getElementById('formModal').hidden = true;
+        }
+
+        function resetVariantForm() {
+            document.getElementById('formTitle').innerText = 'Thêm biến thể mới';
+            document.getElementById('actionInput').value = 'add';
+            document.getElementById('variantIdInput').value = '';
+            document.getElementById('sku').value = '';
+            document.getElementById('packagingType').value = '';
+            document.getElementById('unit').value = 'kg';
+            document.getElementById('weightValue').value = '';
+            document.getElementById('price').value = '';
+            document.getElementById('stock').value = '0';
+            document.getElementById('qualityGrade').value = '1';
+            document.getElementById('submitBtn').innerText = 'Thêm biến thể';
+            var cancelBtn = document.getElementById('cancelEditBtn');
+            if (cancelBtn) cancelBtn.style.display = 'none';
+        }
+
         function openDetail(id) {
             var tpl = document.getElementById('detail-' + id);
-            document.getElementById('detailBody').replaceChildren(tpl.content.cloneNode(true));
-            document.getElementById('detailModal').hidden = false;
+            if (tpl) {
+                document.getElementById('detailBody').replaceChildren(tpl.content.cloneNode(true));
+                document.getElementById('detailModal').hidden = false;
+            }
         }
 
         function closeDetail() {
@@ -419,6 +541,17 @@
         function closeConfirm() {
             document.getElementById('confirmModal').hidden = true;
         }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                var formM = document.getElementById('formModal');
+                if (formM && !formM.hidden) closeForm();
+                var confM = document.getElementById('confirmModal');
+                if (confM && !confM.hidden) closeConfirm();
+                var detM = document.getElementById('detailModal');
+                if (detM && !detM.hidden) closeDetail();
+            }
+        });
     </script>
 
 </body>
