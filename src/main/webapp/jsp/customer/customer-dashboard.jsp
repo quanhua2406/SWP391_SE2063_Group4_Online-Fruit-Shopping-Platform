@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customer Dashboard - FreshFruit</title>
+    <title>Bảng điều khiển khách hàng - FreshFruit</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
 
     <style>
@@ -250,10 +250,10 @@
 
 <section class="dashboard">
 
-    <h1>Customer Dashboard</h1>
+    <h1>Bảng điều khiển khách hàng</h1>
 
     <p class="dashboard-welcome">
-        Welcome back, Customer!
+        Chào mừng trở lại, khách hàng!
     </p>
 
     <div class="dashboard-grid">
@@ -263,15 +263,15 @@
 
             <div class="dashboard-icon">🔔</div>
 
-            <h3>Notifications</h3>
+            <h3>Thông báo</h3>
 
             <p>
-                Track your order updates, delivery status, and promotional deals.
+                Theo dõi cập nhật đơn hàng, trạng thái giao hàng và ưu đãi khuyến mãi.
             </p>
 
             <a class="card-button"
                href="${pageContext.request.contextPath}/notifications">
-                View Notifications
+                Xem thông báo
             </a>
 
         </div>
@@ -281,15 +281,15 @@
 
             <div class="dashboard-icon">🍎</div>
 
-            <h3>Browse Fruits</h3>
+            <h3>Xem trái cây</h3>
 
             <p>
-                Explore fresh fruits and find your favorite products.
+                Khám phá trái cây tươi và tìm sản phẩm yêu thích.
             </p>
 
             <a class="card-button"
                href="${pageContext.request.contextPath}/home">
-                Shop Now
+                Mua ngay
             </a>
 
         </div>
@@ -299,15 +299,15 @@
 
             <div class="dashboard-icon">🛒</div>
 
-            <h3>My Cart</h3>
+            <h3>Giỏ hàng của tôi</h3>
 
             <p>
-                View and manage the fruits in your shopping cart.
+                Xem và quản lý trái cây trong giỏ hàng.
             </p>
 
             <a class="card-button"
                href="${pageContext.request.contextPath}/cart">
-                View Cart
+                Xem giỏ hàng
             </a>
 
         </div>
@@ -317,14 +317,14 @@
 
             <div class="dashboard-icon">📦</div>
 
-            <h3>My Orders</h3>
+            <h3>Đơn hàng của tôi</h3>
 
             <p>
-                View your order history and current orders.
+                Xem lịch sử và các đơn hàng hiện tại.
             </p>
 
             <a class="card-button" href="${pageContext.request.contextPath}/orders">
-                My Orders
+                Đơn hàng của tôi
             </a>
 
         </div>
@@ -334,15 +334,15 @@
 
             <div class="dashboard-icon">🚚</div>
 
-            <h3>Track Delivery</h3>
+            <h3>Theo dõi giao hàng</h3>
 
             <p>
-                Check the current status of your delivery.
+                Kiểm tra trạng thái giao hàng hiện tại.
             </p>
 
             <a class="card-button"
                href="${pageContext.request.contextPath}/orders?status=shipping">
-                Track Order
+                Theo dõi đơn
             </a>
 
         </div>
@@ -362,12 +362,12 @@
         <!-- My Reviews -->
         <div class="dashboard-card" style="border: 2px solid #f59e0b;">
             <div class="dashboard-icon">⭐</div>
-            <h3>My Reviews</h3>
+            <h3>Đánh giá của tôi</h3>
             <p>
                 Quản lý các nhận xét đã gửi và đánh giá các sản phẩm đã mua.
             </p>
             <a class="card-button" href="${pageContext.request.contextPath}/customer/reviews" style="background: #f59e0b;">
-                My Reviews →
+                Đánh giá của tôi →
             </a>
         </div>
 

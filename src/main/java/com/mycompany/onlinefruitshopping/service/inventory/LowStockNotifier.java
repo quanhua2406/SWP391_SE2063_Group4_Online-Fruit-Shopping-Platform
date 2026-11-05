@@ -19,7 +19,7 @@ import java.util.Map;
 /**
  * Low stock email alerts for shop owners.
  *
- * <p>The alert lists every variant of the shop that is at or below
+ * <p>The alert lists every variant of the shop that is below
  * the shop's safety threshold ({@code shops.low_stock_threshold}).
  * It is sent</p>
  *

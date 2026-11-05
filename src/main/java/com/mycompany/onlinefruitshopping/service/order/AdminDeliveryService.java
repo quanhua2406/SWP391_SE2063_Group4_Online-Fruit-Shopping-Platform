@@ -34,7 +34,6 @@ public class AdminDeliveryService {
 
     private static final String DEFAULT_ASSIGN_NOTE = "Assigned by admin";
     private static final String DEFAULT_REASSIGN_NOTE = "Reassigned by admin";
-    private static final String DEFAULT_ISSUE_NOTE = "Handled by admin";
 
     private static final String STATUS_ASSIGNED = "assigned";
 
@@ -149,7 +148,11 @@ public class AdminDeliveryService {
             note = note.substring(0, MAX_HISTORY_NOTE_LENGTH);
         }
 
-        String finalNote = note.isEmpty() ? DEFAULT_ISSUE_NOTE : note;
+        if (note.isEmpty()) {
+            return "note-required";
+        }
+
+        String finalNote = note;
 
         try {
 

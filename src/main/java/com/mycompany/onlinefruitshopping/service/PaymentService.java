@@ -2,6 +2,7 @@ package com.mycompany.onlinefruitshopping.service;
 
 import com.mycompany.onlinefruitshopping.dao.OrderDAO;
 import com.mycompany.onlinefruitshopping.dao.PaymentDAO;
+import com.mycompany.onlinefruitshopping.dao.inventory.InventoryDAO;
 import com.mycompany.onlinefruitshopping.model.Order;
 import com.mycompany.onlinefruitshopping.model.Payment;
 import com.mycompany.onlinefruitshopping.model.Refund;
@@ -18,6 +19,7 @@ public class PaymentService {
 
     private final PaymentDAO paymentDAO;
     private final OrderDAO orderDAO;
+    private final InventoryDAO inventoryDAO = new InventoryDAO();
 
     public PaymentService() {
         this.paymentDAO = new PaymentDAO();
@@ -78,6 +80,13 @@ public class PaymentService {
         if (isSuccess) {
             // Cập nhật trạng thái đơn sang preparing (Đã thanh toán, sẵn sàng chuẩn bị hàng) nếu đơn hợp lệ
             try {
+                Order order = orderDAO.getOrderById(orderId, 0);
+                if (order != null && "pending_confirmation".equalsIgnoreCase(order.getStatus())) {
+                    Integer ownerId = inventoryDAO.findShopOwnerId(order.getShopId());
+                    if (ownerId == null || !inventoryDAO.deductStockForOrder(orderId, ownerId)) {
+                        return isSuccess;
+                    }
+                }
                 orderDAO.updateOrderStatus(orderId, 0, "preparing", 1, "Thanh toán thành công qua VNPay (Mã GD: " + txnRef + ")");
             } catch (IllegalStateException ignored) {
                 // Đơn đã ở trạng thái kết thúc, giữ nguyên trạng thái đơn

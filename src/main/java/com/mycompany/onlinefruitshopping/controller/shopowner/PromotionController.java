@@ -51,7 +51,7 @@ public class PromotionController extends HttpServlet {
         } catch (IllegalArgumentException e) {
             response.sendError(400);
         } catch (SQLException e) {
-            log("Không tải được khuyến mãi. Kiểm tra database/03_Them_khuyen_mai.sql", e);
+            log("Không tải được khuyến mãi. Kiểm tra kết nối CSDL", e);
             response.sendError(503);
         }
     }

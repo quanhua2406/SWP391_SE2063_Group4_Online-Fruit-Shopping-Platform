@@ -9,7 +9,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Admin Dashboard - FreshFruit</title>
+    <title>Bảng điều khiển quản trị - FreshFruit</title>
 
     <style>
         /* ==================== GLOBAL ==================== */
@@ -404,11 +404,11 @@
         <nav class="nav-actions">
 
             <a href="${pageContext.request.contextPath}/home">
-                🏠 Home
+                🏠 Trang chủ
             </a>
 
             <a href="${pageContext.request.contextPath}/admin/notifications" class="nav-bell-link">
-                🔔 Notifications
+                🔔 Thông báo
                 <c:if test="${not empty sessionScope.adminUnreadCount and sessionScope.adminUnreadCount > 0}">
                     <span class="nav-bell-badge">${sessionScope.adminUnreadCount}</span>
                 </c:if>
@@ -416,7 +416,7 @@
 
             <a href="${pageContext.request.contextPath}/logout"
                class="logout">
-                Logout
+                Đăng xuất
             </a>
 
         </nav>
@@ -427,10 +427,10 @@
 
     <main class="dashboard">
 
-        <h1>Admin Dashboard</h1>
+        <h1>Bảng điều khiển quản trị</h1>
 
         <p class="dashboard-welcome">
-            Welcome back, Admin!
+            Chào mừng trở lại, Quản trị viên!
         </p>
 
         <!-- KPI METRICS SUMMARY BANNER (TASK 26: VIEW SALES DASHBOARD) -->
@@ -463,7 +463,7 @@
         <c:if test="${not empty topFruits}">
             <div class="top-fruits-section">
                 <div class="top-fruits-header">
-                    <h2>🍇 Top Hoa Quả Bán Chạy Nhất (Best Sellers)</h2>
+                    <h2>🍇 Top Hoa Quả Bán Chạy Nhất</h2>
                     <a href="${pageContext.request.contextPath}/admin/reports?tab=sales" class="view-all-link">Xem Báo Cáo Bán Hàng Chi Tiết &rarr;</a>
                 </div>
                 <div class="table-container">
@@ -507,16 +507,16 @@
 
                 <div class="dashboard-icon">👥</div>
 
-                <h3>User Management</h3>
+                <h3>Quản lý người dùng</h3>
 
                 <p>
-                    Manage customer, store owner
-                    and delivery staff accounts.
+                    Quản lý tài khoản khách hàng, chủ shop
+                    và nhân viên giao hàng.
                 </p>
 
                 <a class="action-btn"
                    href="${pageContext.request.contextPath}/admin/user-management">
-                    Manage Users
+                    Quản lý người dùng
                 </a>
 
             </div>
@@ -527,16 +527,16 @@
 
                 <div class="dashboard-icon">🏪</div>
 
-                <h3>Shop Owner Management</h3>
+                <h3>Quản lý chủ shop</h3>
 
                 <p>
-                    View every registered shop and block or
-                    unblock a store owner and their products.
+                    Xem mọi shop đã đăng ký và khóa hoặc mở khóa
+                    chủ shop cùng sản phẩm của họ.
                 </p>
 
                 <a class="action-btn"
                    href="${pageContext.request.contextPath}/admin/shops">
-                    Manage Shops
+                    Quản lý shop
                 </a>
 
             </div>
@@ -547,16 +547,16 @@
 
                 <div class="dashboard-icon">🏷️</div>
 
-                <h3>Promotion Approvals</h3>
+                <h3>Duyệt khuyến mãi</h3>
 
                 <p>
-                    Approve or refuse the promotional prices
-                    requested by shop owners.
+                    Duyệt hoặc từ chối giá khuyến mãi
+                    do chủ shop yêu cầu.
                 </p>
 
                 <a class="action-btn"
                    href="${pageContext.request.contextPath}/admin/promotion-approvals">
-                    Review Promotions
+                    Duyệt khuyến mãi
                 </a>
 
             </div>
@@ -567,16 +567,16 @@
 
                 <div class="dashboard-icon">🛒</div>
 
-                <h3>Order Management</h3>
+                <h3>Quản lý đơn hàng</h3>
 
                 <p>
-                    Monitor every order across all shops
-                    and open any order in full detail.
+                    Theo dõi mọi đơn hàng của tất cả shop
+                    và xem chi tiết từng đơn.
                 </p>
 
                 <a class="action-btn"
                    href="${pageContext.request.contextPath}/admin/orders">
-                    View Orders
+                    Xem đơn hàng
                 </a>
 
             </div>
@@ -587,16 +587,16 @@
 
                 <div class="dashboard-icon">🚚</div>
 
-                <h3>Delivery Administration</h3>
+                <h3>Quản lý giao hàng</h3>
 
                 <p>
-                    Track delivery progress, manage delivery
-                    staff and reassign shippers when needed.
+                    Theo dõi tiến độ giao hàng, quản lý nhân viên giao
+                    và phân công lại shipper khi cần.
                 </p>
 
                 <a class="action-btn"
                    href="${pageContext.request.contextPath}/admin/deliveries">
-                    Monitor Deliveries
+                    Theo dõi giao hàng
                 </a>
 
             </div>
@@ -607,16 +607,16 @@
 
                 <div class="dashboard-icon">🛠️</div>
 
-                <h3>Order Issues</h3>
+                <h3>Sự cố đơn hàng</h3>
 
                 <p>
-                    Handle failed, cancelled and delayed
-                    orders and close customer disputes.
+                    Xử lý đơn thất bại, đã hủy và bị trễ
+                    và đóng các khiếu nại của khách hàng.
                 </p>
 
                 <a class="action-btn"
                    href="${pageContext.request.contextPath}/admin/order-issues">
-                    Handle Issues
+                    Xử lý sự cố
                 </a>
 
             </div>
@@ -627,16 +627,16 @@
 
                 <div class="dashboard-icon">🛡️</div>
 
-                <h3>Inappropriate Review Management</h3>
+                <h3>Quản lý đánh giá không phù hợp</h3>
 
                 <p>
-                    Moderate reported reviews, inspect attached evidence,
-                    hide or delete inappropriate customer feedback.
+                    Kiểm duyệt đánh giá bị báo cáo, xem minh chứng đính kèm,
+                    ẩn hoặc xóa phản hồi không phù hợp của khách hàng.
                 </p>
 
                 <a class="action-btn"
                    href="${pageContext.request.contextPath}/admin/reviews?status=reported">
-                    Moderate Reviews
+                    Kiểm duyệt đánh giá
                     <c:if test="${not empty reportedReviewsCount && reportedReviewsCount > 0}">
                         (${reportedReviewsCount})
                     </c:if>
@@ -650,16 +650,16 @@
 
                 <div class="dashboard-icon">💰</div>
 
-                <h3>Commission Report</h3>
+                <h3>Báo cáo hoa hồng</h3>
 
                 <p>
-                    View the platform fee collected from shops,
-                    by shop and by commission %.
+                    Xem phí nền tảng thu từ các shop,
+                    theo shop và theo % hoa hồng.
                 </p>
 
                 <a class="action-btn"
                    href="${pageContext.request.contextPath}/admin/commission-report">
-                    View Commission
+                    Xem hoa hồng
                 </a>
 
             </div>
@@ -670,14 +670,14 @@
 
                 <div class="dashboard-icon">📊</div>
 
-                <h3>Reports</h3>
+                <h3>Báo cáo</h3>
 
                 <p>
-                    View sales and platform reports.
+                    Xem báo cáo bán hàng và báo cáo nền tảng.
                 </p>
 
                 <a class="action-btn" href="${pageContext.request.contextPath}/admin/reports">
-                    View Reports
+                    Xem báo cáo
                 </a>
 
             </div>
@@ -688,16 +688,16 @@
 
                 <div class="dashboard-icon">🔔</div>
 
-                <h3>Notifications &amp; Alerts</h3>
+                <h3>Thông báo &amp; cảnh báo</h3>
 
                 <p>
-                    Review reported reviews, critical low stock alerts,
-                    refund requests, and system issues.
+                    Xem đánh giá bị báo cáo, cảnh báo tồn kho nghiêm trọng,
+                    yêu cầu hoàn tiền và sự cố hệ thống.
                 </p>
 
                 <a class="action-btn"
                    href="${pageContext.request.contextPath}/admin/notifications">
-                    View Notifications
+                    Xem thông báo
                 </a>
 
             </div>

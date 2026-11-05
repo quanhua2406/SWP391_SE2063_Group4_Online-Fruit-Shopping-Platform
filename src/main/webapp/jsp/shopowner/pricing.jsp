@@ -341,7 +341,11 @@
 
                 <tr>
                     <td colspan="8">
+                        <% if (products == null || products.isEmpty()) { %>
+                        Cửa hàng chưa có sản phẩm nào.
+                        <% } else { %>
                         Không có biến thể sản phẩm nào khớp với tìm kiếm.
+                        <% } %>
                     </td>
                 </tr>
 

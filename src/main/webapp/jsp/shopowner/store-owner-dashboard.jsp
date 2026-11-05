@@ -32,7 +32,7 @@
     String contextPath = request.getContextPath();
 
     String ownerName = request.getAttribute("ownerName") == null
-            ? "Shop Owner"
+            ? "Chủ shop"
             : request.getAttribute("ownerName").toString();
 
     Boolean hasShopAttr = (Boolean) request.getAttribute("hasShop");
@@ -53,7 +53,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Shop Owner Dashboard - FreshFruit</title>
+    <title>Bảng điều khiển chủ shop - FreshFruit</title>
 
     <link rel="stylesheet"
           href="<%= contextPath %>/css/style.css">
@@ -74,11 +74,11 @@
     <nav class="nav-actions">
 
         <a href="<%= contextPath %>/home">
-            🏠 Home
+            🏠 Trang chủ
         </a>
 
         <a href="<%= contextPath %>/store-owner/notifications" class="nav-bell-link">
-            🔔 Notifications
+            🔔 Thông báo
             <% if (session.getAttribute("shopOwnerUnreadCount") != null && ((Integer) session.getAttribute("shopOwnerUnreadCount")) > 0) { %>
                 <span class="nav-bell-badge"><%= session.getAttribute("shopOwnerUnreadCount") %></span>
             <% } %>
@@ -88,7 +88,7 @@
 
         <a href="<%= contextPath %>/logout"
            class="logout">
-            Logout
+            Đăng xuất
         </a>
 
     </nav>
@@ -99,22 +99,22 @@
 
 <section class="dashboard">
 
-    <h1>Shop Owner Dashboard</h1>
+    <h1>Bảng điều khiển chủ shop</h1>
 
     <p class="dashboard-welcome">
-        Welcome back, <%= esc(ownerName) %>!
+        Chào mừng trở lại, <%= esc(ownerName) %>!
     </p>
 
     <% if ("created".equals(shopStatus)) { %>
 
         <div class="success-message">
-            ✅ Your shop was created successfully.
+            ✅ Tạo shop thành công.
         </div>
 
     <% } else if ("exists".equals(shopStatus)) { %>
 
         <div class="success-message">
-            ℹ️ You already have a shop.
+            ℹ️ Bạn đã có shop.
         </div>
 
     <% } %>
@@ -122,8 +122,8 @@
     <% if (!hasShop) { %>
 
         <div class="error-message">
-            You do not have a shop yet. Create your shop first, then
-            you can manage its products, inventory and pricing.
+            Bạn chưa có shop. Hãy tạo shop trước, sau đó bạn có thể
+            quản lý sản phẩm, tồn kho và giá.
         </div>
 
         <div class="dashboard-grid">
@@ -132,15 +132,15 @@
 
                 <div class="dashboard-icon">🏪</div>
 
-                <h3>Create Shop</h3>
+                <h3>Tạo shop</h3>
 
                 <p>
-                    Set up your fruit shop to start managing
-                    products, inventory and prices.
+                    Thiết lập cửa hàng trái cây của bạn để bắt đầu
+                    quản lý sản phẩm, tồn kho và giá bán.
                 </p>
 
                 <a href="<%= contextPath %>/store-owner/create-shop">
-                    + Create Shop
+                    + Tạo shop
                 </a>
 
             </div>
@@ -150,7 +150,7 @@
     <% } else { %>
 
         <p class="breadcrumb">
-            🏪 Your shop:
+            🏪 Shop của bạn:
             <strong><%= esc(shopName) %></strong>
         </p>
 
@@ -169,17 +169,17 @@
         <div class="summary-grid summary-grid-4">
 
             <div class="summary-card">
-                <span class="summary-label">Products</span>
+                <span class="summary-label">Sản phẩm</span>
                 <span class="summary-value"><%= esc(num(productCount)) %></span>
             </div>
 
             <div class="summary-card">
-                <span class="summary-label">Variants</span>
+                <span class="summary-label">Quy cách</span>
                 <span class="summary-value"><%= esc(num(variantCount)) %></span>
             </div>
 
             <div class="summary-card">
-                <span class="summary-label">Total Stock</span>
+                <span class="summary-label">Tổng tồn kho</span>
                 <span class="summary-value"><%= esc(num(totalStock)) %></span>
             </div>
 
@@ -187,7 +187,7 @@
                     && new BigDecimal(lowStockCount.toString()).signum() > 0
                     ? "summary-warn" : "" %>">
                 <span class="summary-label">
-                    Low / Out of Stock
+                    Sắp hết / Hết hàng
                 </span>
                 <span class="summary-value">
                     <%= esc(num(lowStockCount)) %> /
@@ -215,15 +215,15 @@
 
                 <div class="dashboard-icon">🔔</div>
 
-                <h3>Notifications &amp; Alerts</h3>
+                <h3>Thông báo &amp; cảnh báo</h3>
 
                 <p>
-                    Check new orders, payment updates, low stock warnings,
-                    and refund requests in real-time.
+                    Nhận đơn mới, cập nhật thanh toán, cảnh báo tồn thấp
+                    và yêu cầu hoàn tiền theo thời gian thực.
                 </p>
 
                 <a href="<%= contextPath %>/store-owner/notifications">
-                    View Notifications
+                    Xem thông báo
                 </a>
 
             </div>
@@ -234,15 +234,15 @@
 
                 <div class="dashboard-icon">🍎</div>
 
-                <h3>Product Management</h3>
+                <h3>Quản lý sản phẩm</h3>
 
                 <p>
-                    Manage fruit listings, packaging variants, categories,
-                    and platform sales commission.
+                    Quản lý danh sách trái cây, quy cách đóng gói, danh mục
+                    và hoa hồng bán hàng trên sàn.
                 </p>
 
                 <a href="<%= contextPath %>/store-owner/products">
-                    Manage Products
+                    Quản lý sản phẩm
                 </a>
 
             </div>
@@ -272,15 +272,15 @@
 
                 <div class="dashboard-icon">📦</div>
 
-                <h3>Stock Management</h3>
+                <h3>Quản lý tồn kho</h3>
 
                 <p>
-                    View and update stock, restock products, watch
-                    low stock and see the inventory history.
+                    Xem và cập nhật tồn kho, nhập thêm hàng, theo dõi
+                    hàng sắp hết và xem lịch sử tồn kho.
                 </p>
 
                 <a href="<%= contextPath %>/store-owner/inventory">
-                    Manage Stock
+                    Quản lý tồn kho
                 </a>
 
             </div>
@@ -291,15 +291,15 @@
 
                 <div class="dashboard-icon">💲</div>
 
-                <h3>Pricing Management</h3>
+                <h3>Quản lý giá</h3>
 
                 <p>
-                    Set and edit the selling price of every product
-                    variant (package weight in kg).
+                    Đặt và chỉnh giá bán của từng quy cách sản phẩm
+                    (khối lượng gói tính bằng kg).
                 </p>
 
                 <a href="<%= contextPath %>/store-owner/pricing">
-                    Manage Pricing
+                    Quản lý giá
                 </a>
 
             </div>
@@ -310,15 +310,15 @@
 
                 <div class="dashboard-icon">💼</div>
 
-                <h3>Commission Report</h3>
+                <h3>Báo cáo hoa hồng</h3>
 
                 <p>
-                    See the platform fee you have to pay, broken down
-                    by product and by commission %.
+                    Xem phí nền tảng bạn phải trả, chi tiết theo sản phẩm
+                    và theo % hoa hồng.
                 </p>
 
                 <a href="<%= contextPath %>/store-owner/commission-report">
-                    View Report
+                    Xem báo cáo
                 </a>
 
             </div>
@@ -329,12 +329,12 @@
 
                 <div class="dashboard-icon">🎁</div>
 
-                <h3>Promotion Management</h3>
+                <h3>Quản lý khuyến mãi</h3>
 
                 <p>Quản lý chương trình khuyến mãi cho sản phẩm của cửa hàng.</p>
 
                 <a href="${pageContext.request.contextPath}/shopowner/shop/promotions">
-                    Manage Promotions
+                    Quản lý khuyến mãi
                 </a>
 
             </div>
@@ -345,14 +345,14 @@
 
                 <div class="dashboard-icon">🎟️</div>
 
-                <h3>Coupon Management</h3>
+                <h3>Quản lý mã giảm giá</h3>
 
                 <p>
-                    Create discount coupons and track their usage.
+                    Tạo mã giảm giá và theo dõi số lần sử dụng.
                 </p>
 
                 <a href="${pageContext.request.contextPath}/shopowner/shop/coupons">
-                    Manage Coupons
+                    Quản lý mã giảm giá
                 </a>
 
             </div>
@@ -363,14 +363,14 @@
 
                 <div class="dashboard-icon">📋</div>
 
-                <h3>Order Management</h3>
+                <h3>Quản lý đơn hàng</h3>
 
                 <p>
-                    Track, confirm, prepare and assign delivery staff for orders containing your products.
+                    Theo dõi, xác nhận, chuẩn bị và phân công nhân viên giao hàng cho các đơn có sản phẩm của bạn.
                 </p>
 
                 <a href="<%= contextPath %>/store-owner/orders">
-                    Manage Orders
+                    Quản lý đơn hàng
                 </a>
 
             </div>
@@ -381,15 +381,14 @@
 
                 <div class="dashboard-icon">🔄</div>
 
-                <h3>Subscription Plans</h3>
+                <h3>Gói đăng ký</h3>
 
                 <p>
-                    Offer recurring fruit boxes and manage
-                    subscription plans.
+                    Cung cấp hộp trái cây định kỳ và quản lý các gói đăng ký.
                 </p>
 
                 <a href="<%= contextPath %>/store-owner/subscription/plans">
-                    Manage Subscriptions
+                    Quản lý gói đăng ký
                 </a>
 
             </div>
@@ -400,15 +399,15 @@
 
                 <div class="dashboard-icon">🛵</div>
 
-                <h3>Shipper Team Management</h3>
+                <h3>Quản lý đội giao hàng</h3>
 
                 <p>
-                    Manage delivery staff roster, review shipper applications,
-                    and track driver workload.
+                    Quản lý danh sách nhân viên giao hàng, xem đơn ứng tuyển shipper
+                    và theo dõi khối lượng việc của tài xế.
                 </p>
 
                 <a href="<%= contextPath %>/shopowner/shop/shipper-team">
-                    Manage Shipper Team
+                    Quản lý đội giao hàng
                 </a>
 
             </div>

@@ -14,6 +14,7 @@ import com.mycompany.onlinefruitshopping.model.Voucher;
 import com.mycompany.onlinefruitshopping.model.Coupon;
 import com.mycompany.onlinefruitshopping.model.CouponQuote;
 import com.mycompany.onlinefruitshopping.dao.coupon.CouponCheckoutDAO;
+import com.mycompany.onlinefruitshopping.dao.inventory.InventoryDAO;
 import java.math.BigDecimal;
 
 import java.sql.SQLException;
@@ -38,6 +39,7 @@ public class OrderService {
     private final CartDAO cartDAO;
     private final VoucherDAO voucherDAO;
     private final AddressDAO addressDAO;
+    private final InventoryDAO inventoryDAO = new InventoryDAO();
 
     public OrderService() {
         this.orderDAO = new OrderDAO();
@@ -96,6 +98,19 @@ public class OrderService {
         if (orderId <= 0 || shopId <= 0) {
             throw new IllegalArgumentException("Thông tin đơn hàng hoặc cửa hàng không hợp lệ.");
         }
+
+        Order order = orderDAO.getOrderById(orderId, shopId);
+        if (order == null) {
+            throw new IllegalArgumentException("Không tìm thấy đơn hàng.");
+        }
+        if (!"pending_confirmation".equalsIgnoreCase(order.getStatus())) {
+            throw new IllegalStateException("Đơn hàng này đã được xác nhận trước đó.");
+        }
+
+        if (!inventoryDAO.deductStockForOrder(orderId, changedBy)) {
+            throw new IllegalStateException("Không đủ tồn kho để xác nhận đơn hàng này.");
+        }
+
         orderDAO.updateOrderStatus(orderId, shopId, "preparing", changedBy, "Shop đã duyệt đơn và đang đóng gói.");
     }
 

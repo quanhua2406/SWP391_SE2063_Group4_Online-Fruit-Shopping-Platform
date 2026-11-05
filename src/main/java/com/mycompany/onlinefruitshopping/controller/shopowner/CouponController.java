@@ -48,7 +48,7 @@ public class CouponController extends HttpServlet {
             } else response.sendError(405);
         } catch (IllegalArgumentException e) { response.sendError(400); }
         catch (SQLException e) {
-            log("Không tải được coupon. Kiểm tra database/05_Them_coupon.sql", e);
+            log("Không tải được coupon. Kiểm tra kết nối CSDL", e);
             response.sendError(503);
         }
     }

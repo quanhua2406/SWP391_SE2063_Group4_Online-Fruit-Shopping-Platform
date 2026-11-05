@@ -139,6 +139,8 @@
             <div class="success-message">✅ Đã mở lại đơn — đơn quay lại xử lý.</div>
         <% } else if ("cancelled".equals(msg)) { %>
             <div class="success-message">✅ Đã hủy đơn hàng.</div>
+        <% } else if ("note-required".equals(msg)) { %>
+            <div class="error-message">Vui lòng nhập ghi chú xử lý trước khi xác nhận.</div>
         <% } else if ("terminal".equals(msg)) { %>
             <div class="error-message">
                 Đơn hàng này đã ở trạng thái cuối (đã giao hoặc đã hủy)
@@ -240,8 +242,8 @@
                                        value="<%= esc(row.get("order_id")) %>">
 
                                 <input type="text" name="note" class="filter-input"
-                                       maxlength="40"
-                                       placeholder="Ghi chú cho lịch sử">
+                                       maxlength="40" required
+                                       placeholder="Ghi chú xử lý (bắt buộc)">
 
                                 <button type="submit" class="btn-sm"
                                         name="resolution" value="reopen">

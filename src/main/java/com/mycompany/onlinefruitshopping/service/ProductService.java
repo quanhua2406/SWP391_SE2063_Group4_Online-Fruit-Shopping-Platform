@@ -138,6 +138,9 @@ public class ProductService {
         if (v == null || v.getProductId() <= 0) {
             throw new IllegalArgumentException("Sản phẩm không hợp lệ.");
         }
+        if (initialStock < 0) {
+            throw new IllegalArgumentException("Số lượng tồn kho ban đầu không được âm.");
+        }
         if (v.getSku() == null || v.getSku().trim().isEmpty()) {
             throw new IllegalArgumentException("Mã SKU không được để trống.");
         }
@@ -150,9 +153,12 @@ public class ProductService {
         variantDAO.addVariant(v, initialStock);
     }
 
-    public void updateVariant(ProductVariant v, double newStock) throws SQLException {
+    public void updateVariant(ProductVariant v, double newStock, int userId) throws SQLException {
         if (v == null || v.getVariantId() <= 0) {
             throw new IllegalArgumentException("Biến thể quy cách không hợp lệ.");
+        }
+        if (newStock < 0) {
+            throw new IllegalArgumentException("Số lượng tồn kho không được âm.");
         }
         if (v.getSku() == null || v.getSku().trim().isEmpty()) {
             throw new IllegalArgumentException("Mã SKU không được để trống.");
@@ -163,7 +169,7 @@ public class ProductService {
         if (v.getPrice() <= 0) {
             throw new IllegalArgumentException("Đơn giá quy cách phải lớn hơn 0.");
         }
-        variantDAO.updateVariant(v, newStock);
+        variantDAO.updateVariant(v, newStock, userId);
     }
 
     public void deleteVariant(int variantId, int productId) throws SQLException {
@@ -176,6 +182,9 @@ public class ProductService {
         }
         if (variantDAO.isVariantInOrders(variantId)) {
             throw new IllegalStateException("Không thể xóa quy cách này vì đã phát sinh trong các đơn hàng thực tế.");
+        }
+        if (variantDAO.hasStockHistoryOrPromotion(variantId)) {
+            throw new IllegalStateException("Không thể xóa quy cách này vì đã có lịch sử nhập kho hoặc khuyến mãi.");
         }
         variantDAO.deleteVariant(variantId);
     }

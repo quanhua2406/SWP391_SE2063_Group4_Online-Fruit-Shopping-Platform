@@ -213,6 +213,28 @@ public class ProductVariantDAO {
         return false;
     }
 
+    public boolean hasStockHistoryOrPromotion(int variantId) throws SQLException {
+        String sql = """
+                SELECT CASE WHEN EXISTS (
+                           SELECT 1 FROM inventory_adjustments a
+                           JOIN inventory_batches b ON b.batch_id = a.batch_id
+                           WHERE b.variant_id = ?)
+                         OR EXISTS (
+                           SELECT 1 FROM variant_promotions pr
+                           WHERE pr.variant_id = ?)
+                       THEN 1 ELSE 0 END
+                """;
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, variantId);
+            ps.setInt(2, variantId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) == 1;
+            }
+        }
+    }
+
     public boolean addVariant(ProductVariant v, double initialStock) throws SQLException {
         String insVariant = """
                 INSERT INTO product_variants (product_id, sku, unit, weight_value, packaging_type, price, quality_grade)
@@ -282,17 +304,11 @@ public class ProductVariantDAO {
         }
     }
 
-    public boolean updateVariant(ProductVariant v, double newStock) throws SQLException {
+    public boolean updateVariant(ProductVariant v, double newStock, int userId) throws SQLException {
         String updVariant = """
                 UPDATE product_variants
                 SET sku = ?, unit = ?, weight_value = ?, packaging_type = ?, price = ?, quality_grade = ?
                 WHERE variant_id = ?
-                """;
-
-        String updBatch = """
-                UPDATE inventory_batches
-                SET quantity = ?
-                WHERE variant_id = ? AND status = 'active'
                 """;
 
         String insBatch = """
@@ -320,24 +336,7 @@ public class ProductVariantDAO {
                 psV.executeUpdate();
             }
 
-            // Update or add stock batch
-            int batchUpdated = 0;
-            try (PreparedStatement psB = conn.prepareStatement(updBatch)) {
-                psB.setBigDecimal(1, BigDecimal.valueOf(newStock));
-                psB.setInt(2, v.getVariantId());
-                batchUpdated = psB.executeUpdate();
-            }
-
-            if (batchUpdated == 0 && newStock > 0) {
-                try (PreparedStatement psInsB = conn.prepareStatement(insBatch)) {
-                    psInsB.setInt(1, v.getVariantId());
-                    psInsB.setString(2, "BATCH-" + v.getSku().trim().toUpperCase());
-                    psInsB.setBigDecimal(3, BigDecimal.valueOf(newStock));
-                    psInsB.setDate(4, Date.valueOf(LocalDate.now().plusMonths(3)));
-                    psInsB.setDate(5, Date.valueOf(LocalDate.now()));
-                    psInsB.executeUpdate();
-                }
-            }
+            adjustStock(conn, v, newStock, userId, insBatch);
 
             conn.commit();
             return true;
@@ -356,6 +355,116 @@ public class ProductVariantDAO {
                     conn.close();
                 } catch (SQLException ignored) {}
             }
+        }
+    }
+
+    /**
+     * Brings the variant's total active stock to {@code newStock} by
+     * adjusting only the difference: additions go to the oldest active
+     * batch, reductions are taken oldest-expiry first. Every change is
+     * logged in {@code inventory_adjustments}.
+     */
+    private void adjustStock(Connection conn, ProductVariant v, double newStock,
+                             int userId, String insBatch) throws SQLException {
+
+        String listSql = """
+                SELECT batch_id, quantity
+                FROM inventory_batches WITH (UPDLOCK, ROWLOCK)
+                WHERE variant_id = ? AND status = 'active'
+                ORDER BY CASE WHEN expiry_date IS NULL THEN 1 ELSE 0 END,
+                         expiry_date ASC, batch_id ASC
+                """;
+
+        List<Integer> batchIds = new ArrayList<>();
+        List<BigDecimal> quantities = new ArrayList<>();
+
+        try (PreparedStatement ps = conn.prepareStatement(listSql)) {
+            ps.setInt(1, v.getVariantId());
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    batchIds.add(rs.getInt("batch_id"));
+                    quantities.add(rs.getBigDecimal("quantity"));
+                }
+            }
+        }
+
+        BigDecimal current = BigDecimal.ZERO;
+        for (BigDecimal q : quantities) {
+            current = current.add(q);
+        }
+
+        BigDecimal delta = BigDecimal.valueOf(newStock).subtract(current);
+
+        if (delta.signum() == 0) {
+            return;
+        }
+
+        String reason = "Điều chỉnh khi sửa quy cách";
+
+        if (delta.signum() > 0) {
+            if (batchIds.isEmpty()) {
+                try (PreparedStatement psInsB = conn.prepareStatement(insBatch, Statement.RETURN_GENERATED_KEYS)) {
+                    psInsB.setInt(1, v.getVariantId());
+                    psInsB.setString(2, "BATCH-" + v.getSku().trim().toUpperCase());
+                    psInsB.setBigDecimal(3, delta);
+                    psInsB.setDate(4, Date.valueOf(LocalDate.now().plusMonths(3)));
+                    psInsB.setDate(5, Date.valueOf(LocalDate.now()));
+                    psInsB.executeUpdate();
+
+                    try (ResultSet keys = psInsB.getGeneratedKeys()) {
+                        if (keys.next()) {
+                            logAdjustment(conn, keys.getInt(1), "import", delta, userId, reason);
+                        }
+                    }
+                }
+                return;
+            }
+
+            int firstBatch = batchIds.get(0);
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "UPDATE inventory_batches SET quantity = quantity + ? WHERE batch_id = ?")) {
+                ps.setBigDecimal(1, delta);
+                ps.setInt(2, firstBatch);
+                ps.executeUpdate();
+            }
+            logAdjustment(conn, firstBatch, "import", delta, userId, reason);
+            return;
+        }
+
+        BigDecimal remaining = delta.negate();
+
+        for (int i = 0; i < batchIds.size() && remaining.signum() > 0; i++) {
+            BigDecimal taken = quantities.get(i).min(remaining);
+
+            if (taken.signum() <= 0) {
+                continue;
+            }
+
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "UPDATE inventory_batches SET quantity = quantity - ? WHERE batch_id = ?")) {
+                ps.setBigDecimal(1, taken);
+                ps.setInt(2, batchIds.get(i));
+                ps.executeUpdate();
+            }
+            logAdjustment(conn, batchIds.get(i), "export", taken, userId, reason);
+
+            remaining = remaining.subtract(taken);
+        }
+    }
+
+    private void logAdjustment(Connection conn, int batchId, String type,
+                               BigDecimal quantity, int userId, String reason) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement("""
+                INSERT INTO inventory_adjustments
+                    (batch_id, adjustment_type, quantity, reason, created_by, created_at)
+                VALUES (?, ?, ?, ?, ?, GETDATE())
+                """)) {
+            ps.setInt(1, batchId);
+            ps.setString(2, type);
+            ps.setBigDecimal(3, quantity.abs());
+            ps.setString(4, reason);
+            ps.setInt(5, userId);
+            ps.executeUpdate();
         }
     }
 

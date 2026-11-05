@@ -56,6 +56,21 @@ public class InventoryDAO {
         return null;
     }
 
+    public Integer findShopOwnerId(int shopId) throws SQLException {
+
+        String sql = "SELECT owner_id FROM shops WHERE shop_id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, shopId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt("owner_id") : null;
+            }
+        }
+    }
+
     public boolean hasShop(int ownerId) throws SQLException {
         try (Connection conn = DBConnection.getConnection()) {
             return findShopId(conn, ownerId) != null;
@@ -315,7 +330,7 @@ public class InventoryDAO {
                            ON pr.variant_id = v.variant_id
                     WHERE p.shop_id = ?
                 ) t
-                WHERE t.stock <= ?
+                WHERE t.stock < ?
                 ORDER BY t.stock ASC, t.product_name ASC
                 """;
 

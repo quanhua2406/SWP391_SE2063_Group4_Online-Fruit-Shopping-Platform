@@ -59,6 +59,14 @@ public class ProductVariantService {
         return inventoryDAO.getQualityGrades();
     }
 
+    public boolean productBelongsToOwner(int productId, int ownerId) throws SQLException {
+        return inventoryDAO.productBelongsToOwner(productId, ownerId);
+    }
+
+    public boolean variantBelongsToOwner(int variantId, int ownerId) throws SQLException {
+        return inventoryDAO.variantBelongsToOwner(variantId, ownerId);
+    }
+
     private double toDouble(Object obj) {
         if (obj instanceof Number n) {
             return n.doubleValue();

@@ -164,11 +164,16 @@ public class ProductVariantServlet extends HttpServlet {
             return;
         }
 
+        if (!variantService.productBelongsToOwner(productId, currentUserId(request))) {
+            redirectWithError(request, response, productId, "Bạn không có quyền thêm quy cách cho sản phẩm này.");
+            return;
+        }
+
         double price = 0;
         try {
             price = Double.parseDouble(priceStr);
-            if (price < 0) {
-                redirectWithError(request, response, productId, "Đơn giá không được nhỏ hơn 0!");
+            if (price <= 0) {
+                redirectWithError(request, response, productId, "Đơn giá phải lớn hơn 0!");
                 return;
             }
         } catch (Exception e) {
@@ -240,11 +245,16 @@ public class ProductVariantServlet extends HttpServlet {
             return;
         }
 
+        if (!variantService.variantBelongsToOwner(variantId, currentUserId(request))) {
+            redirectWithError(request, response, productId, "Bạn không có quyền sửa quy cách này.");
+            return;
+        }
+
         double price = 0;
         try {
             price = Double.parseDouble(priceStr);
-            if (price < 0) {
-                redirectWithError(request, response, productId, "Đơn giá không được nhỏ hơn 0!");
+            if (price <= 0) {
+                redirectWithError(request, response, productId, "Đơn giá phải lớn hơn 0!");
                 return;
             }
         } catch (Exception e) {
@@ -288,7 +298,7 @@ public class ProductVariantServlet extends HttpServlet {
         v.setPrice(price);
 
         try {
-            productService.updateVariant(v, stock);
+            productService.updateVariant(v, stock, currentUserId(request));
             if (before != null) {
                 pricingService.recordVariantPriceChange(variantId, before.getPrice(), price, currentUserId(request));
             }
@@ -332,6 +342,11 @@ public class ProductVariantServlet extends HttpServlet {
             if (existing != null) {
                 productId = existing.getProductId();
             }
+        }
+
+        if (!variantService.variantBelongsToOwner(variantId, currentUserId(request))) {
+            redirectWithError(request, response, productId, "Bạn không có quyền xóa quy cách này.");
+            return;
         }
 
         try {
