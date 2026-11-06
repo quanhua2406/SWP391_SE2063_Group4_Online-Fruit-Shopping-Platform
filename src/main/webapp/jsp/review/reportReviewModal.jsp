@@ -135,6 +135,27 @@
   .btn-submit-report:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 </style>
 
+<%
+  String reportToastSuccess = (String) session.getAttribute("toast_success");
+  String reportToastError   = (String) session.getAttribute("toast_error");
+  if (reportToastSuccess != null) session.removeAttribute("toast_success");
+  if (reportToastError != null)   session.removeAttribute("toast_error");
+%>
+<% if (reportToastSuccess != null && !reportToastSuccess.isBlank()) { %>
+<div id="reportToastNotice" style="position:fixed; top:24px; right:24px; z-index:3000; background:#10b981; color:#fff; padding:14px 20px; border-radius:12px; font-weight:600; font-size:0.9rem; box-shadow:0 10px 25px rgba(16,185,129,.35); display:flex; align-items:center; gap:10px; animation:reportPop .25s ease;">
+  <span>✅ <%= reportToastSuccess %></span>
+  <button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;color:#fff;font-size:16px;cursor:pointer;margin-left:8px;">✕</button>
+</div>
+<script>setTimeout(function(){ var el = document.getElementById('reportToastNotice'); if(el) el.remove(); }, 5000);</script>
+<% } %>
+<% if (reportToastError != null && !reportToastError.isBlank()) { %>
+<div id="reportToastError" style="position:fixed; top:24px; right:24px; z-index:3000; background:#ef4444; color:#fff; padding:14px 20px; border-radius:12px; font-weight:600; font-size:0.9rem; box-shadow:0 10px 25px rgba(239,68,68,.35); display:flex; align-items:center; gap:10px; animation:reportPop .25s ease;">
+  <span>⚠️ <%= reportToastError %></span>
+  <button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;color:#fff;font-size:16px;cursor:pointer;margin-left:8px;">✕</button>
+</div>
+<script>setTimeout(function(){ var el = document.getElementById('reportToastError'); if(el) el.remove(); }, 5000);</script>
+<% } %>
+
 <!-- Report Modal -->
 <div id="reportModalOverlay">
   <div id="reportModal" role="dialog" aria-modal="true" aria-labelledby="reportModalTitle">
@@ -218,11 +239,11 @@
    * @param {string} redirectUrl - URL quay lại sau khi submit (tuỳ chọn)
    */
   function openReportModal(reviewId, redirectUrl) {
+    // Reset form & previews trước khi gán giá trị hidden inputs
+    resetReportForm();
     document.getElementById('reportReviewId').value = reviewId;
     document.getElementById('reportRedirect').value = redirectUrl || window.location.href;
     document.getElementById('reportModalOverlay').classList.add('open');
-    // Reset form & previews
-    resetReportForm();
   }
   window.openReportModal = openReportModal;
 

@@ -62,6 +62,14 @@ public class NotificationService {
         return createNotification(adminUserId, title, content, type, referenceType, referenceId);
     }
 
+    public void notifyAllAdmins(String title, String content,
+                                AdminNotificationType type, String referenceType, String referenceId) {
+        List<Integer> adminIds = notificationDAO.getAdminUserIds();
+        for (int adminId : adminIds) {
+            createNotification(adminId, title, content, type, referenceType, referenceId);
+        }
+    }
+
     // =========================================================================
     // 2. TẠO THÔNG BÁO CHO CUSTOMER
     // =========================================================================
@@ -342,7 +350,7 @@ public class NotificationService {
 
         if ("reported_review".equals(type) || "review".equals(refType)) {
             if (!refId.isEmpty()) {
-                return contextPath + "/admin/reviews?status=reported&reviewId=" + refId;
+                return contextPath + "/admin/reviews/detail?reviewId=" + refId;
             }
             return contextPath + "/admin/reviews?status=reported";
         }

@@ -298,6 +298,30 @@ public class NotificationDAO {
     }
 
     // =========================================================================
+    // GET ALL ADMIN USER IDS
+    // =========================================================================
+    public List<Integer> getAdminUserIds() {
+        List<Integer> adminIds = new ArrayList<>();
+        String sql = """
+                SELECT DISTINCT u.user_id
+                FROM users u
+                INNER JOIN user_roles ur ON u.user_id = ur.user_id
+                INNER JOIN roles r ON ur.role_id = r.role_id
+                WHERE LOWER(r.role_name) = 'admin'
+                """;
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                adminIds.add(rs.getInt("user_id"));
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Lỗi khi lấy danh sách Admin userId", e);
+        }
+        return adminIds;
+    }
+
+    // =========================================================================
     // PRIVATE HELPER METHODS
     // =========================================================================
     private void applyFilters(StringBuilder sql, List<Object> params, String groupFilter, Boolean isRead, Boolean isImportant) {
