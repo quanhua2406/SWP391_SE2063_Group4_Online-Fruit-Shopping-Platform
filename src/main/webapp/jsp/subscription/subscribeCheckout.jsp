@@ -34,6 +34,13 @@
                     </div>
 
                     <!-- Error Alert if any -->
+                    <c:if test="${not empty sessionScope.toastError}">
+                        <div
+                            style="background:#fee2e2; border:1px solid #f87171; color:#991b1b; padding:16px 20px; border-radius:12px; margin-bottom:24px; font-weight:600;">
+                            ${sessionScope.toastError}
+                        </div>
+                        <c:remove var="toastError" scope="session" />
+                    </c:if>
                     <c:if test="${not empty errorMessage}">
                         <div
                             style="background:#fee2e2; border:1px solid #f87171; color:#991b1b; padding:16px 20px; border-radius:12px; margin-bottom:24px; font-weight:600;">
@@ -165,22 +172,34 @@
                                     <h3 class="checkout-card-title">
                                         4. Phương thức thanh toán
                                     </h3>
-                                    <label class="address-item-radio selected" style="margin-bottom:8px;">
-                                        <input type="radio" name="paymentMethod" value="COD" checked />
+                                    <c:set var="isVnpaySelected" value="${selectedPaymentMethod == 'VNPAY'}" />
+                                    <label class="address-item-radio payment-option-radio ${not isVnpaySelected ? 'selected' : ''}" style="margin-bottom:10px; cursor:pointer;">
+                                        <input type="radio" name="paymentMethod" value="COD" ${not isVnpaySelected ? 'checked' : ''} onchange="onPaymentMethodChange(this)" />
                                         <div class="address-info">
                                             <strong>Thanh toán khi nhận hàng mỗi kỳ (COD)</strong>
                                             <p>Shipper giao trái cây đến nhà, bạn kiểm tra độ tươi ngon rồi mới thanh
                                                 toán tiền mặt hoặc quét mã QR.</p>
                                         </div>
                                     </label>
-                                    <label class="address-item-radio" style="opacity:0.75;">
-                                        <input type="radio" name="paymentMethod" value="VNPAY" checked />
+                                    <label class="address-item-radio payment-option-radio ${isVnpaySelected ? 'selected' : ''}" style="cursor:pointer;">
+                                        <input type="radio" name="paymentMethod" value="VNPAY" ${isVnpaySelected ? 'checked' : ''} onchange="onPaymentMethodChange(this)" />
                                         <div class="address-info">
-                                            <strong>Ví điện tử / Thẻ ngân hàng (Đang thử nghiệm)</strong>
-                                            <p>Tính năng trừ tiền tự động mỗi kỳ đang được kết nối với cổng thanh toán.
-                                             </p>
+                                            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                                                <strong>Ví điện tử / Thẻ ngân hàng (Cổng thanh toán VNPay)</strong>
+                                                <span style="background:#dbeafe; color:#1d4ed8; font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:999px;">VNPay Sandbox</span>
+                                            </div>
+                                            <p>Thanh toán trực tuyến an toàn qua cổng VNPay (Thẻ ATM nội địa NCB, Ví điện tử, Internet Banking).</p>
                                         </div>
                                     </label>
+
+                                    <!-- Thông tin thẻ test VNPay Sandbox hỗ trợ kiểm thử -->
+                                    <div id="vnpaySandboxHint" style="display:${isVnpaySelected ? 'block' : 'none'}; margin-top:12px; background:#eff6ff; border:1px dashed #60a5fa; border-radius:10px; padding:12px 16px; font-size:0.84rem; color:#1e3a8a; line-height:1.6;">
+                                        <div style="font-weight:700; margin-bottom:4px; color:#1d4ed8;">
+                                            💳 Thông tin thẻ giả lập VNPay Sandbox (Dùng để test thanh toán):
+                                        </div>
+                                        <div>• <strong>Ngân hàng:</strong> NCB &nbsp;|&nbsp; <strong>Số thẻ:</strong> <code>9704198526191432198</code></div>
+                                        <div>• <strong>Tên chủ thẻ:</strong> <code>NGUYEN VAN A</code> &nbsp;|&nbsp; <strong>Ngày phát hành:</strong> <code>07/15</code> &nbsp;|&nbsp; <strong>Mã OTP:</strong> <code>123456</code></div>
+                                    </div>
                                 </div>
 
                                 <!-- Điều khoản cam kết -->
@@ -198,9 +217,16 @@
                                 </div>
 
                                 <!-- Submit Button -->
-                                <button type="submit" class="btn-subscribe-cta"
+                                <button type="submit" id="submitSubscribeBtn" class="btn-subscribe-cta"
                                     style="width:100%; justify-content:center; padding:16px; font-size:1.1rem; border-radius:12px;">
-                                    Xác Nhận Đăng Ký Gói (${plan.billingCycleLabel})
+                                    <c:choose>
+                                        <c:when test="${isVnpaySelected}">
+                                            Thanh Toán VNPay &amp; Đăng Ký Gói (${plan.billingCycleLabel})
+                                        </c:when>
+                                        <c:otherwise>
+                                            Xác Nhận Đăng Ký Gói (${plan.billingCycleLabel})
+                                        </c:otherwise>
+                                    </c:choose>
                                 </button>
                             </form>
                         </div>
@@ -290,6 +316,44 @@
                 <!-- Footer (Reusable Component) -->
                 <jsp:include page="/includes/footer.jsp" />
 
+                <script>
+                    function onPaymentMethodChange(radioEl) {
+                        var labels = document.querySelectorAll('.payment-option-radio');
+                        for (var i = 0; i < labels.length; i++) {
+                            labels[i].classList.remove('selected');
+                        }
+                        var parentLabel = radioEl.closest('.payment-option-radio');
+                        if (parentLabel) {
+                            parentLabel.classList.add('selected');
+                        }
+
+                        var hintBox = document.getElementById('vnpaySandboxHint');
+                        var submitBtn = document.getElementById('submitSubscribeBtn');
+                        var cycleLabel = '<c:out value="${plan.billingCycleLabel}"/>';
+
+                        if (radioEl.value === 'VNPAY') {
+                            if (hintBox) hintBox.style.display = 'block';
+                            if (submitBtn) submitBtn.textContent = 'Thanh Toán VNPay & Đăng Ký Gói (' + cycleLabel + ')';
+                        } else {
+                            if (hintBox) hintBox.style.display = 'none';
+                            if (submitBtn) submitBtn.textContent = 'Xác Nhận Đăng Ký Gói (' + cycleLabel + ')';
+                        }
+                    }
+
+                    document.addEventListener('DOMContentLoaded', function () {
+                        var addrRadios = document.querySelectorAll('input[name="selectedAddressId"]');
+                        for (var i = 0; i < addrRadios.length; i++) {
+                            addrRadios[i].addEventListener('change', function () {
+                                for (var j = 0; j < addrRadios.length; j++) {
+                                    var lbl = addrRadios[j].closest('.address-item-radio');
+                                    if (lbl) lbl.classList.remove('selected');
+                                }
+                                var activeLbl = this.closest('.address-item-radio');
+                                if (activeLbl) activeLbl.classList.add('selected');
+                            });
+                        }
+                    });
+                </script>
             </body>
 
             </html>

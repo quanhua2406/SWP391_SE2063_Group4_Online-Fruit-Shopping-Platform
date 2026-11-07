@@ -636,6 +636,23 @@ public class SubscriptionPlanDAO {
     }
 
     /**
+     * Cập nhật ghi chú (notes) của subscription (dùng khi cập nhật trạng thái thanh toán VNPay).
+     */
+    public boolean updateSubscriptionNotes(int subscriptionId, int userId, String notes) {
+        String sql = "UPDATE subscriptions SET notes = ? WHERE subscription_id = ? AND user_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, notes);
+            ps.setInt(2, subscriptionId);
+            ps.setInt(3, userId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            LOG.log(Level.SEVERE, "updateSubscriptionNotes error", e);
+            return false;
+        }
+    }
+
+    /**
      * Kích hoạt lại gói và cập nhật ngày giao hàng mới (nếu ngày cũ trong quá khứ).
      */
     public boolean resumeSubscriptionWithNewDate(int subscriptionId, int userId, java.util.Date newDate) {

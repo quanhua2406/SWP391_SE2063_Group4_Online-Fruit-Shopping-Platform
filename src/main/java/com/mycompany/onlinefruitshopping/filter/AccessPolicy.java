@@ -85,7 +85,7 @@ final class AccessPolicy {
         if (path.startsWith("/delivery/") || path.startsWith("/jsp/delivery/")) return Set.of("DELIVERYSTAFF");
         return switch (path) {
             case "/profile" -> ALL_ROLES;
-            case "/addresses", "/my-subscriptions", "/subscription/subscribe",
+            case "/addresses", "/my-subscriptions", "/subscription/subscribe", "/subscription/vnpay-return",
                     "/ReviewServlet", "/write-review", "/EditReviewServlet", "/edit-review" -> Set.of("CUSTOMER");
             case "/DeleteReviewServlet", "/delete-review" ->
                     "POST".equals(method) ? Set.of("CUSTOMER") : Set.of();

@@ -670,4 +670,60 @@ public class SubscriptionService {
 
         return ServiceResult.ok("Đã hủy gói đăng ký thành công. Bạn sẽ không nhận thêm đơn giao định kỳ từ kỳ tiếp theo.", null);
     }
+
+    /**
+     * Xác nhận thanh toán VNPay thành công cho gói đăng ký định kỳ:
+     * Cập nhật ghi chú thanh toán với mã giao dịch và ngân hàng.
+     */
+    public ServiceResult<Subscription> confirmVNPaySubscriptionPayment(int subscriptionId, int userId, String txnRef, String bankCode) {
+        Subscription sub = planDAO.getCustomerSubscriptionById(subscriptionId, userId);
+        if (sub == null) {
+            return ServiceResult.fail("Không tìm thấy gói đăng ký tương ứng với giao dịch VNPay.");
+        }
+
+        String currentNotes = sub.getNotes() != null ? sub.getNotes() : "";
+        String paymentBadge = "💳 Thanh toán: Đã thanh toán kỳ đầu qua VNPay (Mã GD: "
+                + (txnRef != null ? txnRef : "N/A")
+                + (bankCode != null && !bankCode.isBlank() ? " - Ngân hàng: " + bankCode : "")
+                + ")";
+
+        String updatedNotes;
+        if (currentNotes.contains("💳 Thanh toán:")) {
+            updatedNotes = currentNotes.replaceAll("💳 Thanh toán:.*", paymentBadge);
+        } else if (!currentNotes.isBlank()) {
+            updatedNotes = currentNotes + "\n" + paymentBadge;
+        } else {
+            updatedNotes = paymentBadge;
+        }
+
+        planDAO.updateSubscriptionNotes(subscriptionId, userId, updatedNotes);
+        sub.setNotes(updatedNotes);
+
+        String planName = sub.getPlanName() != null ? sub.getPlanName() : ("#" + subscriptionId);
+        return ServiceResult.ok("Thanh toán VNPay thành công! Gói đăng ký '" + planName + "' đã được kích hoạt.", sub);
+    }
+
+    /**
+     * Tự động hủy gói đăng ký khi khách hàng hủy thanh toán hoặc giao dịch VNPay thất bại
+     * để khách hàng có thể đăng ký lại mà không bị báo trùng gói active.
+     */
+    public void cancelUnpaidVNPaySubscription(int subscriptionId, int userId, String responseCode) {
+        Subscription sub = planDAO.getCustomerSubscriptionById(subscriptionId, userId);
+        if (sub == null) return;
+
+        planDAO.updateSubscriptionStatus(subscriptionId, userId, Subscription.STATUS_CANCELLED);
+
+        String currentNotes = sub.getNotes() != null ? sub.getNotes() : "";
+        String failBadge = "💳 Thanh toán: Giao dịch VNPay đã hủy/thất bại (Mã phản hồi: "
+                + (responseCode != null ? responseCode : "24") + ")";
+        String updatedNotes;
+        if (currentNotes.contains("💳 Thanh toán:")) {
+            updatedNotes = currentNotes.replaceAll("💳 Thanh toán:.*", failBadge);
+        } else if (!currentNotes.isBlank()) {
+            updatedNotes = currentNotes + "\n" + failBadge;
+        } else {
+            updatedNotes = failBadge;
+        }
+        planDAO.updateSubscriptionNotes(subscriptionId, userId, updatedNotes);
+    }
 }
