@@ -190,6 +190,9 @@ public class NotificationDAO {
                     String type = rs.getString("type");
                     int cnt = rs.getInt("cnt");
 
+                    if (type == null) {
+                        type = "general";
+                    }
                     // Lưu cả theo type cụ thể lẫn theo group để mọi giao diện (Customer, ShopOwner, Admin, Delivery) đọc được
                     counts.put(type, counts.getOrDefault(type, 0) + cnt);
 
@@ -199,7 +202,7 @@ public class NotificationDAO {
                         case "delivery_status", "delivery_status_update", "order_delivered", "delivery_assigned" -> "delivery";
                         case "payment_success", "payment_failed", "payment_received", "refund_update", "refund_request" -> "payment";
                         case "promotion" -> "promotion";
-                        case "subscription", "subscription_reminder" -> "subscription";
+                        case "subscription", "subscription_reminder", "new_subscription" -> "subscription";
                         // Shop Owner groups
                         case "low_stock", "critical_low_stock" -> "low_stock";
                         // Admin & Shared
@@ -298,8 +301,99 @@ public class NotificationDAO {
     }
 
     // =========================================================================
-    // GET ALL ADMIN USER IDS
+    // GET ALL ADMIN USER IDS & SHOP OWNER ID
     // =========================================================================
+    public int getShopOwnerIdByShopId(int shopId) {
+        if (shopId <= 0) return -1;
+        String sql = "SELECT owner_id FROM shops WHERE shop_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, shopId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("owner_id");
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Lỗi khi lấy owner_id cho shopId: " + shopId, e);
+        }
+        return -1;
+    }
+
+    /**
+     * Đồng bộ bổ sung thông báo cho các đơn hàng và gói định kỳ đã tạo trước đó
+     * nhưng chưa có bản ghi thông báo cho Shop Owner.
+     */
+    public void syncMissingShopOwnerNotifications(int ownerUserId) {
+        if (ownerUserId <= 0) return;
+
+        String syncOrdersSql = """
+                INSERT INTO notifications (user_id, title, content, type, reference_type, reference_id, channel, is_read, is_important, created_at)
+                SELECT s.owner_id,
+                       CONCAT(N'Đơn hàng mới #', o.order_id),
+                       CONCAT(N'Cửa hàng nhận được đơn hàng #', o.order_id, N' từ khách hàng ', u.full_name, N' (Tổng tiền: ', FORMAT(o.total_amount, 'N0'), N'đ).'),
+                       'new_order',
+                       'order',
+                       CAST(o.order_id AS NVARCHAR(50)),
+                       'in_app',
+                       0,
+                       1,
+                       ISNULL(o.created_at, GETDATE())
+                FROM orders o
+                INNER JOIN shops s ON o.shop_id = s.shop_id
+                INNER JOIN users u ON o.user_id = u.user_id
+                WHERE s.owner_id = ?
+                  AND NOT EXISTS (
+                      SELECT 1 FROM notifications n
+                      WHERE n.user_id = s.owner_id
+                        AND (
+                            (n.reference_type = 'order' AND n.reference_id = CAST(o.order_id AS NVARCHAR(50)))
+                            OR n.title LIKE CONCAT('%#', o.order_id, '%')
+                            OR n.content LIKE CONCAT('%#', o.order_id, '%')
+                        )
+                  )
+                """;
+
+        String syncSubscriptionsSql = """
+                INSERT INTO notifications (user_id, title, content, type, reference_type, reference_id, channel, is_read, is_important, created_at)
+                SELECT s.owner_id,
+                       CONCAT(N'Khách hàng đăng ký gói định kỳ #', sub.subscription_id),
+                       CONCAT(N'Khách hàng ', u.full_name, N' đã đăng ký gói combo ''', sp.name, N''' (Mã đăng ký: #', sub.subscription_id, N').'),
+                       'new_subscription',
+                       'subscription',
+                       CAST(sub.subscription_id AS NVARCHAR(50)),
+                       'in_app',
+                       0,
+                       1,
+                       ISNULL(sub.created_at, GETDATE())
+                FROM subscriptions sub
+                INNER JOIN subscription_plans sp ON sub.plan_id = sp.plan_id
+                INNER JOIN shops s ON sp.shop_id = s.shop_id
+                INNER JOIN users u ON sub.user_id = u.user_id
+                WHERE s.owner_id = ?
+                  AND NOT EXISTS (
+                      SELECT 1 FROM notifications n
+                      WHERE n.user_id = s.owner_id
+                        AND n.reference_type = 'subscription'
+                        AND n.reference_id = CAST(sub.subscription_id AS NVARCHAR(50))
+                  )
+                """;
+
+        try (Connection conn = DBConnection.getConnection()) {
+            try (PreparedStatement ps = conn.prepareStatement(syncOrdersSql)) {
+                ps.setInt(1, ownerUserId);
+                ps.executeUpdate();
+            } catch (SQLException ignored) {}
+
+            try (PreparedStatement ps = conn.prepareStatement(syncSubscriptionsSql)) {
+                ps.setInt(1, ownerUserId);
+                ps.executeUpdate();
+            } catch (SQLException ignored) {}
+        } catch (SQLException e) {
+            LOGGER.log(Level.WARNING, "Không thể đồng bộ thông báo thiếu cho Shop Owner: " + ownerUserId, e);
+        }
+    }
+
     public List<Integer> getAdminUserIds() {
         List<Integer> adminIds = new ArrayList<>();
         String sql = """
@@ -332,7 +426,7 @@ public class NotificationDAO {
                 case "delivery" -> sql.append(" AND (reference_type = 'delivery' OR type IN ('delivery_status', 'delivery_status_update', 'order_delivered', 'delivery_assigned') OR type LIKE '%delivery%' OR type LIKE '%deliver%') ");
                 case "payment" -> sql.append(" AND (reference_type = 'payment' OR type IN ('payment_success', 'payment_failed', 'payment_received', 'refund_update', 'refund_request') OR type LIKE '%payment%' OR type LIKE '%refund%') ");
                 case "promotion" -> sql.append(" AND (type = 'promotion' OR type LIKE '%promotion%' OR type LIKE '%coupon%') ");
-                case "subscription" -> sql.append(" AND (reference_type = 'subscription' OR type IN ('subscription', 'subscription_reminder') OR type LIKE '%subscription%') ");
+                case "subscription" -> sql.append(" AND (reference_type = 'subscription' OR type IN ('subscription', 'subscription_reminder', 'new_subscription') OR type LIKE '%subscription%') ");
                 // Shop Owner filters
                 case "new_order" -> sql.append(" AND type = 'new_order' ");
                 case "low_stock" -> sql.append(" AND (type = 'low_stock' OR type = 'critical_low_stock') ");

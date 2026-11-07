@@ -4,7 +4,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Verify Email - FreshFruit</title>
+    <title>Xác minh email - FreshFruit</title>
 
     <link rel="stylesheet"
           href="${pageContext.request.contextPath}/css/style.css">
@@ -22,12 +22,12 @@
         </div>
 
         <!-- Title -->
-        <h2>Verify Your Email</h2>
+        <h2>Xác minh email của bạn</h2>
 
         <!-- Description -->
         <p class="auth-description">
-            Enter the 6-digit verification code sent to your email
-            to complete your registration.
+            Nhập mã xác minh gồm 6 chữ số đã gửi đến email của bạn
+            để hoàn tất đăng ký.
         </p>
 
         <!-- Error -->
@@ -46,7 +46,7 @@
             <div class="auth-form-group">
 
                 <label for="otp">
-                    Verification Code
+                    Mã xác minh
                 </label>
 
                 <input
@@ -58,14 +58,14 @@
                     pattern="[0-9]{6}"
                     inputmode="numeric"
                     autocomplete="one-time-code"
-                    placeholder="Enter 6-digit OTP"
+                    placeholder="Nhập mã OTP gồm 6 chữ số"
                     required>
 
             </div>
 
             <button type="submit"
                     class="auth-button">
-                Verify Email
+                Xác minh email
             </button>
 
         </form>
@@ -74,7 +74,7 @@
         <div class="auth-links">
 
             <a href="${pageContext.request.contextPath}/register">
-                Back to Register
+                Quay lại đăng ký
             </a>
 
         </div>

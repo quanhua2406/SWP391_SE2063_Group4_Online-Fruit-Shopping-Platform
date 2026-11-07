@@ -6,6 +6,7 @@ package com.mycompany.onlinefruitshopping.model;
  */
 public enum ShopOwnerNotificationType {
     NEW_ORDER("new_order", "Đơn hàng mới", "🛒", "Xem đơn hàng", "new_order", true),
+    NEW_SUBSCRIPTION("new_subscription", "Đăng ký gói định kỳ", "📅", "Xem gói định kỳ", "subscription", true),
     PAYMENT_RECEIVED("payment_received", "Đã nhận thanh toán", "💰", "Chi tiết đơn hàng", "payment", false),
     LOW_STOCK("low_stock", "Cảnh báo tồn kho", "⚠️", "Cập nhật tồn kho", "low_stock", true),
     REFUND_REQUEST("refund_request", "Yêu cầu hoàn tiền", "🔄", "Xử lý hoàn tiền", "refund", true),

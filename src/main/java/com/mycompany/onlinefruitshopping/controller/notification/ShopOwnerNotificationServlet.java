@@ -229,8 +229,8 @@ public class ShopOwnerNotificationServlet extends HttpServlet {
     private User getAuthenticatedStoreOwner(HttpSession session) {
         if (session == null) return null;
         Object userObj = session.getAttribute("user");
-        if (userObj instanceof User u) {
-            return u;
+        if (userObj instanceof User) {
+            return (User) userObj;
         }
         return null;
     }

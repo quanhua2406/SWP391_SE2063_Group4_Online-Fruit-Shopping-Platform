@@ -121,7 +121,7 @@
 
     <meta charset="UTF-8">
 
-    <title>Manage Addresses - FreshFruit</title>
+    <title>Quản lý địa chỉ - FreshFruit</title>
 
     <style>
 
@@ -358,7 +358,7 @@
 
 <div class="container">
 
-    <h1>Manage Addresses</h1>
+    <h1>Quản lý địa chỉ</h1>
 
 
     <!-- SUCCESS MESSAGE -->
@@ -366,25 +366,25 @@
     <% if ("added".equals(success)) { %>
 
         <div class="message success">
-            Address added successfully.
+            Thêm địa chỉ thành công.
         </div>
 
     <% } else if ("updated".equals(success)) { %>
 
         <div class="message success">
-            Address updated successfully.
+            Cập nhật địa chỉ thành công.
         </div>
 
     <% } else if ("deleted".equals(success)) { %>
 
         <div class="message success">
-            Address deleted successfully.
+            Xóa địa chỉ thành công.
         </div>
 
     <% } else if ("default".equals(success)) { %>
 
         <div class="message success">
-            Default address updated successfully.
+            Cập nhật địa chỉ mặc định thành công.
         </div>
 
     <% } %>
@@ -409,8 +409,8 @@
 
         <h2>
             <%= editAddress == null
-                    ? "Add New Address"
-                    : "Edit Address" %>
+                    ? "Thêm địa chỉ mới"
+                    : "Sửa địa chỉ" %>
         </h2>
 
 
@@ -440,7 +440,7 @@
             <div class="form-group">
 
                 <label for="recipientName">
-                    Recipient Name
+                    Tên người nhận
                 </label>
 
                 <input type="text"
@@ -448,7 +448,7 @@
                        name="recipientName"
                        maxlength="100"
                        value="<%= formRecipientName %>"
-                       placeholder="Enter recipient name">
+                       placeholder="Nhập tên người nhận">
 
                 <div id="recipientNameError"
                      class="field-error">
@@ -462,7 +462,7 @@
             <div class="form-group">
 
                 <label for="phone">
-                    Phone Number
+                    Số điện thoại
                 </label>
 
                 <input type="text"
@@ -470,7 +470,7 @@
                        name="phone"
                        maxlength="11"
                        value="<%= formPhone %>"
-                       placeholder="Example: 0912345678">
+                       placeholder="Ví dụ: 0912345678">
 
                 <div id="phoneError"
                      class="field-error">
@@ -484,7 +484,7 @@
             <div class="form-group">
 
                 <label for="addressLine">
-                    Address
+                    Địa chỉ
                 </label>
 
                 <input type="text"
@@ -492,7 +492,7 @@
                        name="addressLine"
                        maxlength="255"
                        value="<%= formAddressLine %>"
-                       placeholder="House number, street...">
+                       placeholder="Số nhà, tên đường...">
 
                 <div id="addressLineError"
                      class="field-error">
@@ -508,7 +508,7 @@
                 <div class="form-group">
 
                     <label for="ward">
-                        Ward
+                        Phường / Xã
                     </label>
 
                     <input type="text"
@@ -516,7 +516,7 @@
                            name="ward"
                            maxlength="100"
                            value="<%= formWard %>"
-                           placeholder="Ward">
+                           placeholder="Phường / Xã">
 
                     <div id="wardError"
                          class="field-error">
@@ -528,7 +528,7 @@
                 <div class="form-group">
 
                     <label for="district">
-                        District
+                        Quận / Huyện
                     </label>
 
                     <input type="text"
@@ -536,7 +536,7 @@
                            name="district"
                            maxlength="100"
                            value="<%= formDistrict %>"
-                           placeholder="District">
+                           placeholder="Quận / Huyện">
 
                     <div id="districtError"
                          class="field-error">
@@ -552,7 +552,7 @@
             <div class="form-group">
 
                 <label for="province">
-                    Province / City
+                    Tỉnh / Thành phố
                 </label>
 
                 <input type="text"
@@ -560,7 +560,7 @@
                        name="province"
                        maxlength="100"
                        value="<%= formProvince %>"
-                       placeholder="Province / City">
+                       placeholder="Tỉnh / Thành phố">
 
                 <div id="provinceError"
                      class="field-error">
@@ -580,7 +580,7 @@
                     <%= formDefault ? "checked" : "" %>>
 
                 <label for="isDefault">
-                    Set as default address
+                    Đặt làm địa chỉ mặc định
                 </label>
 
             </div>
@@ -592,8 +592,8 @@
                     class="save-button">
 
                 <%= editAddress == null
-                        ? "Add Address"
-                        : "Update Address" %>
+                        ? "Thêm địa chỉ"
+                        : "Cập nhật địa chỉ" %>
 
             </button>
 
@@ -603,7 +603,7 @@
                 <a class="cancel-button"
                    href="<%= request.getContextPath() %>/addresses">
 
-                    Cancel
+                    Hủy
 
                 </a>
 
@@ -621,14 +621,14 @@
     <div class="card">
 
         <h2>
-            My Addresses
+            Địa chỉ của tôi
         </h2>
 
 
         <% if (addresses == null || addresses.isEmpty()) { %>
 
             <div class="empty">
-                You do not have any saved addresses yet.
+                Bạn chưa có địa chỉ nào được lưu.
             </div>
 
         <% } else { %>
@@ -645,7 +645,7 @@
                     <% if (address.isDefault()) { %>
 
                         <span class="default-badge">
-                            Default Address
+                            Địa chỉ mặc định
                         </span>
 
                     <% } %>
@@ -659,7 +659,7 @@
 
                         <br>
 
-                        Phone:
+                        Điện thoại:
                         <%= address.getPhone() %>
 
                         <br>
@@ -681,7 +681,7 @@
                            style="background:#0d6efd;"
                            href="<%= request.getContextPath() %>/addresses?editId=<%= address.getAddressId() %>">
 
-                            Edit
+                            Sửa
 
                         </a>
 
@@ -704,7 +704,7 @@
                                     class="delete-btn"
                                     onclick="return confirmDelete();">
 
-                                Delete
+                                Xóa
 
                             </button>
 
@@ -730,7 +730,7 @@
                                 <button type="submit"
                                         class="default-btn">
 
-                                    Set Default
+                                    Đặt mặc định
 
                                 </button>
 
@@ -755,7 +755,7 @@
     <a class="back-btn"
        href="<%= request.getContextPath() %>/profile">
 
-        ← Back to Profile
+        ← Quay lại hồ sơ
 
     </a>
 
@@ -854,7 +854,7 @@
             showError(
                 recipientName,
                 recipientNameError,
-                "Recipient name cannot be empty."
+                "Tên người nhận không được để trống."
             );
 
             return false;
@@ -867,7 +867,7 @@
             showError(
                 recipientName,
                 recipientNameError,
-                "Recipient name must be between 2 and 100 characters."
+                "Tên người nhận phải có từ 2 đến 100 ký tự."
             );
 
             return false;
@@ -883,7 +883,7 @@
             showError(
                 recipientName,
                 recipientNameError,
-                "Recipient name contains invalid characters."
+                "Tên người nhận chứa ký tự không hợp lệ."
             );
 
             return false;
@@ -914,7 +914,7 @@
             showError(
                 phone,
                 phoneError,
-                "Phone number cannot be empty."
+                "Số điện thoại không được để trống."
             );
 
             return false;
@@ -930,7 +930,7 @@
             showError(
                 phone,
                 phoneError,
-                "Phone number must contain 10 or 11 digits and start with 0."
+                "Số điện thoại phải có 10 hoặc 11 chữ số và bắt đầu bằng số 0."
             );
 
             return false;
@@ -961,7 +961,7 @@
             showError(
                 addressLine,
                 addressLineError,
-                "Address cannot be empty."
+                "Địa chỉ không được để trống."
             );
 
             return false;
@@ -974,7 +974,7 @@
             showError(
                 addressLine,
                 addressLineError,
-                "Address must be between 5 and 255 characters."
+                "Địa chỉ phải có từ 5 đến 255 ký tự."
             );
 
             return false;
@@ -1005,7 +1005,7 @@
             showError(
                 ward,
                 wardError,
-                "Ward cannot be empty."
+                "Phường / Xã không được để trống."
             );
 
             return false;
@@ -1017,7 +1017,7 @@
             showError(
                 ward,
                 wardError,
-                "Ward cannot exceed 100 characters."
+                "Phường / Xã không được vượt quá 100 ký tự."
             );
 
             return false;
@@ -1048,7 +1048,7 @@
             showError(
                 district,
                 districtError,
-                "District cannot be empty."
+                "Quận / Huyện không được để trống."
             );
 
             return false;
@@ -1060,7 +1060,7 @@
             showError(
                 district,
                 districtError,
-                "District cannot exceed 100 characters."
+                "Quận / Huyện không được vượt quá 100 ký tự."
             );
 
             return false;
@@ -1091,7 +1091,7 @@
             showError(
                 province,
                 provinceError,
-                "Province / City cannot be empty."
+                "Tỉnh / Thành phố không được để trống."
             );
 
             return false;
@@ -1103,7 +1103,7 @@
             showError(
                 province,
                 provinceError,
-                "Province / City cannot exceed 100 characters."
+                "Tỉnh / Thành phố không được vượt quá 100 ký tự."
             );
 
             return false;
@@ -1214,7 +1214,7 @@
     function confirmDelete() {
 
         return confirm(
-            "Are you sure you want to delete this address?"
+            "Bạn có chắc chắn muốn xóa địa chỉ này không?"
         );
     }
 

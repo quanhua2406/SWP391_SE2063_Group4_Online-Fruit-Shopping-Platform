@@ -2,9 +2,12 @@ package com.mycompany.onlinefruitshopping.service;
 
 import com.mycompany.onlinefruitshopping.dao.OrderDAO;
 import com.mycompany.onlinefruitshopping.dao.PaymentDAO;
+import com.mycompany.onlinefruitshopping.model.AdminNotificationType;
+import com.mycompany.onlinefruitshopping.model.NotificationType;
 import com.mycompany.onlinefruitshopping.model.Order;
 import com.mycompany.onlinefruitshopping.model.Payment;
 import com.mycompany.onlinefruitshopping.model.Refund;
+import com.mycompany.onlinefruitshopping.model.ShopOwnerNotificationType;
 import com.mycompany.onlinefruitshopping.utils.VNPayConfig;
 
 import java.sql.SQLException;
@@ -18,15 +21,18 @@ public class PaymentService {
 
     private final PaymentDAO paymentDAO;
     private final OrderDAO orderDAO;
+    private final NotificationService notificationService;
 
     public PaymentService() {
         this.paymentDAO = new PaymentDAO();
         this.orderDAO = new OrderDAO();
+        this.notificationService = new NotificationService();
     }
 
     public PaymentService(PaymentDAO paymentDAO, OrderDAO orderDAO) {
         this.paymentDAO = paymentDAO;
         this.orderDAO = orderDAO;
+        this.notificationService = new NotificationService();
     }
 
     /**
@@ -83,6 +89,44 @@ public class PaymentService {
                 // Đơn đã ở trạng thái kết thúc, giữ nguyên trạng thái đơn
             }
         }
+
+        try {
+            Order order = orderDAO.getOrderById(orderId, 0);
+            if (order != null) {
+                if (isSuccess) {
+                    notificationService.notifyCustomer(
+                            order.getUserId(),
+                            "Thanh toán đơn hàng #" + orderId + " thành công",
+                            "Giao dịch thanh toán trực tuyến cho đơn hàng #" + orderId + " với số tiền "
+                                    + String.format("%,.0fđ", order.getTotalAmount()) + " đã hoàn tất.",
+                            NotificationType.PAYMENT_SUCCESS,
+                            "order",
+                            String.valueOf(orderId)
+                    );
+                    if (order.getShopId() > 0) {
+                        notificationService.notifyShopOwnerByShopId(
+                                order.getShopId(),
+                                "Đã nhận thanh toán cho đơn #" + orderId,
+                                "Khách hàng đã thanh toán trực tuyến thành công số tiền "
+                                        + String.format("%,.0fđ", order.getTotalAmount()) + " cho đơn hàng #" + orderId + ".",
+                                ShopOwnerNotificationType.PAYMENT_RECEIVED,
+                                "order",
+                                String.valueOf(orderId)
+                        );
+                    }
+                } else {
+                    notificationService.notifyCustomer(
+                            order.getUserId(),
+                            "Thanh toán đơn hàng #" + orderId + " không thành công",
+                            "Giao dịch thanh toán trực tuyến cho đơn hàng #" + orderId + " đã bị hủy hoặc không thành công.",
+                            NotificationType.PAYMENT_FAILED,
+                            "order",
+                            String.valueOf(orderId)
+                    );
+                }
+            }
+        } catch (Exception ignored) {}
+
         return isSuccess;
     }
 
@@ -128,7 +172,40 @@ public class PaymentService {
             throw new IllegalStateException("Đơn hàng chưa được thanh toán thành công, không thể gửi yêu cầu hoàn tiền.");
         }
 
-        return paymentDAO.createRefundRequest(payment.getPaymentId(), payment.getAmount(), reason.trim());
+        int refundId = paymentDAO.createRefundRequest(payment.getPaymentId(), payment.getAmount(), reason.trim());
+        if (refundId > 0) {
+            try {
+                notificationService.notifyCustomer(
+                        userId,
+                        "Đã gửi yêu cầu hoàn tiền đơn #" + orderId,
+                        "Yêu cầu hoàn tiền số tiền " + String.format("%,.0fđ", payment.getAmount())
+                                + " cho đơn hàng #" + orderId + " đang được chờ xử lý.",
+                        NotificationType.REFUND_UPDATE,
+                        "order",
+                        String.valueOf(orderId)
+                );
+                if (payment.getShopId() > 0) {
+                    notificationService.notifyShopOwnerByShopId(
+                            payment.getShopId(),
+                            "Yêu cầu hoàn tiền mới cho đơn #" + orderId,
+                            "Khách hàng vừa gửi yêu cầu hoàn tiền " + String.format("%,.0fđ", payment.getAmount())
+                                    + " cho đơn hàng #" + orderId + ". Lý do: " + reason.trim(),
+                            ShopOwnerNotificationType.REFUND_REQUEST,
+                            "order",
+                            String.valueOf(orderId)
+                    );
+                }
+                notificationService.notifyAllAdmins(
+                        "Yêu cầu hoàn tiền mới cho đơn #" + orderId,
+                        "Khách hàng gửi yêu cầu hoàn tiền " + String.format("%,.0fđ", payment.getAmount())
+                                + " cho đơn #" + orderId + ". Lý do: " + reason.trim(),
+                        AdminNotificationType.REFUND_REQUEST,
+                        "refund",
+                        String.valueOf(orderId)
+                );
+            } catch (Exception ignored) {}
+        }
+        return refundId;
     }
 
     /**
@@ -151,7 +228,11 @@ public class PaymentService {
      */
     public boolean approveRefund(int refundId, int processedByUserId) throws SQLException {
         if (refundId <= 0) throw new IllegalArgumentException("Mã yêu cầu hoàn tiền không hợp lệ.");
-        return paymentDAO.updateRefundStatus(refundId, "approved", processedByUserId);
+        boolean ok = paymentDAO.updateRefundStatus(refundId, "approved", processedByUserId);
+        if (ok) {
+            notifyCustomerRefundResult(refundId, true);
+        }
+        return ok;
     }
 
     /**
@@ -159,6 +240,34 @@ public class PaymentService {
      */
     public boolean rejectRefund(int refundId, int processedByUserId) throws SQLException {
         if (refundId <= 0) throw new IllegalArgumentException("Mã yêu cầu hoàn tiền không hợp lệ.");
-        return paymentDAO.updateRefundStatus(refundId, "rejected", processedByUserId);
+        boolean ok = paymentDAO.updateRefundStatus(refundId, "rejected", processedByUserId);
+        if (ok) {
+            notifyCustomerRefundResult(refundId, false);
+        }
+        return ok;
+    }
+
+    private void notifyCustomerRefundResult(int refundId, boolean approved) {
+        try {
+            for (Refund r : paymentDAO.getAllRefunds("all")) {
+                if (r.getRefundId() == refundId) {
+                    String title = approved
+                            ? "Hoàn tiền thành công cho đơn #" + r.getOrderId()
+                            : "Yêu cầu hoàn tiền đơn #" + r.getOrderId() + " bị từ chối";
+                    String content = approved
+                            ? "Số tiền " + String.format("%,.0fđ", r.getAmount()) + " đã được duyệt hoàn lại cho đơn #" + r.getOrderId() + "."
+                            : "Yêu cầu hoàn tiền số tiền " + String.format("%,.0fđ", r.getAmount()) + " cho đơn #" + r.getOrderId() + " đã bị từ chối.";
+                    notificationService.notifyCustomer(
+                            r.getUserId(),
+                            title,
+                            content,
+                            NotificationType.REFUND_UPDATE,
+                            "order",
+                            String.valueOf(r.getOrderId())
+                    );
+                    break;
+                }
+            }
+        } catch (Exception ignored) {}
     }
 }

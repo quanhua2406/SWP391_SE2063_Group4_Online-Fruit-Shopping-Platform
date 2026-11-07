@@ -4,6 +4,18 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 
 <%!
+    private String statusLabel(String status) {
+        if ("active".equalsIgnoreCase(status)) {
+            return "Hoạt động";
+        }
+
+        if ("locked".equalsIgnoreCase(status)) {
+            return "Đã khóa";
+        }
+
+        return status;
+    }
+
     private String escapeHtml(String value) {
         if (value == null) {
             return "";
@@ -48,7 +60,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>User Management - FreshFruit</title>
+    <title>Quản lý người dùng - FreshFruit</title>
 
     <style>
         * {
@@ -500,17 +512,17 @@
     <div class="logo">🍊 FreshFruit</div>
 
     <nav class="nav-actions">
-        <a href="<%=contextPath%>/admin/dashboard">Dashboard</a>
-        <a href="<%=contextPath%>/admin/shops">Shops</a>
-        <a href="<%=contextPath%>/logout">Logout</a>
+        <a href="<%=contextPath%>/admin/dashboard">Bảng điều khiển</a>
+        <a href="<%=contextPath%>/admin/shops">Cửa hàng</a>
+        <a href="<%=contextPath%>/logout">Đăng xuất</a>
     </nav>
 </header>
 
 <main class="container">
 
     <section class="page-header">
-        <h1>User Management</h1>
-        <p>Search, filter, edit, and manage user account status.</p>
+        <h1>Quản lý người dùng</h1>
+        <p>Tìm kiếm, lọc, sửa và quản lý trạng thái tài khoản người dùng.</p>
     </section>
 
     <% if (!error.isEmpty()) { %>
@@ -529,8 +541,8 @@
     <section class="filter-card">
 
         <div class="filter-heading">
-            <h2>Search Users</h2>
-            <p>Search by email and filter accounts by role.</p>
+            <h2>Tìm kiếm người dùng</h2>
+            <p>Tìm theo email và lọc tài khoản theo vai trò.</p>
         </div>
 
         <form class="filter-form"
@@ -542,56 +554,56 @@
             <input type="text"
                    name="keyword"
                    value="<%=escapeHtml(keyword)%>"
-                   placeholder="Search by email..."
-                   aria-label="Search by email">
+                   placeholder="Tìm theo email..."
+                   aria-label="Tìm theo email">
 
-            <select name="role" aria-label="Filter by role">
+            <select name="role" aria-label="Lọc theo vai trò">
 
                 <option value="ALL"
                     <%= "ALL".equalsIgnoreCase(selectedRole)
                             || selectedRole.isEmpty() ? "selected" : "" %>>
-                    All Roles
+                    Tất cả vai trò
                 </option>
 
                 <option value="CUSTOMER"
                     <%= "CUSTOMER".equalsIgnoreCase(selectedRole)
                             ? "selected" : "" %>>
-                    Customer
+                    Khách hàng
                 </option>
 
                 <option value="SHOPOWNER"
                     <%= "SHOPOWNER".equalsIgnoreCase(selectedRole)
                             ? "selected" : "" %>>
-                    Shop Owner
+                    Chủ cửa hàng
                 </option>
 
                 <option value="DELIVERYSTAFF"
                     <%= "DELIVERYSTAFF".equalsIgnoreCase(selectedRole)
                             ? "selected" : "" %>>
-                    Delivery Staff
+                    Nhân viên giao hàng
                 </option>
 
                 <option value="ADMIN"
                     <%= "ADMIN".equalsIgnoreCase(selectedRole)
                             ? "selected" : "" %>>
-                    Admin
+                    Quản trị viên
                 </option>
 
                 <option value="GUEST"
                     <%= "GUEST".equalsIgnoreCase(selectedRole)
                             ? "selected" : "" %>>
-                    Guest
+                    Khách vãng lai
                 </option>
 
             </select>
 
             <button type="submit" class="btn btn-search">
-                Search
+                Tìm kiếm
             </button>
 
             <a class="btn btn-reset"
                href="<%=contextPath%>/admin/user-management">
-                Reset
+                Đặt lại
             </a>
 
         </form>
@@ -603,8 +615,8 @@
         <div class="table-heading">
 
             <div>
-                <h2>User List</h2>
-                <p>View details, edit accounts, or block and unblock users.</p>
+                <h2>Danh sách người dùng</h2>
+                <p>Xem chi tiết, sửa tài khoản, hoặc khóa và mở khóa người dùng.</p>
             </div>
 
         </div>
@@ -615,12 +627,12 @@
 
                 <thead>
                     <tr>
-                        <th>User</th>
+                        <th>Người dùng</th>
                         <th>Email</th>
-                        <th>Phone</th>
-                        <th>Role</th>
-                        <th>Status</th>
-                        <th>Actions</th>
+                        <th>Số điện thoại</th>
+                        <th>Vai trò</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
                     </tr>
                 </thead>
 
@@ -657,7 +669,7 @@
                             String displayName =
                                     user.getFullName() == null
                                     || user.getFullName().isBlank()
-                                        ? "User"
+                                        ? "Người dùng"
                                         : user.getFullName();
 
                             String avatar = displayName
@@ -712,8 +724,8 @@
                         <td>
                             <span class="status-badge <%=statusClass%>">
                                 <%=status.isBlank()
-                                        ? "Unknown"
-                                        : escapeHtml(status)%>
+                                        ? "Không rõ"
+                                        : escapeHtml(statusLabel(status))%>
                             </span>
                         </td>
 
@@ -724,13 +736,13 @@
                                 <!-- VIEW -->
                                 <a class="btn btn-detail"
                                    href="<%=contextPath%>/admin/user-management?action=detail&amp;userId=<%=user.getUserId()%>">
-                                    View
+                                    Xem
                                 </a>
 
                                 <!-- EDIT -->
                                 <a class="btn btn-edit"
                                    href="<%=contextPath%>/admin/user-management?action=edit&amp;userId=<%=user.getUserId()%>">
-                                    Edit
+                                    Sửa
                                 </a>
 
                                 <% if (!isAdmin && isActive) { %>
@@ -739,7 +751,7 @@
                                     <form class="action-form"
                                           method="post"
                                           action="<%=contextPath%>/admin/user-management"
-                                          onsubmit="return confirm('Are you sure you want to block this account?');">
+                                          onsubmit="return confirm('Bạn có chắc muốn khóa tài khoản này không?');">
 
                                         <input type="hidden"
                                                name="action"
@@ -751,7 +763,7 @@
 
                                         <button type="submit"
                                                 class="btn btn-block">
-                                            Block
+                                            Khóa
                                         </button>
 
                                     </form>
@@ -762,7 +774,7 @@
                                     <form class="action-form"
                                           method="post"
                                           action="<%=contextPath%>/admin/user-management"
-                                          onsubmit="return confirm('Are you sure you want to unblock this account?');">
+                                          onsubmit="return confirm('Bạn có chắc muốn mở khóa tài khoản này không?');">
 
                                         <input type="hidden"
                                                name="action"
@@ -774,7 +786,7 @@
 
                                         <button type="submit"
                                                 class="btn btn-unblock">
-                                            Unblock
+                                            Mở khóa
                                         </button>
 
                                     </form>
@@ -782,7 +794,7 @@
                                 <% } else if (isAdmin) { %>
 
                                     <span class="status-badge status-other">
-                                        Protected
+                                        Được bảo vệ
                                     </span>
 
                                 <% } %>
@@ -801,10 +813,10 @@
                     <tr>
                         <td colspan="6" class="empty-message">
 
-                            <strong>No users found</strong>
+                            <strong>Không tìm thấy người dùng</strong>
 
                             <span>
-                                Try another email keyword or role filter.
+                                Thử từ khóa email hoặc bộ lọc vai trò khác.
                             </span>
 
                         </td>

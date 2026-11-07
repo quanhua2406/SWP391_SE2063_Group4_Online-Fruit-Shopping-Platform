@@ -23,18 +23,18 @@
 
 <div class="panel">
 
-    <h2>📥 Restock Products</h2>
+    <h2>📥 Nhập hàng cho sản phẩm</h2>
 
     <p class="panel-hint">
-        Record a new batch arrival and add it to a variant's
-        stock.
+        Ghi nhận một lô hàng mới về và cộng vào tồn kho của một biến thể
+        sản phẩm.
     </p>
 
     <% if (variants == null || variants.isEmpty()) { %>
 
         <p class="panel-hint">
-            Your shop has no product variants yet, so there is
-            nothing to restock.
+            Cửa hàng của bạn chưa có biến thể sản phẩm nào nên chưa có gì để
+            nhập.
         </p>
 
     <% } else { %>
@@ -47,9 +47,9 @@
             <div class="form-grid">
 
                 <div class="form-field">
-                    <label for="variantId">Product Variant *</label>
+                    <label for="variantId">Biến thể sản phẩm *</label>
                     <select id="variantId" name="variantId" required>
-                        <option value="">-- Select variant --</option>
+                        <option value="">-- Chọn biến thể --</option>
                         <% for (Map<String, Object> v : variants) { %>
                             <option value="<%= esc(v.get("variant_id")) %>">
                                 <%= esc(v.get("product_name")) %>
@@ -60,36 +60,36 @@
                 </div>
 
                 <div class="form-field">
-                    <label for="batchCode">Batch Code *</label>
+                    <label for="batchCode">Mã lô *</label>
                     <input type="text" id="batchCode" name="batchCode"
                            maxlength="50" required
-                           placeholder="e.g. BATCH-001">
+                           placeholder="VD: BATCH-001">
                 </div>
 
                 <div class="form-field">
-                    <label for="quantity">Quantity *</label>
+                    <label for="quantity">Số lượng *</label>
                     <input type="number" id="quantity" name="quantity"
                            min="0.01" step="0.01" required>
                 </div>
 
                 <div class="form-field">
-                    <label for="expiryDate">Expiry Date *</label>
+                    <label for="expiryDate">Hạn sử dụng *</label>
                     <input type="date" id="expiryDate" name="expiryDate"
                            required>
                 </div>
 
                 <div class="form-field">
-                    <label for="reason">Note</label>
+                    <label for="reason">Ghi chú</label>
                     <input type="text" id="reason" name="reason"
                            maxlength="255"
-                           placeholder="Optional note">
+                           placeholder="Ghi chú (không bắt buộc)">
                 </div>
 
             </div>
 
             <div class="form-actions">
                 <button type="submit" class="btn-primary">
-                    Add Stock
+                    Thêm vào kho
                 </button>
             </div>
 

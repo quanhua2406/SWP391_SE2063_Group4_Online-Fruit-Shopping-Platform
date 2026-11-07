@@ -22,7 +22,7 @@
 
     <meta charset="UTF-8">
 
-    <title>My Profile - FreshFruit</title>
+    <title>Hồ sơ của tôi - FreshFruit</title>
 
     <style>
 
@@ -115,13 +115,13 @@
     <div class="profile-card">
 
         <h2 class="profile-title">
-            My Profile
+            Hồ sơ của tôi
         </h2>
 
         <div class="profile-row">
 
             <div class="profile-label">
-                Full Name
+                Họ và tên
             </div>
 
             <div class="profile-value">
@@ -145,13 +145,13 @@
         <div class="profile-row">
 
             <div class="profile-label">
-                Phone
+                Số điện thoại
             </div>
 
             <div class="profile-value">
                 <%= user.getPhone() != null
                         ? user.getPhone()
-                        : "Not provided" %>
+                        : "Chưa cung cấp" %>
             </div>
 
         </div>
@@ -159,7 +159,7 @@
         <div class="profile-row">
 
             <div class="profile-label">
-                Role
+                Vai trò
             </div>
 
             <div class="profile-value">
@@ -172,19 +172,19 @@
 
             <a class="button"
                href="<%= request.getContextPath() %>/home">
-                Home
+                Trang chủ
             </a>
 
             <a class="button edit-button"
                href="<%= request.getContextPath() %>/profile?action=edit">
-                Edit Profile
+                Chỉnh sửa hồ sơ
             </a>
 
             <% if (isCustomer) { %>
 
                 <a class="button address-button"
                    href="<%= request.getContextPath() %>/addresses">
-                    Manage Addresses
+                    Quản lý địa chỉ
                 </a>
 
             <% } %>

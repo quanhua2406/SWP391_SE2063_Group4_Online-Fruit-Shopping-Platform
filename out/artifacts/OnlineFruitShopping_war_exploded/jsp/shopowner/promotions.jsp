@@ -80,8 +80,8 @@
     }
 
     /**
-     * Where the promotion stands in time: "Running" when today is
-     * inside the range, "Scheduled" when it starts later, "Ended"
+     * Where the promotion stands in time: "Đang chạy" when today is
+     * inside the range, "Chưa bắt đầu" when it starts later, "Đã kết thúc"
      * when it is over and "" when the variant has no promotion.
      */
     private String periodStatus(Object start, Object end) {
@@ -94,22 +94,22 @@
         LocalDate today = LocalDate.now();
 
         if (today.isBefore(from)) {
-            return "Scheduled";
+            return "Chưa bắt đầu";
         }
 
         if (today.isAfter(to)) {
-            return "Ended";
+            return "Đã kết thúc";
         }
 
-        return "Running";
+        return "Đang chạy";
     }
 
     private String periodPill(String status) {
-        if ("Running".equals(status)) {
+        if ("Đang chạy".equals(status)) {
             return "pill-ok";
         }
 
-        if ("Scheduled".equals(status)) {
+        if ("Chưa bắt đầu".equals(status)) {
             return "pill-warn";
         }
 
@@ -123,26 +123,26 @@
         String value = status == null ? "" : status.toString();
 
         if ("approved".equals(value)) {
-            return "Approved";
+            return "Đã duyệt";
         }
 
         if ("rejected".equals(value)) {
-            return "Rejected";
+            return "Từ chối";
         }
 
         if ("pending".equals(value)) {
-            return "Pending";
+            return "Chờ duyệt";
         }
 
         return "";
     }
 
     private String approvalPill(String label) {
-        if ("Approved".equals(label)) {
+        if ("Đã duyệt".equals(label)) {
             return "pill-ok";
         }
 
-        if ("Pending".equals(label)) {
+        if ("Chờ duyệt".equals(label)) {
             return "pill-warn";
         }
 
@@ -192,28 +192,28 @@
     String messageText = null;
 
     if ("promo-set".equals(message)) {
-        messageText = "Promotion submitted. It becomes effective once an "
-                + "administrator approves it.";
+        messageText = "Đã gửi khuyến mãi. Khuyến mãi sẽ có hiệu lực sau khi "
+                + "quản trị viên duyệt.";
     } else if ("promo-removed".equals(message)) {
-        messageText = "Promotion removed. The variant is back to its normal price.";
+        messageText = "Đã xóa khuyến mãi. Biến thể trở lại giá bán thường.";
     } else if ("promo-invalid".equals(message)) {
         level = "error-message";
-        messageText = "Please enter a valid promotional price and a valid date range.";
+        messageText = "Vui lòng nhập giá khuyến mãi và khoảng thời gian hợp lệ.";
     } else if ("promo-expired".equals(message)) {
         level = "error-message";
-        messageText = "The promotion end date cannot be in the past.";
+        messageText = "Ngày kết thúc khuyến mãi không được nằm trong quá khứ.";
     } else if ("promo-not-discount".equals(message)) {
         level = "error-message";
-        messageText = "The promotional price must be lower than the normal price.";
+        messageText = "Giá khuyến mãi phải thấp hơn giá bán thường.";
     } else if ("invalid".equals(message)) {
         level = "error-message";
-        messageText = "Please choose a product variant.";
+        messageText = "Vui lòng chọn một biến thể sản phẩm.";
     } else if ("forbidden".equals(message)) {
         level = "error-message";
-        messageText = "You are not allowed to change this promotion.";
+        messageText = "Bạn không có quyền thay đổi khuyến mãi này.";
     } else if ("failed".equals(message)) {
         level = "error-message";
-        messageText = "The promotion could not be saved.";
+        messageText = "Không thể lưu khuyến mãi.";
     }
 %>
 
@@ -223,7 +223,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Promotion Management - FreshFruit</title>
+    <title>Quản lý khuyến mãi - FreshFruit</title>
 
     <link rel="stylesheet"
           href="<%= contextPath %>/css/style.css">
@@ -240,16 +240,16 @@
     <nav class="nav-actions">
 
         <a href="<%= contextPath %>/store-owner/dashboard">
-            📊 Dashboard
+            📊 Bảng điều khiển
         </a>
 
         <a href="<%= contextPath %>/store-owner/inventory">
-            📦 Inventory
+            📦 Kho hàng
         </a>
 
         <a href="<%= contextPath %>/logout"
            class="logout">
-            Logout
+            Đăng xuất
         </a>
 
     </nav>
@@ -260,16 +260,16 @@
 
     <p class="breadcrumb">
         <a href="<%= contextPath %>/store-owner/dashboard">
-            ← Shop Owner Dashboard
+            ← Bảng điều khiển chủ cửa hàng
         </a>
     </p>
 
-    <h1>Promotion Management</h1>
+    <h1>Quản lý khuyến mãi</h1>
 
     <p class="dashboard-welcome">
-        Request a limited-time promotional price for a product variant.
-        Every promotion is reviewed by an administrator before it
-        applies, and it only runs inside its date range.
+        Yêu cầu giá khuyến mãi có thời hạn cho một biến thể sản phẩm.
+        Mọi khuyến mãi đều được quản trị viên xem xét trước khi áp dụng,
+        và chỉ chạy trong khoảng thời gian đã đặt.
     </p>
 
     <% if (messageText != null) { %>
@@ -283,22 +283,22 @@
     <div class="summary-grid summary-grid-4">
 
         <div class="summary-card">
-            <span class="summary-label">Product Variants</span>
+            <span class="summary-label">Biến thể sản phẩm</span>
             <span class="summary-value"><%= esc(qty(variantCount)) %></span>
         </div>
 
         <div class="summary-card summary-warn">
-            <span class="summary-label">Pending Approval</span>
+            <span class="summary-label">Chờ duyệt</span>
             <span class="summary-value"><%= esc(qty(pendingCount)) %></span>
         </div>
 
         <div class="summary-card summary-accent">
-            <span class="summary-label">Approved</span>
+            <span class="summary-label">Đã duyệt</span>
             <span class="summary-value"><%= esc(qty(approvedCount)) %></span>
         </div>
 
         <div class="summary-card">
-            <span class="summary-label">Rejected</span>
+            <span class="summary-label">Từ chối</span>
             <span class="summary-value"><%= esc(qty(rejectedCount)) %></span>
         </div>
 
@@ -310,10 +310,10 @@
 
         <input type="text" class="filter-input" name="q"
                value="<%= esc(q) %>"
-               placeholder="Search product or SKU...">
+               placeholder="Tìm sản phẩm hoặc SKU...">
 
         <select class="filter-select" name="weight">
-            <option value="">All weights</option>
+            <option value="">Tất cả khối lượng</option>
             <% if (weightOptions != null) {
                    for (String w : weightOptions) { %>
                 <option value="<%= esc(w) %>"
@@ -325,16 +325,16 @@
         </select>
 
         <select class="filter-select" name="approval">
-            <option value="">All approval states</option>
-            <option value="pending" <%= "pending".equals(approval) ? "selected" : "" %>>Pending</option>
-            <option value="approved" <%= "approved".equals(approval) ? "selected" : "" %>>Approved</option>
-            <option value="rejected" <%= "rejected".equals(approval) ? "selected" : "" %>>Rejected</option>
+            <option value="">Tất cả trạng thái duyệt</option>
+            <option value="pending" <%= "pending".equals(approval) ? "selected" : "" %>>Chờ duyệt</option>
+            <option value="approved" <%= "approved".equals(approval) ? "selected" : "" %>>Đã duyệt</option>
+            <option value="rejected" <%= "rejected".equals(approval) ? "selected" : "" %>>Từ chối</option>
         </select>
 
-        <button type="submit" class="btn-sm">Filter</button>
+        <button type="submit" class="btn-sm">Lọc</button>
 
         <a class="filter-clear"
-           href="<%= contextPath %>/store-owner/promotions">Clear</a>
+           href="<%= contextPath %>/store-owner/promotions">Xóa lọc</a>
 
     </form>
 
@@ -342,14 +342,13 @@
 
     <div class="panel" id="promo">
 
-        <h2>🏷️ Set Promotional Price</h2>
+        <h2>🏷️ Đặt giá khuyến mãi</h2>
 
         <p class="panel-hint">
-            Saving a promotion submits it for approval; editing an
-            approved promotion sends it back for review. Normal prices
-            are managed in
+            Lưu khuyến mãi sẽ gửi yêu cầu duyệt; chỉnh sửa khuyến mãi đã duyệt
+            sẽ đưa nó trở lại để xem xét. Giá bán thường được quản lý tại
             <a href="<%= contextPath %>/store-owner/pricing">
-                Pricing Management
+                Quản lý giá bán
             </a>.
         </p>
 
@@ -359,14 +358,14 @@
 
                 <thead>
                     <tr>
-                        <th>Product</th>
+                        <th>Sản phẩm</th>
                         <th>SKU</th>
-                        <th>Weight</th>
-                        <th>Normal Price</th>
-                        <th>Promo Price</th>
-                        <th>Promo Period</th>
-                        <th>Approval</th>
-                        <th>Promotion</th>
+                        <th>Khối lượng</th>
+                        <th>Giá bán thường</th>
+                        <th>Giá khuyến mãi</th>
+                        <th>Thời gian khuyến mãi</th>
+                        <th>Duyệt</th>
+                        <th>Khuyến mãi</th>
                     </tr>
                 </thead>
 
@@ -375,7 +374,7 @@
 
                     <tr>
                         <td colspan="8">
-                            No product variants match your search.
+                            Không có biến thể sản phẩm nào khớp với tìm kiếm.
                         </td>
                     </tr>
 
@@ -425,7 +424,7 @@
                                     <%= approvalText %>
                                 </span>
 
-                                <% if ("Rejected".equals(approvalText)
+                                <% if ("Từ chối".equals(approvalText)
                                         && v.get("promo_note") != null) { %>
                                     <span class="row-note">
                                         <%= esc(v.get("promo_note")) %>
@@ -460,7 +459,7 @@
                                     <input class="qty-input" type="number"
                                            name="promoPrice" min="1000" step="1000"
                                            value="<%= promoPrice == null ? "" : qty(promoPrice) %>"
-                                           placeholder="Promo đ"
+                                           placeholder="Giá KM đ"
                                            required>
 
                                     <input class="qty-input date-input" type="date"
@@ -474,7 +473,7 @@
                                            required>
 
                                     <button type="submit" class="btn-sm">
-                                        Submit
+                                        Gửi
                                     </button>
 
                                 </form>
@@ -504,7 +503,7 @@
 
                                         <button type="submit"
                                                 class="btn-sm btn-sm-danger">
-                                            Remove
+                                            Xóa
                                         </button>
 
                                     </form>

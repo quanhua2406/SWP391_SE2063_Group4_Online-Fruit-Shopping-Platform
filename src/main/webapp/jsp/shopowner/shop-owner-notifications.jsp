@@ -89,6 +89,15 @@
                     </c:if>
                 </a>
 
+                <!-- Gói định kỳ -->
+                <a href="${pageContext.request.contextPath}/store-owner/notifications?tab=subscription&pageSize=${pageSize}&filterRead=${filterRead}" 
+                   class="filter-link ${currentTab == 'subscription' ? 'active' : ''}">
+                    <span class="filter-label">📅 Gói định kỳ</span>
+                    <c:if test="${not empty unreadPerGroup['subscription'] and unreadPerGroup['subscription'] > 0}">
+                        <span class="filter-badge has-unread">${unreadPerGroup['subscription']}</span>
+                    </c:if>
+                </a>
+
                 <!-- Thanh toán -->
                 <a href="${pageContext.request.contextPath}/store-owner/notifications?tab=payment&pageSize=${pageSize}&filterRead=${filterRead}" 
                    class="filter-link ${currentTab == 'payment' ? 'active' : ''}">
@@ -150,6 +159,7 @@
                         <c:choose>
                             <c:when test="${filterImportant == 'important'}">⚡ Thông Báo Quan Trọng Cần Xử Lý</c:when>
                             <c:when test="${currentTab == 'new_order'}">🛒 Đơn Hàng Mới Chờ Xử Lý</c:when>
+                            <c:when test="${currentTab == 'subscription'}">📅 Đăng Ký &amp; Cập Nhật Gói Định Kỳ</c:when>
                             <c:when test="${currentTab == 'payment'}">💰 Thông Báo Thanh Toán</c:when>
                             <c:when test="${currentTab == 'low_stock'}">⚠️ Cảnh Báo Tồn Kho Thấp</c:when>
                             <c:when test="${currentTab == 'refund'}">🔄 Yêu Cầu Hoàn Tiền</c:when>

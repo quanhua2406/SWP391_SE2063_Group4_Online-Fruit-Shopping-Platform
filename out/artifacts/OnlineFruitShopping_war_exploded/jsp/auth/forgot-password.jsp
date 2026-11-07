@@ -14,7 +14,7 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0">
 
-    <title>Forgot Password - FreshFruit</title>
+    <title>Quên mật khẩu - FreshFruit</title>
 
     <link rel="stylesheet"
           href="<%= contextPath %>/css/style.css">
@@ -44,13 +44,13 @@
              ================================================= -->
 
         <h2>
-            Forgot Password
+            Quên mật khẩu
         </h2>
 
 
         <p class="auth-description">
-            Enter your email address and we will send you
-            a 6-digit OTP.
+            Nhập địa chỉ email, chúng tôi sẽ gửi cho bạn
+            mã OTP gồm 6 chữ số.
         </p>
 
 
@@ -124,7 +124,7 @@
                     value="<%= request.getAttribute("email") != null
                             ? request.getAttribute("email")
                             : "" %>"
-                    placeholder="Enter your email"
+                    placeholder="Nhập email"
                     autocomplete="email"
                 >
 
@@ -139,7 +139,7 @@
                 type="submit"
                 class="auth-button">
 
-                Send OTP
+                Gửi mã OTP
 
             </button>
 
@@ -156,11 +156,11 @@
 
             <p>
 
-                Remember your password?
+                Nhớ mật khẩu rồi?
 
                 <a href="<%= contextPath %>/login">
 
-                    Login
+                    Đăng nhập
 
                 </a>
 
@@ -169,11 +169,11 @@
 
             <p>
 
-                Don't have an account?
+                Chưa có tài khoản?
 
                 <a href="<%= contextPath %>/register">
 
-                    Create Account
+                    Tạo tài khoản
 
                 </a>
 
@@ -220,7 +220,7 @@ function validateForgotPassword() {
     if (email === "") {
 
         error.innerHTML =
-            "Please enter your email address.";
+            "Vui lòng nhập địa chỉ email.";
 
         error.style.display = "block";
 
@@ -242,7 +242,7 @@ function validateForgotPassword() {
     if (!emailPattern.test(email)) {
 
         error.innerHTML =
-            "Please enter a valid email address.";
+            "Vui lòng nhập địa chỉ email hợp lệ.";
 
         error.style.display = "block";
 

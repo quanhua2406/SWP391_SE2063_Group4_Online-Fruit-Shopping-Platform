@@ -30,10 +30,10 @@
 
 <div class="panel">
 
-    <h2>🕓 Inventory History</h2>
+    <h2>🕓 Lịch sử kho</h2>
 
     <p class="panel-hint">
-        Every stock change recorded for your shop.
+        Mọi thay đổi tồn kho được ghi nhận cho cửa hàng của bạn.
     </p>
 
     <form method="get"
@@ -42,19 +42,19 @@
 
         <input type="text" class="filter-input" name="hq"
                value="<%= esc(hq) %>"
-               placeholder="Search product, SKU, batch or reason...">
+               placeholder="Tìm sản phẩm, SKU, lô hàng hoặc lý do...">
 
         <select class="filter-select" name="htype">
-            <option value="">All types</option>
-            <option value="import" <%= "import".equals(htype) ? "selected" : "" %>>Restock</option>
-            <option value="export" <%= "export".equals(htype) ? "selected" : "" %>>Stock Out</option>
-            <option value="discard" <%= "discard".equals(htype) ? "selected" : "" %>>Discard</option>
+            <option value="">Tất cả loại</option>
+            <option value="import" <%= "import".equals(htype) ? "selected" : "" %>>Nhập hàng</option>
+            <option value="export" <%= "export".equals(htype) ? "selected" : "" %>>Xuất kho</option>
+            <option value="discard" <%= "discard".equals(htype) ? "selected" : "" %>>Hủy hàng</option>
         </select>
 
-        <button type="submit" class="btn-sm">Filter</button>
+        <button type="submit" class="btn-sm">Lọc</button>
 
         <a class="filter-clear"
-           href="<%= contextPath %>/store-owner/inventory/history">Clear</a>
+           href="<%= contextPath %>/store-owner/inventory/history">Xóa lọc</a>
 
     </form>
 
@@ -62,13 +62,13 @@
 
         <thead>
             <tr>
-                <th>Date</th>
-                <th>Product</th>
+                <th>Ngày</th>
+                <th>Sản phẩm</th>
                 <th>SKU</th>
-                <th>Batch</th>
-                <th>Type</th>
-                <th>Quantity</th>
-                <th>Reason</th>
+                <th>Lô hàng</th>
+                <th>Loại</th>
+                <th>Số lượng</th>
+                <th>Lý do</th>
             </tr>
         </thead>
 
@@ -77,7 +77,7 @@
 
             <tr>
                 <td colspan="7">
-                    No inventory changes yet.
+                    Chưa có thay đổi tồn kho nào.
                 </td>
             </tr>
 

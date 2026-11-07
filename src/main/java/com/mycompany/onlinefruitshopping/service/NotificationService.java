@@ -208,6 +208,17 @@ public class NotificationService {
         return createShopOwnerNotification(shopOwnerUserId, title, content, type, referenceType, referenceId);
     }
 
+    public int notifyShopOwnerByShopId(int shopId, String title, String content,
+                                       ShopOwnerNotificationType type,
+                                       String referenceType, String referenceId) {
+        int ownerUserId = notificationDAO.getShopOwnerIdByShopId(shopId);
+        if (ownerUserId <= 0) {
+            LOGGER.warning("Không tìm thấy owner_id cho shopId=" + shopId);
+            return -1;
+        }
+        return createShopOwnerNotification(ownerUserId, title, content, type, referenceType, referenceId);
+    }
+
     public List<Notification> getShopOwnerNotifications(int userId, String groupFilter, Boolean isRead, Boolean isImportant, int page, int pageSize) {
         if (userId <= 0) return List.of();
         if (page < 1) page = 1;
@@ -223,6 +234,7 @@ public class NotificationService {
 
     public int countShopOwnerNotifications(int userId, String groupFilter, Boolean isRead, Boolean isImportant) {
         if (userId <= 0) return 0;
+        notificationDAO.syncMissingShopOwnerNotifications(userId);
         return notificationDAO.countNotifications(userId, groupFilter, isRead, isImportant);
     }
 
@@ -239,12 +251,28 @@ public class NotificationService {
             return contextPath + "/store-owner/products";
         }
 
-        if ("order".equals(refType) || "new_order".equals(type) || "refund_request".equals(type) ||
+        if ("subscription".equals(refType) || "new_subscription".equals(type) || type.contains("subscription")) {
+            return contextPath + "/store-owner/subscription/plans";
+        }
+
+        if ("refund_request".equals(type) || "refund".equals(refType)) {
+            return contextPath + "/store-owner/refunds";
+        }
+
+        if ("order".equals(refType) || "new_order".equals(type) ||
             "order_cancelled".equals(type) || "payment_received".equals(type)) {
+            if (refId.isEmpty()) {
+                refId = extractOrderId(n.getTitle(), n.getContent());
+            }
             if (!refId.isEmpty()) {
                 return contextPath + "/store-owner/orders?action=detail&orderId=" + refId;
             }
             return contextPath + "/store-owner/orders";
+        }
+
+        String fallbackOrderId = extractOrderId(n.getTitle(), n.getContent());
+        if (!fallbackOrderId.isEmpty()) {
+            return contextPath + "/store-owner/orders?action=detail&orderId=" + fallbackOrderId;
         }
 
         return contextPath + "/store-owner/notifications";

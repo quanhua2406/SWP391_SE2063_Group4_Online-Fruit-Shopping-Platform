@@ -13,6 +13,8 @@ import com.mycompany.onlinefruitshopping.model.User;
 import com.mycompany.onlinefruitshopping.model.Voucher;
 import com.mycompany.onlinefruitshopping.model.Coupon;
 import com.mycompany.onlinefruitshopping.model.CouponQuote;
+import com.mycompany.onlinefruitshopping.model.NotificationType;
+import com.mycompany.onlinefruitshopping.model.ShopOwnerNotificationType;
 import com.mycompany.onlinefruitshopping.dao.coupon.CouponCheckoutDAO;
 import java.math.BigDecimal;
 
@@ -38,6 +40,7 @@ public class OrderService {
     private final CartDAO cartDAO;
     private final VoucherDAO voucherDAO;
     private final AddressDAO addressDAO;
+    private final NotificationService notificationService;
 
     public OrderService() {
         this.orderDAO = new OrderDAO();
@@ -45,6 +48,7 @@ public class OrderService {
         this.cartDAO = new CartDAO();
         this.voucherDAO = new VoucherDAO();
         this.addressDAO = new AddressDAO();
+        this.notificationService = new NotificationService();
     }
 
     public OrderService(OrderDAO orderDAO, ProductDAO productDAO, CartDAO cartDAO, VoucherDAO voucherDAO, AddressDAO addressDAO) {
@@ -53,6 +57,7 @@ public class OrderService {
         this.cartDAO = cartDAO;
         this.voucherDAO = voucherDAO;
         this.addressDAO = addressDAO;
+        this.notificationService = new NotificationService();
     }
 
     // =========================================================
@@ -96,14 +101,44 @@ public class OrderService {
         if (orderId <= 0 || shopId <= 0) {
             throw new IllegalArgumentException("Thông tin đơn hàng hoặc cửa hàng không hợp lệ.");
         }
-        orderDAO.updateOrderStatus(orderId, shopId, "preparing", changedBy, "Shop đã duyệt đơn và đang đóng gói.");
+        boolean updated = orderDAO.updateOrderStatus(orderId, shopId, "preparing", changedBy, "Shop đã duyệt đơn và đang đóng gói.");
+        if (updated) {
+            try {
+                Order order = orderDAO.getOrderById(orderId, shopId);
+                if (order != null && order.getUserId() > 0) {
+                    notificationService.notifyCustomer(
+                            order.getUserId(),
+                            "Đơn hàng #" + orderId + " đã được xác nhận",
+                            "Đơn hàng #" + orderId + " đã được cửa hàng xác nhận và đang được chuẩn bị.",
+                            NotificationType.ORDER_CONFIRMATION,
+                            "order",
+                            String.valueOf(orderId)
+                    );
+                }
+            } catch (Exception ignored) {}
+        }
     }
 
     public void markOrderReady(int orderId, int shopId, int changedBy) throws SQLException {
         if (orderId <= 0 || shopId <= 0) {
             throw new IllegalArgumentException("Thông tin đơn hàng hoặc cửa hàng không hợp lệ.");
         }
-        orderDAO.updateOrderStatus(orderId, shopId, "shipping", changedBy, "Shop đã đóng gói xong, bàn giao vận chuyển.");
+        boolean updated = orderDAO.updateOrderStatus(orderId, shopId, "shipping", changedBy, "Shop đã đóng gói xong, bàn giao vận chuyển.");
+        if (updated) {
+            try {
+                Order order = orderDAO.getOrderById(orderId, shopId);
+                if (order != null && order.getUserId() > 0) {
+                    notificationService.notifyCustomer(
+                            order.getUserId(),
+                            "Đơn hàng #" + orderId + " đang được giao",
+                            "Cửa hàng đã đóng gói xong đơn hàng #" + orderId + " và bàn giao cho đơn vị vận chuyển.",
+                            NotificationType.DELIVERY_STATUS,
+                            "order",
+                            String.valueOf(orderId)
+                    );
+                }
+            } catch (Exception ignored) {}
+        }
     }
 
     public void rejectOrder(int orderId, int shopId, int changedBy, String reason) throws SQLException {
@@ -113,7 +148,22 @@ public class OrderService {
         if (reason == null || reason.trim().isEmpty()) {
             throw new IllegalArgumentException("Vui lòng nhập lý do từ chối đơn hàng!");
         }
-        orderDAO.updateOrderStatus(orderId, shopId, "cancelled", changedBy, "Từ chối: " + reason.trim());
+        boolean updated = orderDAO.updateOrderStatus(orderId, shopId, "cancelled", changedBy, "Từ chối: " + reason.trim());
+        if (updated) {
+            try {
+                Order order = orderDAO.getOrderById(orderId, shopId);
+                if (order != null && order.getUserId() > 0) {
+                    notificationService.notifyCustomer(
+                            order.getUserId(),
+                            "Đơn hàng #" + orderId + " đã bị từ chối",
+                            "Rất tiếc, cửa hàng đã từ chối đơn hàng #" + orderId + ". Lý do: " + reason.trim(),
+                            NotificationType.ORDER_CONFIRMATION,
+                            "order",
+                            String.valueOf(orderId)
+                    );
+                }
+            } catch (Exception ignored) {}
+        }
     }
 
     // =========================================================
@@ -236,9 +286,38 @@ public class OrderService {
         Map<String,Object> summary=calculateOrderSummary(userId,items,deliveryMethod,couponCode);
         double shippingFee=(double)summary.get("shippingFee");
         double subtotal=(double)summary.get("subtotal");
+        double totalAmount=(double)summary.get("totalAmount");
         double undiscountedTotal=subtotal+shippingFee;
-        return orderDAO.createOrder(userId,shopId,addressId,null,
+        int orderId = orderDAO.createOrder(userId,shopId,addressId,null,
                 deliveryMethod,paymentMethod,undiscountedTotal,shippingFee,0,items,note,couponCode);
+
+        if (orderId > 0) {
+            try {
+                // 1. Gửi thông báo xác nhận đặt hàng cho Customer
+                notificationService.notifyCustomer(
+                        userId,
+                        "Đặt hàng thành công #" + orderId,
+                        "Đơn hàng #" + orderId + " của bạn đã được tạo thành công với tổng tiền "
+                                + String.format("%,.0fđ", totalAmount) + " và đang chờ cửa hàng xác nhận.",
+                        NotificationType.ORDER_CONFIRMATION,
+                        "order",
+                        String.valueOf(orderId)
+                );
+
+                // 2. Gửi thông báo Đơn hàng mới cho Shop Owner
+                notificationService.notifyShopOwnerByShopId(
+                        shopId,
+                        "Đơn hàng mới #" + orderId,
+                        "Cửa hàng vừa nhận được đơn hàng mới #" + orderId + " (Tổng thanh toán: "
+                                + String.format("%,.0fđ", totalAmount) + "). Vui lòng kiểm tra và xác nhận đơn hàng.",
+                        ShopOwnerNotificationType.NEW_ORDER,
+                        "order",
+                        String.valueOf(orderId)
+                );
+            } catch (Exception ignored) {}
+        }
+
+        return orderId;
     }
 
     // =========================================================
@@ -259,7 +338,31 @@ public class OrderService {
         if (orderId <= 0 || userId <= 0) {
             throw new IllegalArgumentException("Thông tin đơn hàng không hợp lệ.");
         }
-        orderDAO.cancelOrderCustomer(orderId, userId, reason);
+        Order order = orderDAO.getOrderById(orderId, 0);
+        boolean cancelled = orderDAO.cancelOrderCustomer(orderId, userId, reason);
+        if (cancelled) {
+            try {
+                String reasonText = (reason != null && !reason.isBlank()) ? " Lý do: " + reason.trim() : "";
+                notificationService.notifyCustomer(
+                        userId,
+                        "Đã hủy đơn hàng #" + orderId,
+                        "Bạn đã hủy đơn hàng #" + orderId + " thành công." + reasonText,
+                        NotificationType.ORDER_CONFIRMATION,
+                        "order",
+                        String.valueOf(orderId)
+                );
+                if (order != null && order.getShopId() > 0) {
+                    notificationService.notifyShopOwnerByShopId(
+                            order.getShopId(),
+                            "Đơn hàng #" + orderId + " đã bị khách hủy",
+                            "Khách hàng đã hủy đơn hàng #" + orderId + "." + reasonText,
+                            ShopOwnerNotificationType.ORDER_CANCELLED,
+                            "order",
+                            String.valueOf(orderId)
+                    );
+                }
+            } catch (Exception ignored) {}
+        }
     }
 
     public int reorder(int orderId, int userId) throws SQLException {
@@ -293,6 +396,23 @@ public class OrderService {
         if (orderId <= 0 || shopId <= 0 || staffId <= 0) {
             throw new IllegalArgumentException("Thông tin đơn hàng hoặc nhân viên giao hàng không hợp lệ.");
         }
-        orderDAO.assignDeliveryStaff(orderId, shopId, staffId, assignedByUserId, note);
+        boolean assigned = orderDAO.assignDeliveryStaff(orderId, shopId, staffId, assignedByUserId, note);
+        if (assigned) {
+            try {
+                Order order = orderDAO.getOrderById(orderId, shopId);
+                String addr = order != null ? order.getRecipientAddress() : "";
+                notificationService.notifyDeliveryAssignment(staffId, orderId, addr);
+                if (order != null && order.getUserId() > 0) {
+                    notificationService.notifyCustomer(
+                            order.getUserId(),
+                            "Đơn hàng #" + orderId + " đã được giao cho Shipper",
+                            "Đơn hàng #" + orderId + " của bạn đã được phân công cho nhân viên giao hàng và đang trên đường vận chuyển.",
+                            NotificationType.DELIVERY_STATUS,
+                            "order",
+                            String.valueOf(orderId)
+                    );
+                }
+            } catch (Exception ignored) {}
+        }
     }
 }

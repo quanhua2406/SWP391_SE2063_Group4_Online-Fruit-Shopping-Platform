@@ -237,12 +237,31 @@
                 <h3>Product Management</h3>
 
                 <p>
-                    View your products, their status and the
-                    commission the platform keeps on each sale.
+                    Manage fruit listings, packaging variants, categories,
+                    and platform sales commission.
                 </p>
 
-                <a href="<%= contextPath %>/store-owner/commission">
+                <a href="<%= contextPath %>/store-owner/products">
                     Manage Products
+                </a>
+
+            </div>
+
+            <!-- VARIANT MANAGEMENT -->
+
+            <div class="dashboard-card">
+
+                <div class="dashboard-icon">📏</div>
+
+                <h3>Quản lý biến thể</h3>
+
+                <p>
+                    Thêm, sửa và xóa biến thể (quy cách đóng gói, SKU, khối lượng)
+                    của từng sản phẩm.
+                </p>
+
+                <a href="<%= contextPath %>/store-owner/variants">
+                    Quản lý biến thể
                 </a>
 
             </div>
@@ -347,11 +366,10 @@
                 <h3>Order Management</h3>
 
                 <p>
-                    Track and process the orders that contain your
-                    products.
+                    Track, confirm, prepare and assign delivery staff for orders containing your products.
                 </p>
 
-                <a href="#">
+                <a href="<%= contextPath %>/store-owner/orders">
                     Manage Orders
                 </a>
 
@@ -363,34 +381,34 @@
 
                 <div class="dashboard-icon">🔄</div>
 
-                <h3>Subscription</h3>
+                <h3>Subscription Plans</h3>
 
                 <p>
                     Offer recurring fruit boxes and manage
                     subscription plans.
                 </p>
 
-                <a href="#">
+                <a href="<%= contextPath %>/store-owner/subscription/plans">
                     Manage Subscriptions
                 </a>
 
             </div>
 
-            <!-- NOTIFICATIONS -->
+            <!-- SHIPPER TEAM MANAGEMENT -->
 
             <div class="dashboard-card">
 
-                <div class="dashboard-icon">🔔</div>
+                <div class="dashboard-icon">🛵</div>
 
-                <h3>Notifications</h3>
+                <h3>Shipper Team Management</h3>
 
                 <p>
-                    Send and review notifications for your
-                    customers.
+                    Manage delivery staff roster, review shipper applications,
+                    and track driver workload.
                 </p>
 
-                <a href="#">
-                    Manage Notifications
+                <a href="<%= contextPath %>/shopowner/shop/shipper-team">
+                    Manage Shipper Team
                 </a>
 
             </div>

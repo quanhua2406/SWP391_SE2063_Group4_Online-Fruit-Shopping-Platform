@@ -1,6 +1,8 @@
 package com.mycompany.onlinefruitshopping.service;
 
 import com.mycompany.onlinefruitshopping.dao.subscription.SubscriptionPlanDAO;
+import com.mycompany.onlinefruitshopping.model.NotificationType;
+import com.mycompany.onlinefruitshopping.model.ShopOwnerNotificationType;
 import com.mycompany.onlinefruitshopping.model.Subscription;
 import com.mycompany.onlinefruitshopping.model.SubscriptionPlan;
 import com.mycompany.onlinefruitshopping.model.SubscriptionPlanItem;
@@ -33,13 +35,16 @@ public class SubscriptionService {
     private static final Logger LOG = Logger.getLogger(SubscriptionService.class.getName());
 
     private final SubscriptionPlanDAO planDAO;
+    private final NotificationService notificationService;
 
     public SubscriptionService() {
         this.planDAO = new SubscriptionPlanDAO();
+        this.notificationService = new NotificationService();
     }
 
     public SubscriptionService(SubscriptionPlanDAO planDAO) {
         this.planDAO = planDAO;
+        this.notificationService = new NotificationService();
     }
 
     // ═════════════════════════════════════════════════════════════════════
@@ -561,6 +566,33 @@ public class SubscriptionService {
             return ServiceResult.fail("Không thể tạo gói đăng ký do lỗi hệ thống. Vui lòng thử lại sau.");
         }
 
+        try {
+            String priceText = plan.getPrice() != null ? String.format("%,.0fđ", plan.getPrice().doubleValue()) : "";
+            // 1. Gửi thông báo xác nhận đăng ký gói định kỳ cho Customer
+            notificationService.notifyCustomer(
+                    userId,
+                    "Đăng ký gói định kỳ thành công #" + subId,
+                    "Bạn đã đăng ký thành công gói combo '" + plan.getName() + "' (Mã đăng ký: #" + subId
+                            + (priceText.isEmpty() ? "" : ", giá: " + priceText) + ").",
+                    NotificationType.SUBSCRIPTION,
+                    "subscription",
+                    String.valueOf(subId)
+            );
+
+            // 2. Gửi thông báo có khách đăng ký gói định kỳ mới cho Shop Owner
+            if (plan.getShopId() > 0) {
+                notificationService.notifyShopOwnerByShopId(
+                        plan.getShopId(),
+                        "Khách hàng đăng ký gói định kỳ mới #" + subId,
+                        "Khách hàng vừa đăng ký gói combo '" + plan.getName() + "' (Mã đăng ký: #" + subId
+                                + (priceText.isEmpty() ? "" : ", giá gói: " + priceText) + ").",
+                        ShopOwnerNotificationType.NEW_SUBSCRIPTION,
+                        "subscription",
+                        String.valueOf(subId)
+                );
+            }
+        } catch (Exception ignored) {}
+
         return ServiceResult.ok("Đăng ký gói combo '" + plan.getName() + "' thành công!", subId);
     }
 
@@ -607,6 +639,31 @@ public class SubscriptionService {
             return ServiceResult.fail("Không thể tạm dừng gói đăng ký. Vui lòng thử lại sau.");
         }
 
+        try {
+            String planName = sub.getPlanName() != null ? sub.getPlanName() : ("#" + subscriptionId);
+            notificationService.notifyCustomer(
+                    userId,
+                    "Đã tạm dừng gói định kỳ #" + subscriptionId,
+                    "Gói định kỳ '" + planName + "' (#" + subscriptionId + ") đã được tạm dừng theo yêu cầu của bạn.",
+                    NotificationType.SUBSCRIPTION,
+                    "subscription",
+                    String.valueOf(subscriptionId)
+            );
+            if (sub.getPlan_id() != null && sub.getPlan_id() > 0) {
+                SubscriptionPlan plan = planDAO.getPlanById(sub.getPlan_id());
+                if (plan != null && plan.getShopId() > 0) {
+                    notificationService.notifyShopOwnerByShopId(
+                            plan.getShopId(),
+                            "Khách hàng tạm dừng gói định kỳ #" + subscriptionId,
+                            "Khách hàng đã tạm dừng gói combo '" + planName + "' (Mã đăng ký: #" + subscriptionId + ").",
+                            ShopOwnerNotificationType.NEW_SUBSCRIPTION,
+                            "subscription",
+                            String.valueOf(subscriptionId)
+                    );
+                }
+            }
+        } catch (Exception ignored) {}
+
         return ServiceResult.ok("Đã tạm dừng gói đăng ký thành công.", null);
     }
 
@@ -642,6 +699,31 @@ public class SubscriptionService {
             return ServiceResult.fail("Không thể kích hoạt lại gói đăng ký. Vui lòng thử lại sau.");
         }
 
+        try {
+            String planName = sub.getPlanName() != null ? sub.getPlanName() : ("#" + subscriptionId);
+            notificationService.notifyCustomer(
+                    userId,
+                    "Đã kích hoạt lại gói định kỳ #" + subscriptionId,
+                    "Gói định kỳ '" + planName + "' (#" + subscriptionId + ") đã được kích hoạt lại thành công.",
+                    NotificationType.SUBSCRIPTION,
+                    "subscription",
+                    String.valueOf(subscriptionId)
+            );
+            if (sub.getPlan_id() != null && sub.getPlan_id() > 0) {
+                SubscriptionPlan plan = planDAO.getPlanById(sub.getPlan_id());
+                if (plan != null && plan.getShopId() > 0) {
+                    notificationService.notifyShopOwnerByShopId(
+                            plan.getShopId(),
+                            "Khách hàng kích hoạt lại gói định kỳ #" + subscriptionId,
+                            "Khách hàng đã kích hoạt lại gói combo '" + planName + "' (Mã đăng ký: #" + subscriptionId + ").",
+                            ShopOwnerNotificationType.NEW_SUBSCRIPTION,
+                            "subscription",
+                            String.valueOf(subscriptionId)
+                    );
+                }
+            }
+        } catch (Exception ignored) {}
+
         return ServiceResult.ok("Đã kích hoạt lại gói đăng ký thành công. Lịch giao hàng sẽ tiếp tục bình thường.", null);
     }
 
@@ -667,6 +749,31 @@ public class SubscriptionService {
         if (!ok) {
             return ServiceResult.fail("Không thể hủy gói đăng ký. Vui lòng thử lại sau.");
         }
+
+        try {
+            String planName = sub.getPlanName() != null ? sub.getPlanName() : ("#" + subscriptionId);
+            notificationService.notifyCustomer(
+                    userId,
+                    "Đã hủy gói định kỳ #" + subscriptionId,
+                    "Gói định kỳ '" + planName + "' (#" + subscriptionId + ") đã được hủy thành công.",
+                    NotificationType.SUBSCRIPTION,
+                    "subscription",
+                    String.valueOf(subscriptionId)
+            );
+            if (sub.getPlan_id() != null && sub.getPlan_id() > 0) {
+                SubscriptionPlan plan = planDAO.getPlanById(sub.getPlan_id());
+                if (plan != null && plan.getShopId() > 0) {
+                    notificationService.notifyShopOwnerByShopId(
+                            plan.getShopId(),
+                            "Khách hàng đã hủy gói định kỳ #" + subscriptionId,
+                            "Khách hàng đã hủy gói combo '" + planName + "' (Mã đăng ký: #" + subscriptionId + ").",
+                            ShopOwnerNotificationType.NEW_SUBSCRIPTION,
+                            "subscription",
+                            String.valueOf(subscriptionId)
+                    );
+                }
+            }
+        } catch (Exception ignored) {}
 
         return ServiceResult.ok("Đã hủy gói đăng ký thành công. Bạn sẽ không nhận thêm đơn giao định kỳ từ kỳ tiếp theo.", null);
     }
@@ -700,6 +807,33 @@ public class SubscriptionService {
         sub.setNotes(updatedNotes);
 
         String planName = sub.getPlanName() != null ? sub.getPlanName() : ("#" + subscriptionId);
+
+        try {
+            notificationService.notifyCustomer(
+                    userId,
+                    "Thanh toán gói định kỳ #" + subscriptionId + " thành công",
+                    "Giao dịch VNPay cho gói '" + planName + "' (#" + subscriptionId + ") đã thành công (Mã GD: "
+                            + (txnRef != null ? txnRef : "N/A") + ").",
+                    NotificationType.PAYMENT_SUCCESS,
+                    "subscription",
+                    String.valueOf(subscriptionId)
+            );
+            if (sub.getPlan_id() != null && sub.getPlan_id() > 0) {
+                SubscriptionPlan plan = planDAO.getPlanById(sub.getPlan_id());
+                if (plan != null && plan.getShopId() > 0) {
+                    notificationService.notifyShopOwnerByShopId(
+                            plan.getShopId(),
+                            "Đã nhận thanh toán VNPay cho gói định kỳ #" + subscriptionId,
+                            "Khách hàng đã thanh toán thành công gói '" + planName + "' (#" + subscriptionId
+                                    + ") qua VNPay (Mã GD: " + (txnRef != null ? txnRef : "N/A") + ").",
+                            ShopOwnerNotificationType.PAYMENT_RECEIVED,
+                            "subscription",
+                            String.valueOf(subscriptionId)
+                    );
+                }
+            }
+        } catch (Exception ignored) {}
+
         return ServiceResult.ok("Thanh toán VNPay thành công! Gói đăng ký '" + planName + "' đã được kích hoạt.", sub);
     }
 

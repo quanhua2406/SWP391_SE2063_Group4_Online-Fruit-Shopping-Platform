@@ -245,7 +245,8 @@ public class DeliveryNotificationServlet extends HttpServlet {
 
         // 1. Kiểm tra session "user"
         Object userObj = session.getAttribute("user");
-        if (userObj instanceof User u) {
+        if (userObj instanceof User) {
+            User u = (User) userObj;
             String role = u.getRoleName();
             if (role != null && (role.equalsIgnoreCase("DeliveryStaff")
                     || role.equalsIgnoreCase("DELIVERY_STAFF")
