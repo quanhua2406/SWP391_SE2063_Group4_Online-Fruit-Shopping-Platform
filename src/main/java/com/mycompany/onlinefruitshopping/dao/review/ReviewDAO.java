@@ -115,7 +115,7 @@ public class ReviewDAO extends DBConnection {
         if (hasTitle) {
             sql.append("r.title, ");
         }
-        sql.append("r.rating, r.comment, r.").append(dateCol).append(" AS review_date, ");
+        sql.append("r.rating, r.comment, r.status, r.").append(dateCol).append(" AS review_date, ");
         if (hasImages) {
             sql.append("r.image_urls, ");
         }
@@ -461,7 +461,7 @@ public class ReviewDAO extends DBConnection {
         if (hasTitle) {
             sql.append("r.title, ");
         }
-        sql.append("r.rating, r.comment, r.").append(dateCol).append(" AS review_date, ");
+        sql.append("r.rating, r.comment, r.status, r.").append(dateCol).append(" AS review_date, ");
         if (hasImages) {
             sql.append("r.image_urls, ");
         }
@@ -498,6 +498,7 @@ public class ReviewDAO extends DBConnection {
 
                 String uName = rs.getString("user_name");
                 r.setUserName(uName != null ? uName : "Khách hàng");
+                r.setStatus(rs.getString("status"));
                 r.setProductName(rs.getString("product_name"));
                 return r;
             }
@@ -878,7 +879,8 @@ public class ReviewDAO extends DBConnection {
                         r.setImageUrls(rs.getString("image_urls"));
                     }
 
-                    r.setProductName(rs.getString("product_name"));
+                    r.setStatus(rs.getString("status"));
+                r.setProductName(rs.getString("product_name"));
                     String pImg = rs.getString("product_image");
                     if (pImg == null || pImg.isBlank()) {
                         pImg = getProductImageById(r.getProduct_id());

@@ -3,6 +3,18 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 
 <%!
+    private String statusLabel(String status) {
+        if ("active".equalsIgnoreCase(status)) {
+            return "Hoạt động";
+        }
+
+        if ("locked".equalsIgnoreCase(status)) {
+            return "Đã khóa";
+        }
+
+        return status;
+    }
+
     private String escapeHtml(String value) {
         if (value == null) return "";
         return value.replace("&", "&amp;")
@@ -38,7 +50,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>User Detail - FreshFruit</title>
+    <title>Chi tiết người dùng - FreshFruit</title>
 
     <style>
         * { box-sizing: border-box; }
@@ -214,48 +226,48 @@
 <main class="container">
     <div class="header">
         <div>
-            <h1>User Detail</h1>
-            <p class="muted">View and manage this user account.</p>
+            <h1>Chi tiết người dùng</h1>
+            <p class="muted">Xem và quản lý tài khoản người dùng này.</p>
         </div>
 
         <a class="btn secondary"
            href="<%=cp%>/admin/user-management">
-            Back to User List
+            Quay lại danh sách người dùng
         </a>
     </div>
 
     <% if ("updated".equals(message)) { %>
         <div class="notice success" role="status">
-            User updated successfully!
+            Cập nhật người dùng thành công!
         </div>
     <% } else if ("status-updated".equals(message)) { %>
         <div class="notice success" role="status">
-            User status updated successfully!
+            Cập nhật trạng thái người dùng thành công!
         </div>
     <% } else if ("status-failed".equals(message)) { %>
         <div class="notice error" role="alert">
-            Failed to update user status.
+            Không thể cập nhật trạng thái người dùng.
         </div>
     <% } else if ("admin-protected".equals(message)) { %>
         <div class="notice error" role="alert">
-            Admin account status cannot be changed.
+            Không thể thay đổi trạng thái tài khoản quản trị viên.
         </div>
     <% } %>
 
     <section class="card">
         <div class="grid">
             <div class="field">
-                <label>User ID</label>
+                <label>Mã người dùng</label>
                 <div class="value"><%=user.getUserId()%></div>
             </div>
 
             <div class="field">
-                <label>Role</label>
+                <label>Vai trò</label>
                 <div class="value"><%=escapeHtml(role)%></div>
             </div>
 
             <div class="field">
-                <label>Full Name</label>
+                <label>Họ và tên</label>
                 <div class="value"><%=escapeHtml(user.getFullName())%></div>
             </div>
 
@@ -265,16 +277,16 @@
             </div>
 
             <div class="field">
-                <label>Phone</label>
+                <label>Số điện thoại</label>
                 <div class="value"><%=escapeHtml(user.getPhone())%></div>
             </div>
 
             <div class="field">
-                <label>Status</label>
+                <label>Trạng thái</label>
                 <div class="value">
                     <span class="badge <%=isLocked ? "locked" :
                         ("active".equalsIgnoreCase(status) ? "active" : "other")%>">
-                        <%=escapeHtml(status)%>
+                        <%=escapeHtml(statusLabel(status))%>
                     </span>
                 </div>
             </div>
@@ -283,36 +295,36 @@
         <div class="actions">
             <a class="btn primary"
                href="<%=cp%>/admin/user-management?action=edit&amp;userId=<%=user.getUserId()%>">
-                Edit User
+                Sửa người dùng
             </a>
 
             <% if (!isAdmin && !isLocked) { %>
                 <form method="post"
                       action="<%=cp%>/admin/user-management"
-                      onsubmit="return confirm('Are you sure you want to block this user?');">
+                      onsubmit="return confirm('Bạn có chắc muốn khóa người dùng này không?');">
                     <input type="hidden" name="action" value="block">
                     <input type="hidden" name="userId"
                            value="<%=user.getUserId()%>">
                     <button type="submit" class="btn danger">
-                        Block User
+                        Khóa người dùng
                     </button>
                 </form>
             <% } else if (!isAdmin && isLocked) { %>
                 <form method="post"
                       action="<%=cp%>/admin/user-management"
-                      onsubmit="return confirm('Are you sure you want to unblock this user?');">
+                      onsubmit="return confirm('Bạn có chắc muốn mở khóa người dùng này không?');">
                     <input type="hidden" name="action" value="unblock">
                     <input type="hidden" name="userId"
                            value="<%=user.getUserId()%>">
                     <button type="submit" class="btn success-btn">
-                        Unblock User
+                        Mở khóa người dùng
                     </button>
                 </form>
             <% } %>
 
             <a class="btn secondary"
                href="<%=cp%>/admin/user-management">
-                Back
+                Quay lại
             </a>
         </div>
     </section>

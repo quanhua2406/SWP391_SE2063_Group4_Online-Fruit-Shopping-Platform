@@ -21,7 +21,7 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0">
 
-    <title>Register - FreshFruit</title>
+    <title>Đăng ký - FreshFruit</title>
 
     <link rel="stylesheet"
           href="<%= contextPath %>/css/style.css">
@@ -46,11 +46,11 @@
         </div>
 
         <h2>
-            Create Account
+            Tạo tài khoản
         </h2>
 
         <p class="auth-description">
-            Fill in your details to create a FreshFruit account.
+            Nhập thông tin để tạo tài khoản FreshFruit.
         </p>
 
 
@@ -97,7 +97,7 @@
                  ================================================= -->
 
             <label class="role-label">
-                Register as
+                Đăng ký với vai trò
             </label>
 
 
@@ -118,7 +118,7 @@
                         <span class="role-icon">🛒</span>
 
                         <span class="role-name">
-                            Customer
+                            Khách hàng
                         </span>
 
                     </span>
@@ -140,7 +140,7 @@
                         <span class="role-icon">🏪</span>
 
                         <span class="role-name">
-                            Shop Owner
+                            Chủ cửa hàng
                         </span>
 
                     </span>
@@ -162,7 +162,7 @@
                         <span class="role-icon">🚚</span>
 
                         <span class="role-name">
-                            Delivery Staff
+                            Nhân viên giao hàng
                         </span>
 
                     </span>
@@ -179,7 +179,7 @@
             <div class="auth-form-group">
 
                 <label for="fullName">
-                    Full Name
+                    Họ và tên
                 </label>
 
                 <input
@@ -187,7 +187,7 @@
                     id="fullName"
                     name="fullName"
                     value="${fullName}"
-                    placeholder="Enter your full name"
+                    placeholder="Nhập họ và tên"
                     maxlength="100">
 
             </div>
@@ -208,7 +208,7 @@
                     id="email"
                     name="email"
                     value="${email}"
-                    placeholder="Enter your email"
+                    placeholder="Nhập email"
                     autocomplete="email">
 
             </div>
@@ -221,20 +221,20 @@
             <div class="auth-form-group">
 
                 <label for="password">
-                    Password
+                    Mật khẩu
                 </label>
 
                 <input
                     type="password"
                     id="password"
                     name="password"
-                    placeholder="Enter your password"
+                    placeholder="Nhập mật khẩu"
                     autocomplete="new-password">
 
                 <div class="password-note">
 
-                    Minimum 8 characters, including
-                    at least one letter and one number.
+                    Tối thiểu 8 ký tự, bao gồm
+                    ít nhất một chữ cái và một chữ số.
 
                 </div>
 
@@ -248,14 +248,14 @@
             <div class="auth-form-group">
 
                 <label for="confirmPassword">
-                    Confirm Password
+                    Xác nhận mật khẩu
                 </label>
 
                 <input
                     type="password"
                     id="confirmPassword"
                     name="confirmPassword"
-                    placeholder="Confirm your password"
+                    placeholder="Nhập lại mật khẩu"
                     autocomplete="new-password">
 
             </div>
@@ -268,7 +268,7 @@
             <div class="auth-form-group">
 
                 <label for="phone">
-                    Phone Number
+                    Số điện thoại
                 </label>
 
                 <input
@@ -276,7 +276,7 @@
                     id="phone"
                     name="phone"
                     value="${phone}"
-                    placeholder="Enter your phone number"
+                    placeholder="Nhập số điện thoại"
                     maxlength="11">
 
             </div>
@@ -289,7 +289,7 @@
             <div class="auth-form-group">
 
                 <label for="address">
-                    Address
+                    Địa chỉ
                 </label>
 
                 <input
@@ -297,7 +297,7 @@
                     id="address"
                     name="address"
                     value="${address}"
-                    placeholder="Enter your address"
+                    placeholder="Nhập địa chỉ"
                     maxlength="255">
 
             </div>
@@ -311,7 +311,7 @@
                 type="submit"
                 class="auth-button">
 
-                Create Account
+                Tạo tài khoản
 
             </button>
 
@@ -327,11 +327,11 @@
 
             <p>
 
-                Already have an account?
+                Đã có tài khoản?
 
                 <a href="<%= contextPath %>/login">
 
-                    Login
+                    Đăng nhập
 
                 </a>
 
@@ -404,7 +404,7 @@ function validateRegisterForm() {
     if (!roleChecked) {
 
         error.innerHTML =
-            "Please choose a role to register as.";
+            "Vui lòng chọn vai trò đăng ký.";
 
         error.style.display = "block";
 
@@ -419,7 +419,7 @@ function validateRegisterForm() {
     if (fullName === "") {
 
         error.innerHTML =
-            "Full name cannot be empty.";
+            "Họ tên không được để trống.";
 
         error.style.display = "block";
 
@@ -430,7 +430,7 @@ function validateRegisterForm() {
     if (fullName.length < 2) {
 
         error.innerHTML =
-            "Full name must contain at least 2 characters.";
+            "Họ tên phải có ít nhất 2 ký tự.";
 
         error.style.display = "block";
 
@@ -441,7 +441,7 @@ function validateRegisterForm() {
     if (!/\p{L}/u.test(fullName)) {
 
         error.innerHTML =
-            "Full name must contain letters.";
+            "Họ tên phải chứa chữ cái.";
 
         error.style.display = "block";
 
@@ -452,7 +452,7 @@ function validateRegisterForm() {
     if (!/^[\p{L}\s]+$/u.test(fullName)) {
 
         error.innerHTML =
-            "Full name can contain only letters and spaces.";
+            "Họ tên chỉ được chứa chữ cái và khoảng trắng.";
 
         error.style.display = "block";
 
@@ -467,7 +467,7 @@ function validateRegisterForm() {
     if (email === "") {
 
         error.innerHTML =
-            "Email cannot be empty.";
+            "Email không được để trống.";
 
         error.style.display = "block";
 
@@ -481,7 +481,7 @@ function validateRegisterForm() {
     if (!emailPattern.test(email)) {
 
         error.innerHTML =
-            "Please enter a valid email address.";
+            "Vui lòng nhập địa chỉ email hợp lệ.";
 
         error.style.display = "block";
 
@@ -496,7 +496,7 @@ function validateRegisterForm() {
     if (password === "") {
 
         error.innerHTML =
-            "Password cannot be empty.";
+            "Mật khẩu không được để trống.";
 
         error.style.display = "block";
 
@@ -507,7 +507,7 @@ function validateRegisterForm() {
     if (password.length < 8) {
 
         error.innerHTML =
-            "Password must contain at least 8 characters.";
+            "Mật khẩu phải có ít nhất 8 ký tự.";
 
         error.style.display = "block";
 
@@ -518,7 +518,7 @@ function validateRegisterForm() {
     if (!/[A-Za-z]/.test(password)) {
 
         error.innerHTML =
-            "Password must contain at least one letter.";
+            "Mật khẩu phải chứa ít nhất một chữ cái.";
 
         error.style.display = "block";
 
@@ -529,7 +529,7 @@ function validateRegisterForm() {
     if (!/[0-9]/.test(password)) {
 
         error.innerHTML =
-            "Password must contain at least one number.";
+            "Mật khẩu phải chứa ít nhất một chữ số.";
 
         error.style.display = "block";
 
@@ -544,7 +544,7 @@ function validateRegisterForm() {
     if (confirmPassword === "") {
 
         error.innerHTML =
-            "Confirm password cannot be empty.";
+            "Xác nhận mật khẩu không được để trống.";
 
         error.style.display = "block";
 
@@ -555,7 +555,7 @@ function validateRegisterForm() {
     if (password !== confirmPassword) {
 
         error.innerHTML =
-            "Passwords do not match.";
+            "Mật khẩu xác nhận không khớp.";
 
         error.style.display = "block";
 
@@ -570,7 +570,7 @@ function validateRegisterForm() {
     if (phone === "") {
 
         error.innerHTML =
-            "Phone number cannot be empty.";
+            "Số điện thoại không được để trống.";
 
         error.style.display = "block";
 
@@ -581,7 +581,7 @@ function validateRegisterForm() {
     if (!/^[0-9]+$/.test(phone)) {
 
         error.innerHTML =
-            "Phone number can contain only digits.";
+            "Số điện thoại chỉ được chứa chữ số.";
 
         error.style.display = "block";
 
@@ -593,7 +593,7 @@ function validateRegisterForm() {
         phone.length > 11) {
 
         error.innerHTML =
-            "Phone number must contain 9 to 11 digits.";
+            "Số điện thoại phải có từ 9 đến 11 chữ số.";
 
         error.style.display = "block";
 
@@ -608,7 +608,7 @@ function validateRegisterForm() {
     if (address === "") {
 
         error.innerHTML =
-            "Address cannot be empty.";
+            "Địa chỉ không được để trống.";
 
         error.style.display = "block";
 

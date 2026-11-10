@@ -34,7 +34,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Delivery Staff - FreshFruit Admin</title>
+    <title>Nhân viên giao hàng - FreshFruit Admin</title>
 
     <link rel="stylesheet" href="<%= contextPath %>/css/style.css">
 </head>
@@ -49,13 +49,13 @@
 
     <nav class="nav-actions">
 
-        <a href="<%= contextPath %>/admin/dashboard">📊 Dashboard</a>
+        <a href="<%= contextPath %>/admin/dashboard">📊 Bảng điều khiển</a>
 
-        <a href="<%= contextPath %>/admin/deliveries">🚚 Deliveries</a>
+        <a href="<%= contextPath %>/admin/deliveries">🚚 Giao hàng</a>
 
-        <a href="<%= contextPath %>/admin/user-management">👥 Users</a>
+        <a href="<%= contextPath %>/admin/user-management">👥 Người dùng</a>
 
-        <a href="<%= contextPath %>/logout" class="logout">Logout</a>
+        <a href="<%= contextPath %>/logout" class="logout">Đăng xuất</a>
 
     </nav>
 
@@ -64,34 +64,34 @@
 <section class="dashboard">
 
     <p class="breadcrumb">
-        <a href="<%= contextPath %>/admin/dashboard">← Admin Dashboard</a>
+        <a href="<%= contextPath %>/admin/dashboard">← Bảng điều khiển</a>
     </p>
 
-    <h1>Delivery Staff</h1>
+    <h1>Nhân viên giao hàng</h1>
 
     <p class="dashboard-welcome">
-        Delivery-staff accounts on the platform, their current
-        workload and availability.
+        Tài khoản nhân viên giao hàng trên hệ thống, khối lượng
+        công việc và tình trạng sẵn sàng hiện tại.
     </p>
 
     <% if ("blocked".equals(msg)) { %>
-        <div class="success-message">✅ Staff account locked — the shipper can no longer sign in.</div>
+        <div class="success-message">✅ Đã khóa tài khoản — shipper không thể đăng nhập nữa.</div>
     <% } else if ("unblocked".equals(msg)) { %>
-        <div class="success-message">✅ Staff account unlocked.</div>
+        <div class="success-message">✅ Đã mở khóa tài khoản.</div>
     <% } else if (!msg.isEmpty() && !"failed".equals(msg)) { %>
-        <div class="error-message">The requested action could not be applied.</div>
+        <div class="error-message">Không thể thực hiện thao tác yêu cầu.</div>
     <% } else if ("failed".equals(msg)) { %>
-        <div class="error-message">The requested action could not be applied.</div>
+        <div class="error-message">Không thể thực hiện thao tác yêu cầu.</div>
     <% } %>
 
     <div class="panel">
 
-        <h2>🧑‍✈️ Staff accounts</h2>
+        <h2>🧑‍✈️ Tài khoản nhân viên</h2>
 
         <p class="panel-hint">
-            <%= staff == null ? 0 : staff.size() %> account(s) hold the DeliveryStaff role.
-            Assignments are viewed through
-            <a href="<%= contextPath %>/admin/deliveries">Delivery Monitoring</a>.
+            <%= staff == null ? 0 : staff.size() %> tài khoản có vai trò DeliveryStaff.
+            Có thể xem phân công tại
+            <a href="<%= contextPath %>/admin/deliveries">Theo dõi giao hàng</a>.
         </p>
 
         <div class="table-scroll">
@@ -100,13 +100,13 @@
 
                 <thead>
                     <tr>
-                        <th>Staff</th>
-                        <th>Contact</th>
-                        <th>Joined</th>
-                        <th>Active deliveries</th>
-                        <th>Total deliveries</th>
-                        <th>Account status</th>
-                        <th>Actions</th>
+                        <th>Nhân viên</th>
+                        <th>Liên hệ</th>
+                        <th>Ngày tham gia</th>
+                        <th>Đơn đang giao</th>
+                        <th>Tổng đơn giao</th>
+                        <th>Trạng thái tài khoản</th>
+                        <th>Thao tác</th>
                     </tr>
                 </thead>
 
@@ -114,7 +114,7 @@
                 <% if (staff == null || staff.isEmpty()) { %>
 
                     <tr>
-                        <td colspan="7">No delivery-staff account exists yet.</td>
+                        <td colspan="7">Chưa có tài khoản nhân viên giao hàng nào.</td>
                     </tr>
 
                 <% } else {
@@ -142,7 +142,7 @@
 
                         <td>
                             <span class="pill <%= active ? "pill-ok" : "pill-danger" %>">
-                                <%= active ? "Active" : "Locked" %>
+                                <%= active ? "Hoạt động" : "Đã khóa" %>
                             </span>
                         </td>
 
@@ -155,18 +155,18 @@
 
                                 <% if (active) { %>
                                     <input type="hidden" name="action" value="block">
-                                    <button type="submit" class="btn-sm-danger">Block</button>
+                                    <button type="submit" class="btn-sm-danger">Khóa</button>
                                 <% } else { %>
                                     <input type="hidden" name="action" value="unblock">
-                                    <button type="submit" class="btn-sm">Unblock</button>
+                                    <button type="submit" class="btn-sm">Mở khóa</button>
                                 <% } %>
 
                             </form>
 
                             <a class="btn-sm-info"
                                href="<%= contextPath %>/admin/delivery-assign?search=<%= esc(row.get("user_id")) %>"
-                               title="Deliveries assigned to this shipper">
-                                Assignments
+                               title="Các đơn được phân cho shipper này">
+                                Phân công
                             </a>
                         </td>
                     </tr>

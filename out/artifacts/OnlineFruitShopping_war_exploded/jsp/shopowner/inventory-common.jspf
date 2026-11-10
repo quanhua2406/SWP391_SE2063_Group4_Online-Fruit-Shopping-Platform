@@ -59,11 +59,11 @@
 
         switch (type) {
             case "import":
-                return "Restock";
+                return "Nhập hàng";
             case "export":
-                return "Stock Out";
+                return "Xuất kho";
             case "discard":
-                return "Discard";
+                return "Hủy hàng";
             default:
                 return value.toString();
         }
@@ -105,33 +105,51 @@
     String messageText = null;
 
     if ("restocked".equals(message)) {
-        messageText = "Product restocked successfully.";
+        messageText = "Đã nhập hàng thành công.";
     } else if ("updated".equals(message)) {
-        messageText = "Stock quantity updated.";
+        messageText = "Đã cập nhật số lượng tồn kho.";
     } else if ("threshold-saved".equals(message)) {
-        messageText = "Low stock threshold updated.";
+        messageText = "Đã cập nhật ngưỡng tồn kho thấp.";
     } else if ("notified".equals(message)) {
-        messageText = "Low stock alert email sent to your account address.";
+        messageText = "Đã gửi email cảnh báo tồn kho thấp tới địa chỉ tài khoản của bạn.";
     } else if ("notify-none".equals(message)) {
-        messageText = "Nothing is below the safety threshold - no alert was sent.";
+        messageText = "Không có sản phẩm nào dưới ngưỡng an toàn - không gửi cảnh báo.";
     } else if ("notify-failed".equals(message)) {
         level = "error-message";
-        messageText = "The alert email could not be sent. Please try again later.";
+        messageText = "Không thể gửi email cảnh báo. Vui lòng thử lại sau.";
     } else if ("duplicate".equals(message)) {
         level = "error-message";
-        messageText = "That batch code already exists for this variant.";
+        messageText = "Mã lô này đã tồn tại cho biến thể đó.";
     } else if ("expired".equals(message)) {
         level = "error-message";
-        messageText = "The expiry date cannot be in the past.";
+        messageText = "Ngày hết hạn không được nằm trong quá khứ.";
     } else if ("invalid".equals(message)) {
         level = "error-message";
-        messageText = "Please enter valid stock information.";
+        messageText = "Vui lòng nhập thông tin tồn kho hợp lệ.";
     } else if ("forbidden".equals(message)) {
         level = "error-message";
-        messageText = "You are not allowed to modify this item.";
+        messageText = "Bạn không có quyền thay đổi mục này.";
+    } else if ("requested".equals(message)) {
+        messageText = "Đã gửi yêu cầu bỏ lô. Chủ shop cần duyệt để bỏ khỏi tồn kho.";
+    } else if ("already-requested".equals(message)) {
+        level = "error-message";
+        messageText = "Lô này đã có yêu cầu bỏ hàng đang chờ duyệt.";
+    } else if ("approved".equals(message)) {
+        messageText = "Đã duyệt và bỏ lô hết hạn khỏi tồn kho.";
+    } else if ("rejected".equals(message)) {
+        messageText = "Đã từ chối yêu cầu bỏ hàng. Lô được giữ nguyên.";
+    } else if ("already-resolved".equals(message)) {
+        level = "error-message";
+        messageText = "Yêu cầu này đã được xử lý trước đó.";
+    } else if ("not-expired".equals(message)) {
+        level = "error-message";
+        messageText = "Lô này chưa hết hạn nên không thể bỏ.";
+    } else if ("already-discarded".equals(message)) {
+        level = "error-message";
+        messageText = "Lô này đã được bỏ trước đó.";
     } else if ("failed".equals(message)) {
         level = "error-message";
-        messageText = "The action could not be completed.";
+        messageText = "Không thể hoàn tất thao tác.";
     }
 %>
 
@@ -141,7 +159,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Stock Management - FreshFruit</title>
+    <title>Quản lý kho - FreshFruit</title>
 
     <link rel="stylesheet"
           href="<%= contextPath %>/css/style.css">
@@ -158,16 +176,16 @@
     <nav class="nav-actions">
 
         <a href="<%= contextPath %>/store-owner/dashboard">
-            📊 Dashboard
+            📊 Bảng điều khiển
         </a>
 
         <a href="<%= contextPath %>/store-owner/pricing">
-            💲 Pricing
+            💲 Giá bán
         </a>
 
         <a href="<%= contextPath %>/logout"
            class="logout">
-            Logout
+            Đăng xuất
         </a>
 
     </nav>
@@ -178,11 +196,11 @@
 
     <p class="breadcrumb">
         <a href="<%= contextPath %>/store-owner/dashboard">
-            ← Shop Owner Dashboard
+            ← Bảng điều khiển chủ cửa hàng
         </a>
     </p>
 
-    <h1>Stock Management</h1>
+    <h1>Quản lý kho</h1>
 
     <p class="dashboard-welcome">
         🏪 <%= esc(shopName) %>

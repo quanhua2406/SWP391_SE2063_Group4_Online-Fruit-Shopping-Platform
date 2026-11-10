@@ -40,7 +40,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Edit User</title>
+    <title>Sửa người dùng</title>
 
     <style>
         * {
@@ -185,11 +185,11 @@
 <div class="container">
 
     <div class="header">
-        <h1>Edit User</h1>
+        <h1>Sửa người dùng</h1>
 
         <a class="btn cancel"
            href="<%= contextPath %>/admin/user-management?action=detail&amp;userId=<%= user.getUserId() %>">
-            Back to Detail
+            Quay lại chi tiết
         </a>
     </div>
 
@@ -213,14 +213,14 @@
         <div class="grid">
 
             <div class="field">
-                <label for="userIdDisplay">User ID</label>
+                <label for="userIdDisplay">Mã người dùng</label>
                 <input id="userIdDisplay"
                        value="<%= user.getUserId() %>"
                        readonly>
             </div>
 
             <div class="field">
-                <label for="role">Role</label>
+                <label for="role">Vai trò</label>
                 <input id="role"
                        value="<%= escapeHtml(role) %>"
                        readonly>
@@ -228,7 +228,7 @@
 
             <div class="field">
                 <label for="fullName">
-                    Full Name <span class="required">*</span>
+                    Họ và tên <span class="required">*</span>
                 </label>
                 <input id="fullName"
                        name="fullName"
@@ -254,7 +254,7 @@
 
             <div class="field">
                 <label for="phone">
-                    Phone <span class="required">*</span>
+                    Số điện thoại <span class="required">*</span>
                 </label>
                 <input id="phone"
                        name="phone"
@@ -266,7 +266,7 @@
             </div>
 
             <div class="field">
-                <label for="status">Status</label>
+                <label for="status">Trạng thái</label>
                 <input id="status"
                        value="<%= escapeHtml(status) %>"
                        readonly>
@@ -276,12 +276,12 @@
 
         <div class="actions">
             <button type="submit" class="btn save">
-                Save Changes
+                Lưu thay đổi
             </button>
 
             <a class="btn cancel"
                href="<%= contextPath %>/admin/user-management?action=detail&amp;userId=<%= user.getUserId() %>">
-                Cancel
+                Hủy
             </a>
         </div>
 
@@ -305,14 +305,14 @@
         const value = fullName.value.trim();
 
         if (value.length === 0) {
-            showError(fullName, "Full Name is required.");
+            showError(fullName, "Vui lòng nhập họ và tên.");
             return false;
         }
 
         if (value.length < 2 || value.length > 100) {
             showError(
                 fullName,
-                "Full Name must contain 2 to 100 characters."
+                "Họ và tên phải có từ 2 đến 100 ký tự."
             );
             return false;
         }
@@ -320,7 +320,7 @@
         if (!/^[\p{L}\p{M} .'-]+$/u.test(value)) {
             showError(
                 fullName,
-                "Full Name contains invalid characters."
+                "Họ và tên chứa ký tự không hợp lệ."
             );
             return false;
         }
@@ -333,13 +333,13 @@
         const value = email.value.trim();
 
         if (value.length === 0) {
-            showError(email, "Email is required.");
+            showError(email, "Vui lòng nhập email.");
             return false;
         }
 
         if (value.length > 150 ||
             !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-            showError(email, "Please enter a valid email address.");
+            showError(email, "Vui lòng nhập địa chỉ email hợp lệ.");
             return false;
         }
 
@@ -351,14 +351,14 @@
         const value = phone.value.trim();
 
         if (value.length === 0) {
-            showError(phone, "Phone is required.");
+            showError(phone, "Vui lòng nhập số điện thoại.");
             return false;
         }
 
         if (!/^0[0-9]{9,10}$/.test(value)) {
             showError(
                 phone,
-                "Phone must start with 0 and contain 10 or 11 digits."
+                "Số điện thoại phải bắt đầu bằng số 0 và có 10 hoặc 11 chữ số."
             );
             return false;
         }

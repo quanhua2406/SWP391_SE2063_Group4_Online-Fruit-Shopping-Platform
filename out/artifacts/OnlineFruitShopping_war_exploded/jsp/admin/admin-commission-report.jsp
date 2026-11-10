@@ -13,15 +13,15 @@
 
         html.append("<option value=\"\"")
             .append(selected.isEmpty() ? " selected" : "")
-            .append(">Delivered (fee basis)</option>");
+            .append(">Đã giao (tính phí)</option>");
 
         String[][] statuses = {
-            {"pending_confirmation", "Pending confirmation"},
-            {"preparing", "Preparing"},
-            {"shipping", "Shipping"},
-            {"delivered", "Delivered"},
-            {"cancelled", "Cancelled"},
-            {"failed", "Failed"}
+            {"pending_confirmation", "Chờ xác nhận"},
+            {"preparing", "Đang chuẩn bị"},
+            {"shipping", "Đang giao"},
+            {"delivered", "Đã giao"},
+            {"cancelled", "Đã hủy"},
+            {"failed", "Thất bại"}
         };
 
         for (String[] s : statuses) {
@@ -156,7 +156,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Commission Report - FreshFruit</title>
+    <title>Báo cáo hoa hồng - FreshFruit</title>
 
     <link rel="stylesheet"
           href="<%= contextPath %>/css/style.css">
@@ -173,16 +173,16 @@
     <nav class="nav-actions">
 
         <a href="<%= contextPath %>/admin/dashboard">
-            📊 Dashboard
+            📊 Bảng điều khiển
         </a>
 
         <a href="<%= contextPath %>/admin/product-management">
-            🍎 Products
+            🍎 Sản phẩm
         </a>
 
         <a href="<%= contextPath %>/logout"
            class="logout">
-            Logout
+            Đăng xuất
         </a>
 
     </nav>
@@ -193,21 +193,21 @@
 
     <p class="breadcrumb">
         <a href="<%= contextPath %>/admin/dashboard">
-            ← Admin Dashboard
+            ← Bảng điều khiển
         </a>
     </p>
 
-    <h1>Commission Report</h1>
+    <h1>Báo cáo hoa hồng</h1>
 
     <p class="dashboard-welcome">
-        Platform fee collected from shop owners, calculated as the
-        commission&nbsp;% of each sale.
+        Phí nền tảng thu từ chủ cửa hàng, tính theo
+        tỷ lệ hoa hồng&nbsp;% trên mỗi đơn bán.
     </p>
 
     <p class="action-row">
         <a class="btn-secondary"
            href="<%= QueryUrl.keep(request, contextPath + "/admin/commission-report", "from", "to", "status") %>format=csv">
-            ⬇️ Export CSV
+            ⬇️ Xuất CSV
         </a>
     </p>
 
@@ -228,17 +228,17 @@
 
         <a class="<%= "overview".equals(section) ? "active" : "" %>"
            href="<%= secOverview %>">
-            📊 Overview
+            📊 Tổng quan
         </a>
 
         <a class="<%= "shops".equals(section) ? "active" : "" %>"
            href="<%= secShops %>">
-            🏪 By Shop
+            🏪 Theo cửa hàng
         </a>
 
         <a class="<%= "rates".equals(section) ? "active" : "" %>"
            href="<%= secRates %>">
-            📈 By Rate
+            📈 Theo tỷ lệ
         </a>
 
     </nav>
@@ -251,26 +251,26 @@
 
         <input type="hidden" name="section" value="<%= esc(section) %>">
 
-        <label for="from">From</label>
+        <label for="from">Từ ngày</label>
 
         <input class="filter-input" type="date" id="from"
                name="from" value="<%= esc(from) %>">
 
-        <label for="to">To</label>
+        <label for="to">Đến ngày</label>
 
         <input class="filter-input" type="date" id="to"
                name="to" value="<%= esc(to) %>">
 
-        <label for="status">Order Status</label>
+        <label for="status">Trạng thái đơn</label>
 
         <select class="filter-input" id="status" name="status">
             <%= statusOptions(status) %>
         </select>
 
-        <button type="submit" class="btn-sm">Apply</button>
+        <button type="submit" class="btn-sm">Áp dụng</button>
 
         <a class="filter-clear"
-           href="<%= secUrl(reportBase, section, "", "", "") %>">Clear</a>
+           href="<%= secUrl(reportBase, section, "", "", "") %>">Xóa lọc</a>
 
     </form>
 
@@ -281,17 +281,17 @@
     <div class="summary-grid">
 
         <div class="summary-card">
-            <span class="summary-label">Total Revenue</span>
+            <span class="summary-label">Tổng doanh thu</span>
             <span class="summary-value"><%= money(totalRevenue) %></span>
         </div>
 
         <div class="summary-card summary-accent">
-            <span class="summary-label">Platform Fee Collected</span>
+            <span class="summary-label">Phí nền tảng đã thu</span>
             <span class="summary-value"><%= money(totalFee) %></span>
         </div>
 
         <div class="summary-card">
-            <span class="summary-label">Paid To Shops</span>
+            <span class="summary-label">Đã trả cửa hàng</span>
             <span class="summary-value"><%= money(totalEarning) %></span>
         </div>
 
@@ -300,8 +300,8 @@
     <% if (!hasSales) { %>
 
         <div class="success-message">
-            ℹ️ No sales yet — the figures below become non-zero as
-            soon as shop products are ordered.
+            ℹ️ Chưa có doanh số — các số liệu bên dưới sẽ khác 0 ngay khi
+            sản phẩm của cửa hàng được đặt mua.
         </div>
 
     <% } %>
@@ -310,13 +310,13 @@
 
     <div class="panel">
 
-        <h2>🧾 Fee Breakdown</h2>
+        <h2>🧾 Chi tiết phí</h2>
 
         <p class="panel-hint">
-            Platform settlement for the selected period, across all
-            shops. Commission is counted on <em>delivered</em>
-            orders only; cancelled and failed orders are reported
-            as refunds.
+            Quyết toán nền tảng trong kỳ đã chọn, trên tất cả
+            cửa hàng. Hoa hồng chỉ tính trên đơn <em>đã giao</em>;
+            đơn đã hủy và đơn thất bại được ghi nhận
+            là hoàn tiền.
         </p>
 
         <div class="table-scroll">
@@ -325,38 +325,38 @@
 
                 <thead>
                     <tr>
-                        <th>Line</th>
-                        <th>Amount</th>
+                        <th>Mục</th>
+                        <th>Số tiền</th>
                     </tr>
                 </thead>
 
                 <tbody>
                     <tr>
-                        <td>Gross sales (all orders in period)</td>
+                        <td>Tổng doanh số (tất cả đơn trong kỳ)</td>
                         <td><%= money(breakdown == null ? null : breakdown.get("gross_sales")) %></td>
                     </tr>
                     <tr>
-                        <td>Promotional discount (&minus;)</td>
+                        <td>Giảm giá khuyến mãi (&minus;)</td>
                         <td><%= money(breakdown == null ? null : breakdown.get("promotional_discount")) %></td>
                     </tr>
                     <tr>
-                        <td>Refunded / cancelled orders</td>
+                        <td>Đơn hoàn tiền / đã hủy</td>
                         <td><%= money(breakdown == null ? null : breakdown.get("refunds")) %></td>
                     </tr>
                     <tr>
-                        <td><strong>Paid revenue (commission basis)</strong></td>
+                        <td><strong>Doanh thu thực thu (cơ sở hoa hồng)</strong></td>
                         <td><strong><%= money(totalRevenue) %></strong></td>
                     </tr>
                     <tr>
-                        <td>Service fee (<%= CommissionReportDAO.SERVICE_FEE_RATE.toPlainString() %> %)</td>
+                        <td>Phí dịch vụ (<%= CommissionReportDAO.SERVICE_FEE_RATE.toPlainString() %> %)</td>
                         <td><%= money(serviceFee) %></td>
                     </tr>
                     <tr>
-                        <td>Platform commission (per product rate)</td>
+                        <td>Hoa hồng nền tảng (theo tỷ lệ từng sản phẩm)</td>
                         <td><%= money(totalFee) %></td>
                     </tr>
                     <tr>
-                        <td><strong>Paid to shops (net)</strong></td>
+                        <td><strong>Thực trả cửa hàng (ròng)</strong></td>
                         <td><strong><%= money(netPayout) %></strong></td>
                     </tr>
                 </tbody>
@@ -373,10 +373,10 @@
 
     <div class="panel">
 
-        <h2>🏪 Platform Fee by Shop</h2>
+        <h2>🏪 Phí nền tảng theo cửa hàng</h2>
 
         <p class="panel-hint">
-            How much fee the platform collects from each shop.
+            Số phí nền tảng thu được từ từng cửa hàng.
         </p>
 
         <div class="table-scroll">
@@ -385,13 +385,13 @@
 
                 <thead>
                     <tr>
-                        <th>Shop</th>
-                        <th>Products</th>
-                        <th>Quantity Sold</th>
-                        <th>Revenue</th>
-                        <th>Avg. Commission</th>
-                        <th>Platform Fee</th>
-                        <th>Paid To Shop</th>
+                        <th>Cửa hàng</th>
+                        <th>Sản phẩm</th>
+                        <th>Số lượng bán</th>
+                        <th>Doanh thu</th>
+                        <th>Hoa hồng TB</th>
+                        <th>Phí nền tảng</th>
+                        <th>Thực trả cửa hàng</th>
                     </tr>
                 </thead>
 
@@ -400,7 +400,7 @@
 
                     <tr>
                         <td colspan="7">
-                            No shops to report yet.
+                            Chưa có cửa hàng để báo cáo.
                         </td>
                     </tr>
 
@@ -424,7 +424,7 @@
 
                 <tfoot>
                     <tr>
-                        <td colspan="3">Total</td>
+                        <td colspan="3">Tổng cộng</td>
                         <td><%= money(totalRevenue) %></td>
                         <td></td>
                         <td><%= money(totalFee) %></td>
@@ -444,11 +444,11 @@
 
     <div class="panel">
 
-        <h2>📊 Platform Fee by Commission Rate</h2>
+        <h2>📊 Phí nền tảng theo tỷ lệ hoa hồng</h2>
 
         <p class="panel-hint">
-            Fee collected, grouped by the commission percentage set
-            for the products.
+            Phí thu được, nhóm theo tỷ lệ hoa hồng đặt
+            cho sản phẩm.
         </p>
 
         <div class="table-scroll">
@@ -457,10 +457,10 @@
 
                 <thead>
                     <tr>
-                        <th>Commission Rate</th>
-                        <th>Quantity Sold</th>
-                        <th>Revenue</th>
-                        <th>Platform Fee</th>
+                        <th>Tỷ lệ hoa hồng</th>
+                        <th>Số lượng bán</th>
+                        <th>Doanh thu</th>
+                        <th>Phí nền tảng</th>
                     </tr>
                 </thead>
 
@@ -469,7 +469,7 @@
 
                     <tr>
                         <td colspan="4">
-                            No commission rates to report yet.
+                            Chưa có tỷ lệ hoa hồng để báo cáo.
                         </td>
                     </tr>
 

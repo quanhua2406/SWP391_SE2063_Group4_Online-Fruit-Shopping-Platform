@@ -2,9 +2,11 @@ package com.mycompany.onlinefruitshopping.controller.review;
 
 import com.mycompany.onlinefruitshopping.dao.review.ReviewDAO;
 import com.mycompany.onlinefruitshopping.dao.review.ReviewReportDAO;
+import com.mycompany.onlinefruitshopping.model.AdminNotificationType;
 import com.mycompany.onlinefruitshopping.model.Review;
 import com.mycompany.onlinefruitshopping.model.ReviewReport;
 import com.mycompany.onlinefruitshopping.model.User;
+import com.mycompany.onlinefruitshopping.service.NotificationService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -55,8 +57,9 @@ public class ReportReviewServlet extends HttpServlet {
     private static final List<String> ALLOWED  = Arrays.asList(
             "image/jpeg", "image/png", "image/webp", "image/gif");
 
-    private final ReviewDAO       reviewDAO = new ReviewDAO();
-    private final ReviewReportDAO reportDAO = new ReviewReportDAO();
+    private final ReviewDAO           reviewDAO           = new ReviewDAO();
+    private final ReviewReportDAO     reportDAO           = new ReviewReportDAO();
+    private final NotificationService notificationService = new NotificationService();
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -114,16 +117,10 @@ public class ReportReviewServlet extends HttpServlet {
         }
 
         try {
-            // ── 6. Kiểm tra đã báo cáo chưa ─────────────────────────────
-            if (reportDAO.hasReported(reviewId, currentUser.getUserID())) {
-                sendError(request, response, backUrl, "Bạn đã báo cáo đánh giá này rồi.");
-                return;
-            }
-
-            // ── 7. Xử lý upload ảnh bằng chứng (tuỳ chọn) ───────────────
+            // ── 6. Xử lý upload ảnh bằng chứng (tuỳ chọn) ───────────────
             String evidenceUrls = handleEvidenceUploads(request);
 
-            // ── 8. Lưu báo cáo ───────────────────────────────────────────
+            // ── 7. Lưu hoặc cập nhật báo cáo ─────────────────────────────
             ReviewReport report = new ReviewReport(
                     reviewId,
                     currentUser.getUserID(),
@@ -131,19 +128,56 @@ public class ReportReviewServlet extends HttpServlet {
                     (note != null && !note.isBlank()) ? note.trim() : null,
                     evidenceUrls
             );
-            int newId = reportDAO.createReport(report);
-            if (newId < 0) {
-                sendError(request, response, backUrl, "Không thể lưu báo cáo. Vui lòng thử lại.");
-                return;
+
+            boolean alreadyReported = reportDAO.hasReported(reviewId, currentUser.getUserID());
+            if (alreadyReported) {
+                boolean updated = reportDAO.updateReport(report);
+                if (!updated) {
+                    sendError(request, response, backUrl, "Không thể cập nhật báo cáo. Vui lòng thử lại.");
+                    return;
+                }
+            } else {
+                int newId = reportDAO.createReport(report);
+                if (newId < 0) {
+                    sendError(request, response, backUrl, "Không thể lưu báo cáo. Vui lòng thử lại.");
+                    return;
+                }
             }
 
-            // ── 9. Cập nhật status review -> reported ─────────────────────
-            if ("published".equals(review.getStatus())) {
+            // ── 8. Cập nhật status review -> reported ─────────────────────
+            if (review.getStatus() == null || "published".equalsIgnoreCase(review.getStatus())) {
                 reviewDAO.updateStatus(reviewId, "reported");
             }
 
+            // ── 9. Gửi thông báo (Notification) cho toàn bộ Admin ─────────
+            String reasonLabel = switch (reason) {
+                case "spam" -> "Spam / Quảng cáo";
+                case "inappropriate_language" -> "Ngôn ngữ không phù hợp";
+                case "fake_review" -> "Đánh giá giả mạo";
+                default -> "Lý do khác";
+            };
+            String reporterName = (currentUser.getFullName() != null && !currentUser.getFullName().isBlank())
+                    ? currentUser.getFullName()
+                    : "Người dùng #" + currentUser.getUserID();
+            String prodName = (review.getProductName() != null && !review.getProductName().isBlank())
+                    ? review.getProductName()
+                    : "Sản phẩm #" + review.getProduct_id();
+
+            String notifTitle = "Báo cáo đánh giá vi phạm #" + reviewId + " - " + prodName;
+            String notifContent = reporterName + " vừa báo cáo đánh giá #" + reviewId
+                    + " của sản phẩm \"" + prodName + "\". Lý do: " + reasonLabel
+                    + (note != null && !note.isBlank() ? " (Mô tả: " + note.trim() + ")" : "") + ".";
+
+            notificationService.notifyAllAdmins(
+                    notifTitle,
+                    notifContent,
+                    AdminNotificationType.REPORTED_REVIEW,
+                    "review",
+                    String.valueOf(reviewId)
+            );
+
             // ── 10. Thành công ─────────────────────────────────────────────
-            session.setAttribute("toast_success", "Báo cáo đã được ghi nhận. Cảm ơn bạn!");
+            session.setAttribute("toast_success", "Báo cáo đánh giá đã được gửi tới Ban quản trị. Cảm ơn bạn!");
             response.sendRedirect(backUrl);
 
         } catch (SQLException e) {

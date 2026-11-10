@@ -8,11 +8,11 @@
 
 <%!
     private static final String[][] DELIVERY_STATUSES = {
-        {"assigned", "Assigned"},
-        {"picked_up", "Picked up"},
-        {"delivering", "Delivering"},
-        {"delivered", "Delivered"},
-        {"failed", "Failed"}
+        {"assigned", "Đã phân công"},
+        {"picked_up", "Đã lấy hàng"},
+        {"delivering", "Đang giao"},
+        {"delivered", "Đã giao"},
+        {"failed", "Giao thất bại"}
     };
 
     private String statusLabel(String status) {
@@ -114,7 +114,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Deliveries - FreshFruit Admin</title>
+    <title>Giao hàng - FreshFruit Admin</title>
 
     <link rel="stylesheet" href="<%= contextPath %>/css/style.css">
 </head>
@@ -129,13 +129,13 @@
 
     <nav class="nav-actions">
 
-        <a href="<%= contextPath %>/admin/dashboard">📊 Dashboard</a>
+        <a href="<%= contextPath %>/admin/dashboard">📊 Bảng điều khiển</a>
 
-        <a href="<%= contextPath %>/admin/orders">🛒 Orders</a>
+        <a href="<%= contextPath %>/admin/orders">🛒 Đơn hàng</a>
 
-        <a href="<%= contextPath %>/admin/delivery-staff">🧑‍✈️ Delivery Staff</a>
+        <a href="<%= contextPath %>/admin/delivery-staff">🧑‍✈️ Nhân viên giao hàng</a>
 
-        <a href="<%= contextPath %>/logout" class="logout">Logout</a>
+        <a href="<%= contextPath %>/logout" class="logout">Đăng xuất</a>
 
     </nav>
 
@@ -144,14 +144,14 @@
 <section class="dashboard">
 
     <p class="breadcrumb">
-        <a href="<%= contextPath %>/admin/dashboard">← Admin Dashboard</a>
+        <a href="<%= contextPath %>/admin/dashboard">← Bảng điều khiển</a>
     </p>
 
-    <h1>Delivery Monitoring</h1>
+    <h1>Theo dõi giao hàng</h1>
 
     <p class="dashboard-welcome">
-        Delivery progress across the platform and the shipper
-        assigned to each order.
+        Tiến độ giao hàng trên toàn hệ thống và shipper
+        được phân cho từng đơn.
     </p>
 
     <!-- ==================== STATUS COUNTS ==================== -->
@@ -175,16 +175,16 @@
 
     <form method="get" action="<%= contextPath %>/admin/deliveries" class="filter-form">
 
-        <label for="search">Search</label>
+        <label for="search">Tìm kiếm</label>
 
         <input class="filter-input" type="text" id="search" name="search"
-               placeholder="Delivery id, order id, shipper, customer, shop"
+               placeholder="Mã giao, mã đơn, shipper, khách hàng, cửa hàng"
                value="<%= esc(search) %>">
 
-        <label for="status">Status</label>
+        <label for="status">Trạng thái</label>
 
         <select class="filter-input" id="status" name="status">
-            <option value=""<%= status.isEmpty() ? " selected" : "" %>>All statuses</option>
+            <option value=""<%= status.isEmpty() ? " selected" : "" %>>Tất cả trạng thái</option>
             <% for (String[] s : DELIVERY_STATUSES) { %>
                 <option value="<%= s[0] %>"<%= s[0].equals(status) ? " selected" : "" %>>
                     <%= s[1] %>
@@ -192,9 +192,9 @@
             <% } %>
         </select>
 
-        <button type="submit" class="btn-sm">Apply</button>
+        <button type="submit" class="btn-sm">Áp dụng</button>
 
-        <a class="filter-clear" href="<%= contextPath %>/admin/deliveries">Clear</a>
+        <a class="filter-clear" href="<%= contextPath %>/admin/deliveries">Xóa lọc</a>
 
     </form>
 
@@ -202,13 +202,13 @@
 
     <div class="panel">
 
-        <h2>🚚 Deliveries</h2>
+        <h2>🚚 Đơn giao hàng</h2>
 
         <p class="panel-hint">
-            <%= deliveries == null ? 0 : deliveries.getTotal() %> delivery record(s) matched.
-            Assignments are created by the shop owner; use
-            <a href="<%= contextPath %>/admin/delivery-assign">Manage Assignments</a>
-            to step in.
+            <%= deliveries == null ? 0 : deliveries.getTotal() %> bản ghi giao hàng phù hợp.
+            Phân công do chủ cửa hàng tạo; có thể vào
+            <a href="<%= contextPath %>/admin/delivery-assign">Quản lý phân công</a>
+            để xử lý.
         </p>
 
         <div class="table-scroll">
@@ -217,14 +217,14 @@
 
                 <thead>
                     <tr>
-                        <th>Delivery</th>
-                        <th>Order</th>
+                        <th>Mã giao</th>
+                        <th>Đơn hàng</th>
                         <th>Shipper</th>
-                        <th>Customer</th>
-                        <th>Address</th>
-                        <th>Status</th>
-                        <th>Note</th>
-                        <th>Actions</th>
+                        <th>Khách hàng</th>
+                        <th>Địa chỉ</th>
+                        <th>Trạng thái</th>
+                        <th>Ghi chú</th>
+                        <th>Thao tác</th>
                     </tr>
                 </thead>
 
@@ -233,8 +233,8 @@
 
                     <tr>
                         <td colspan="8">
-                            No deliveries yet. A delivery appears here once an
-                            order has shipping status and a shipper assigned.
+                            Chưa có đơn giao nào. Đơn giao sẽ hiện ở đây khi đơn hàng
+                            ở trạng thái đang giao và đã được phân shipper.
                         </td>
                     </tr>
 
@@ -274,7 +274,7 @@
                         <td>
                             <a class="btn-sm-info"
                                href="<%= contextPath %>/admin/order-detail?orderId=<%= esc(row.get("order_id")) %>">
-                                Order
+                                Đơn hàng
                             </a>
                         </td>
                     </tr>

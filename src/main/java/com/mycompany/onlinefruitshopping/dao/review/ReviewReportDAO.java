@@ -134,6 +134,38 @@ public class ReviewReportDAO {
     // ─────────────────────────────────────────────────────────────────────
     // 3. Đếm số lần báo cáo của 1 review
     // ─────────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────
+    // 2b. Cập nhật lại báo cáo (khi báo cáo bổ sung hoặc cập nhật bằng chứng)
+    // ─────────────────────────────────────────────────────────────────────
+    public boolean updateReport(ReviewReport report) throws SQLException {
+        boolean colExists = hasEvidenceColumn();
+        boolean hasEvidence = report.getEvidenceUrls() != null && !report.getEvidenceUrls().isBlank();
+        boolean useEvidence = colExists && hasEvidence;
+
+        String note = report.getNote();
+        if (!colExists && hasEvidence) {
+            String evidenceNote = "[Bằng chứng: " + report.getEvidenceUrls() + "]";
+            note = (note != null && !note.isBlank()) ? note + "\n" + evidenceNote : evidenceNote;
+        }
+
+        String sql = useEvidence
+                ? "UPDATE review_reports SET reason = ?, note = ?, evidence_urls = ?, created_at = GETDATE() WHERE review_id = ? AND reporter_id = ?"
+                : "UPDATE review_reports SET reason = ?, note = ?, created_at = GETDATE() WHERE review_id = ? AND reporter_id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            int idx = 1;
+            ps.setString(idx++, report.getReason());
+            ps.setString(idx++, note);
+            if (useEvidence) {
+                ps.setString(idx++, report.getEvidenceUrls());
+            }
+            ps.setInt(idx++, report.getReviewId());
+            ps.setInt(idx, report.getReporterId());
+            return ps.executeUpdate() > 0;
+        }
+    }
+
     public int countReportsByReviewId(int reviewId) throws SQLException {
         String sql = "SELECT COUNT(*) FROM review_reports WHERE review_id = ?";
         try (Connection conn = DBConnection.getConnection();

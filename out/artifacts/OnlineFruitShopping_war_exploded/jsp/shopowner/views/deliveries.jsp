@@ -33,7 +33,7 @@
                                 <h2>Đơn #${d.orderId}</h2>
 
                                 <span class="muted">
-                                    Mã lần giao #${d.id}
+                                    Mã lần giao #${d.attemptId}
                                 </span>
                             </div>
 
@@ -105,7 +105,7 @@
                         </p>
 
                         <a class="button shipper-detail-link"
-                           href="${ctx}/shopowner/delivery/detail?id=${d.id}">
+                           href="${ctx}/shopowner/delivery/detail?id=${d.attemptId}">
 
                             <c:choose>
 

@@ -5,27 +5,32 @@
 
     <a class="<%= "stock".equals(activePage) ? "active" : "" %>"
        href="<%= contextPath %>/store-owner/inventory">
-        📦 View Stock
+        📦 Xem tồn kho
     </a>
 
     <a class="<%= "update".equals(activePage) ? "active" : "" %>"
        href="<%= contextPath %>/store-owner/inventory/update">
-        ✏️ Update Stock
+        ✏️ Cập nhật tồn
     </a>
 
     <a class="<%= "restock".equals(activePage) ? "active" : "" %>"
        href="<%= contextPath %>/store-owner/inventory/restock">
-        📥 Restock
+        📥 Nhập hàng
     </a>
 
     <a class="<%= "lowstock".equals(activePage) ? "active" : "" %>"
        href="<%= contextPath %>/store-owner/inventory/low-stock">
-        ⚠️ Low Stock
+        ⚠️ Sắp hết hàng
+    </a>
+
+    <a class="<%= "expired".equals(activePage) ? "active" : "" %>"
+       href="<%= contextPath %>/store-owner/inventory/expired">
+        ⏰ Hết hạn
     </a>
 
     <a class="<%= "history".equals(activePage) ? "active" : "" %>"
        href="<%= contextPath %>/store-owner/inventory/history">
-        🕓 History
+        🕓 Lịch sử
     </a>
 
 </nav>

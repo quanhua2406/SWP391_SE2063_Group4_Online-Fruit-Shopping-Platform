@@ -5,6 +5,26 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 
 <%!
+    private String statusLabel(String status) {
+        if ("active".equalsIgnoreCase(status)) {
+            return "Hoạt động";
+        }
+
+        if ("suspended".equalsIgnoreCase(status)) {
+            return "Bị khóa";
+        }
+
+        if ("locked".equalsIgnoreCase(status)) {
+            return "Đã khóa";
+        }
+
+        if ("pending".equalsIgnoreCase(status)) {
+            return "Chờ duyệt";
+        }
+
+        return status;
+    }
+
     private String escapeHtml(String value) {
         if (value == null) {
             return "";
@@ -51,7 +71,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Shop Owner Management - FreshFruit</title>
+    <title>Quản lý chủ cửa hàng - FreshFruit</title>
 
     <style>
         * {
@@ -483,19 +503,19 @@
     <div class="logo">🍊 FreshFruit</div>
 
     <nav class="nav-actions">
-        <a href="<%=contextPath%>/admin/dashboard">Dashboard</a>
-        <a href="<%=contextPath%>/admin/shops?action=dashboard">Shop Dashboard</a>
-        <a href="<%=contextPath%>/admin/shops">Shops</a>
-        <a href="<%=contextPath%>/admin/user-management">Users</a>
-        <a href="<%=contextPath%>/logout">Logout</a>
+        <a href="<%=contextPath%>/admin/dashboard">Bảng điều khiển</a>
+        <a href="<%=contextPath%>/admin/shops?action=dashboard">Bảng điều khiển cửa hàng</a>
+        <a href="<%=contextPath%>/admin/shops">Cửa hàng</a>
+        <a href="<%=contextPath%>/admin/user-management">Người dùng</a>
+        <a href="<%=contextPath%>/logout">Đăng xuất</a>
     </nav>
 </header>
 
 <main class="container">
 
     <section class="page-header">
-        <h1>Shop Owner Management</h1>
-        <p>View registered shops and block or unblock a shop owner store.</p>
+        <h1>Quản lý chủ cửa hàng</h1>
+        <p>Xem các cửa hàng đã đăng ký và khóa hoặc mở khóa cửa hàng của chủ cửa hàng.</p>
     </section>
 
     <% if (!error.isEmpty()) { %>
@@ -514,8 +534,8 @@
     <section class="filter-card">
 
         <div class="filter-heading">
-            <h2>Search Shops</h2>
-            <p>Search by shop name or owner email and filter by shop status.</p>
+            <h2>Tìm kiếm cửa hàng</h2>
+            <p>Tìm theo tên cửa hàng hoặc email chủ cửa hàng và lọc theo trạng thái cửa hàng.</p>
         </div>
 
         <form class="filter-form"
@@ -527,44 +547,44 @@
             <input type="text"
                    name="keyword"
                    value="<%=escapeHtml(keyword)%>"
-                   placeholder="Search by shop name or owner email..."
-                   aria-label="Search shops">
+                   placeholder="Tìm theo tên cửa hàng hoặc email chủ cửa hàng..."
+                   aria-label="Tìm cửa hàng">
 
-            <select name="status" aria-label="Filter by shop status">
+            <select name="status" aria-label="Lọc theo trạng thái cửa hàng">
 
                 <option value="ALL"
                     <%= "ALL".equalsIgnoreCase(selectedStatus)
                             || selectedStatus.isEmpty() ? "selected" : "" %>>
-                    All Statuses
+                    Tất cả trạng thái
                 </option>
 
                 <option value="active"
                     <%= "ACTIVE".equalsIgnoreCase(selectedStatus)
                             ? "selected" : "" %>>
-                    Active
+                    Đang hoạt động
                 </option>
 
                 <option value="suspended"
                     <%= "SUSPENDED".equalsIgnoreCase(selectedStatus)
                             ? "selected" : "" %>>
-                    Suspended
+                    Bị khóa
                 </option>
 
                 <option value="pending"
                     <%= "PENDING".equalsIgnoreCase(selectedStatus)
                             ? "selected" : "" %>>
-                    Pending
+                    Chờ duyệt
                 </option>
 
             </select>
 
             <button type="submit" class="btn btn-search">
-                Search
+                Tìm kiếm
             </button>
 
             <a class="btn btn-reset"
                href="<%=contextPath%>/admin/shops">
-                Reset
+                Đặt lại
             </a>
 
         </form>
@@ -575,8 +595,8 @@
 
         <div class="table-heading">
             <div>
-                <h2>Shop List</h2>
-                <p>View a shop profile or block and unblock the whole store.</p>
+                <h2>Danh sách cửa hàng</h2>
+                <p>Xem hồ sơ cửa hàng hoặc khóa và mở khóa toàn bộ cửa hàng.</p>
             </div>
         </div>
 
@@ -586,13 +606,13 @@
 
                 <thead>
                     <tr>
-                        <th>Shop</th>
-                        <th>Owner</th>
-                        <th>Products</th>
-                        <th>Created</th>
-                        <th>Shop Status</th>
-                        <th>Owner Status</th>
-                        <th>Actions</th>
+                        <th>Cửa hàng</th>
+                        <th>Chủ cửa hàng</th>
+                        <th>Sản phẩm</th>
+                        <th>Ngày tạo</th>
+                        <th>Trạng thái cửa hàng</th>
+                        <th>Trạng thái chủ</th>
+                        <th>Thao tác</th>
                     </tr>
                 </thead>
 
@@ -629,7 +649,7 @@
 
                             String shopName = shop.getShopName() == null
                                     || shop.getShopName().isBlank()
-                                        ? "Shop"
+                                        ? "Cửa hàng"
                                         : shop.getShopName();
 
                             String avatar = shopName
@@ -657,7 +677,7 @@
                                     </div>
 
                                     <div class="shop-id">
-                                        Shop #<%=shop.getShopId()%>
+                                        Mã #<%=shop.getShopId()%>
                                     </div>
                                 </div>
 
@@ -677,8 +697,8 @@
 
                         <!-- PRODUCTS -->
                         <td>
-                            <%=shop.getPublishedCount()%> published /
-                            <%=shop.getProductCount()%> total
+                            <%=shop.getPublishedCount()%> đã đăng /
+                            <%=shop.getProductCount()%> tổng
                         </td>
 
                         <!-- CREATED -->
@@ -688,8 +708,8 @@
                         <td>
                             <span class="status-badge <%=shopStatusClass%>">
                                 <%=shopStatus.isBlank()
-                                        ? "Unknown"
-                                        : escapeHtml(shopStatus)%>
+                                        ? "Không rõ"
+                                        : escapeHtml(statusLabel(shopStatus))%>
                             </span>
                         </td>
 
@@ -697,8 +717,8 @@
                         <td>
                             <span class="status-badge <%=ownerStatusClass%>">
                                 <%=ownerStatus.isBlank()
-                                        ? "Unknown"
-                                        : escapeHtml(ownerStatus)%>
+                                        ? "Không rõ"
+                                        : escapeHtml(statusLabel(ownerStatus))%>
                             </span>
                         </td>
 
@@ -708,7 +728,7 @@
 
                                 <a class="btn btn-detail"
                                    href="<%=contextPath%>/admin/shops?action=detail&amp;shopId=<%=shop.getShopId()%>">
-                                    View
+                                    Xem
                                 </a>
 
                                 <% if (suspended) { %>
@@ -716,14 +736,14 @@
                                     <form class="action-form"
                                           method="post"
                                           action="<%=contextPath%>/admin/shops"
-                                          onsubmit="return confirm('Unblock this shop and publish its products again?');">
+                                          onsubmit="return confirm('Mở khóa cửa hàng này và đăng lại sản phẩm?');">
 
                                         <input type="hidden" name="action" value="unblock">
                                         <input type="hidden" name="shopId"
                                                value="<%=shop.getShopId()%>">
 
                                         <button type="submit" class="btn btn-unblock">
-                                            Unblock
+                                            Mở khóa
                                         </button>
 
                                     </form>
@@ -733,14 +753,14 @@
                                     <form class="action-form"
                                           method="post"
                                           action="<%=contextPath%>/admin/shops"
-                                          onsubmit="return confirm('Block this shop? Its owner is locked and its products are hidden.');">
+                                          onsubmit="return confirm('Khóa cửa hàng này? Chủ cửa hàng sẽ bị khóa và sản phẩm bị ẩn.');">
 
                                         <input type="hidden" name="action" value="block">
                                         <input type="hidden" name="shopId"
                                                value="<%=shop.getShopId()%>">
 
                                         <button type="submit" class="btn btn-block">
-                                            Block
+                                            Khóa
                                         </button>
 
                                     </form>
@@ -761,10 +781,10 @@
                     <tr>
                         <td colspan="7" class="empty-message">
 
-                            <strong>No shops found</strong>
+                            <strong>Không tìm thấy cửa hàng</strong>
 
                             <span>
-                                Try another keyword or shop status filter.
+                                Thử từ khóa hoặc bộ lọc trạng thái cửa hàng khác.
                             </span>
 
                         </td>
