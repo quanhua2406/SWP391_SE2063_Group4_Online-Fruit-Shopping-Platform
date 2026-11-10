@@ -25,7 +25,7 @@
 
     <a class="<%= "expired".equals(activePage) ? "active" : "" %>"
        href="<%= contextPath %>/store-owner/inventory/expired">
-        ⏰ Hết hạn
+        ⚠️ Không đảm bảo chất lượng
     </a>
 
     <a class="<%= "history".equals(activePage) ? "active" : "" %>"

@@ -158,7 +158,7 @@
 
     <p class="dashboard-welcome">
         Tất cả đơn hàng trên hệ thống, trên mọi cửa hàng, kèm
-        trạng thái hiện tại và phân công giao hàng.
+        trạng thái hiện tại.
     </p>
 
     <% if ("notfound".equals(msg)) { %>

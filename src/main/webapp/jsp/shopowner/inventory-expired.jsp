@@ -55,7 +55,7 @@
 
 <div class="panel">
 
-    <h2>⏰ Lô hàng đã hết hạn</h2>
+    <h2>⚠️ Lô hàng không đảm bảo chất lượng</h2>
 
     <p class="panel-hint">
         Các lô còn hàng nhưng đã quá hạn sử dụng. Gửi yêu cầu bỏ hàng,
@@ -80,7 +80,7 @@
         <% if (expiredBatches == null || expiredBatches.isEmpty()) { %>
 
             <tr>
-                <td colspan="7">Không có lô nào hết hạn.</td>
+                <td colspan="7">Không có lô nào không đảm bảo chất lượng.</td>
             </tr>
 
         <% } else {
@@ -205,19 +205,24 @@
 <div id="discardModal" class="discard-modal" hidden
      onclick="if (event.target === this) closeDiscard();">
     <div class="discard-box">
-        <h3>Gửi yêu cầu bỏ hàng hết hạn</h3>
+        <h3>Bỏ lô không đảm bảo chất lượng</h3>
         <p class="panel-hint">
-            Gửi yêu cầu bỏ toàn bộ số lượng còn lại của lô này?
-            Lô chỉ bị bỏ khỏi tồn kho sau khi chủ shop duyệt.
+            Bỏ toàn bộ số lượng còn lại của lô này khỏi tồn kho.
         </p>
+        <textarea form="discardForm" name="discardNote" required maxlength="150"
+                  rows="3" placeholder="Ghi chú (bắt buộc)"
+                  style="width: 100%; box-sizing: border-box;"></textarea>
+        <input form="discardForm" type="file" name="discardImage"
+               accept="image/png,image/jpeg,image/gif,image/webp"
+               style="margin: 8px 0;">
         <div style="display: flex; gap: 10px; justify-content: flex-end;">
             <button type="button" class="btn-secondary" onclick="closeDiscard()">Hủy</button>
-            <button type="button" class="btn-sm btn-delete" onclick="submitDiscard()">Gửi yêu cầu</button>
+            <button type="button" class="btn-sm btn-delete" onclick="submitDiscard()">Bỏ lô</button>
         </div>
     </div>
 </div>
 
-<form id="discardForm" method="post"
+<form id="discardForm" method="post" enctype="multipart/form-data"
       action="<%= contextPath %>/store-owner/inventory/update" hidden>
     <input type="hidden" name="action" value="requestDiscard">
     <input type="hidden" id="discardBatchId" name="batchId" value="">

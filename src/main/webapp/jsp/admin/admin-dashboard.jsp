@@ -590,8 +590,7 @@
                 <h3>Quản lý giao hàng</h3>
 
                 <p>
-                    Theo dõi tiến độ giao hàng, quản lý nhân viên giao
-                    và phân công lại shipper khi cần.
+                    Theo dõi tiến độ giao hàng và quản lý nhân viên giao.
                 </p>
 
                 <a class="action-btn"

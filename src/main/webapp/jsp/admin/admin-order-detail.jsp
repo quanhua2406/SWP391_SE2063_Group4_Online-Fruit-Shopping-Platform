@@ -225,10 +225,10 @@
                     <td><%= address.length() == 0 ? "—" : esc(address.toString()) %></td>
                 </tr>
                 <tr>
-                    <th>Shipper</th>
+                    <th>Shipper (chủ cửa hàng phân công)</th>
                     <td>
                         <% if (delivery == null) { %>
-                            <span class="pill pill-muted">Chưa phân công</span>
+                            <span class="pill pill-muted">Chưa có shipper</span>
                         <% } else { %>
                             <%= esc(delivery.get("staff_name")) %>
                             (<%= esc(delivery.get("staff_phone")) %>)
@@ -415,11 +415,6 @@
     </div>
 
     <p class="action-row">
-
-        <a class="btn-secondary"
-           href="<%= contextPath %>/admin/delivery-assign?search=<%= esc(order.get("order_id")) %>">
-            🚚 Quản lý phân công
-        </a>
 
         <a class="btn-secondary"
            href="<%= contextPath %>/admin/order-issues?search=<%= esc(order.get("order_id")) %>">

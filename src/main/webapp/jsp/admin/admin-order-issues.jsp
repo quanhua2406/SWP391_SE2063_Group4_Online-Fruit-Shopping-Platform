@@ -111,8 +111,6 @@
 
         <a href="<%= contextPath %>/admin/orders">🛒 Đơn hàng</a>
 
-        <a href="<%= contextPath %>/admin/delivery-assign">🚚 Phân công</a>
-
         <a href="<%= contextPath %>/logout" class="logout">Đăng xuất</a>
 
     </nav>

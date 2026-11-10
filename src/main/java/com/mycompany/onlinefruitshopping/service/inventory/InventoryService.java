@@ -35,6 +35,7 @@ public class InventoryService {
 
     /** {@code inventory_adjustments.reason} is NVARCHAR(255). */
     private static final int MAX_REASON_LENGTH = 255;
+    private static final int MAX_DISCARD_NOTE_LENGTH = 150;
 
     private static final Logger LOG =
             Logger.getLogger(InventoryService.class.getName());
@@ -322,14 +323,18 @@ public class InventoryService {
     }
 
     /**
-     * Asks to write off an expired batch of the owner's shop. The request
-     * waits for the owner's approval.
+     * The shop owner writes off the remaining quantity of an expired batch
+     * directly. A note is required; a photo is optional.
      */
-    public String requestDiscard(int userId, String batchIdRaw) throws SQLException {
+    public String requestDiscard(int userId,
+                                 String batchIdRaw,
+                                 String noteRaw,
+                                 String imagePath) throws SQLException {
 
         int batchId = parseInt(batchIdRaw, -1);
+        String note = trim(noteRaw);
 
-        if (batchId <= 0) {
+        if (batchId <= 0 || note.isEmpty() || note.length() > MAX_DISCARD_NOTE_LENGTH) {
             return "invalid";
         }
 
@@ -337,7 +342,12 @@ public class InventoryService {
             return "forbidden";
         }
 
-        return inventoryDAO.createDiscardRequest(batchId, userId);
+        String reason = buildDiscardReason("Không đảm bảo chất lượng (hết hạn): ", note, imagePath);
+        if (reason == null) {
+            return "invalid";
+        }
+
+        return inventoryDAO.discardExpiredBatch(batchId, userId, reason);
     }
 
     public List<Map<String, Object>> expiredBatches(int userId) throws SQLException {
@@ -361,6 +371,56 @@ public class InventoryService {
         }
 
         return inventoryDAO.resolveDiscardRequest(requestId, userId, approve);
+    }
+
+    /**
+     * The shop owner writes off part or all of a batch that failed quality
+     * checks. The reason is required.
+     */
+    public String discardQuality(int userId,
+                                 String batchIdRaw,
+                                 String quantityRaw,
+                                 String noteRaw,
+                                 String imagePath) throws SQLException {
+
+        int batchId = parseInt(batchIdRaw, -1);
+        double quantity = parseDouble(quantityRaw, -1);
+        String note = trim(noteRaw);
+
+        if (batchId <= 0 || quantity <= 0 || quantity > MAX_STOCK_QUANTITY) {
+            return "invalid";
+        }
+
+        if (note.isEmpty() || note.length() > MAX_DISCARD_NOTE_LENGTH) {
+            return "invalid";
+        }
+
+        if (!inventoryDAO.batchBelongsToOwner(batchId, userId)) {
+            return "forbidden";
+        }
+
+        String reason = buildDiscardReason("Không đạt chất lượng: ", note, imagePath);
+        if (reason == null) {
+            return "invalid";
+        }
+
+        return inventoryDAO.discardQualityQuantity(
+                batchId,
+                userId,
+                java.math.BigDecimal.valueOf(quantity),
+                reason);
+    }
+
+    /**
+     * Joins the prefix, the note and the optional photo path into the stored
+     * adjustment reason. Returns null when the result does not fit the column.
+     */
+    private String buildDiscardReason(String prefix, String note, String imagePath) {
+
+        String reason = prefix + note
+                + (imagePath == null ? "" : " [ảnh: " + imagePath + "]");
+
+        return reason.length() > 255 ? null : reason;
     }
 
     /**

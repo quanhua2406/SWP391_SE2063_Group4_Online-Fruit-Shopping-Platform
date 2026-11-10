@@ -11,7 +11,7 @@
             case "active":
                 return "Đang hoạt động";
             case "expired":
-                return "Hết hạn";
+                return "Không đảm bảo chất lượng";
             case "depleted":
                 return "Đã hết";
             default:
@@ -70,7 +70,7 @@
         <select class="filter-select" name="bstatus">
             <option value="">Tất cả trạng thái</option>
             <option value="active" <%= "active".equals(bstatus) ? "selected" : "" %>>Đang hoạt động</option>
-            <option value="expired" <%= "expired".equals(bstatus) ? "selected" : "" %>>Hết hạn</option>
+            <option value="expired" <%= "expired".equals(bstatus) ? "selected" : "" %>>Không đảm bảo chất lượng</option>
             <option value="depleted" <%= "depleted".equals(bstatus) ? "selected" : "" %>>Đã hết</option>
         </select>
 
@@ -140,6 +140,32 @@
 
                         <button type="submit" class="btn-sm">
                             Lưu
+                        </button>
+
+                    </form>
+
+                    <form method="post"
+                          enctype="multipart/form-data"
+                          action="<%= contextPath %>/store-owner/inventory/update">
+
+                        <input type="hidden" name="action" value="discardQuality">
+                        <input type="hidden" name="batchId"
+                               value="<%= esc(b.get("batch_id")) %>">
+
+                        <input class="qty-input" type="number"
+                               name="discardQuantity" min="0.01" step="0.01"
+                               placeholder="SL bỏ" required>
+
+                        <input class="qty-input" type="text"
+                               name="discardReason" maxlength="255"
+                               placeholder="Lý do (bắt buộc)" required>
+
+                        <input class="qty-input" type="file"
+                               name="discardImage"
+                               accept="image/png,image/jpeg,image/gif,image/webp">
+
+                        <button type="submit" class="btn-sm">
+                            Bỏ hàng lỗi
                         </button>
 
                     </form>

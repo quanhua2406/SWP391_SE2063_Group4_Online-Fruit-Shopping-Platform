@@ -4,13 +4,17 @@ import com.mycompany.onlinefruitshopping.model.User;
 import com.mycompany.onlinefruitshopping.service.inventory.InventoryService;
 
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Part;
 
+import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.UUID;
 
 /**
  * Shop owner inventory, split into small pages:
@@ -35,6 +39,7 @@ import java.sql.SQLException;
     "/store-owner/inventory",
     "/store-owner/inventory/*"
 })
+@MultipartConfig(maxFileSize = 5 * 1024 * 1024)
 public class StoreOwnerInventoryServlet extends HttpServlet {
 
     private final InventoryService inventoryService = new InventoryService();
@@ -107,6 +112,42 @@ public class StoreOwnerInventoryServlet extends HttpServlet {
      * The page that owns each action, so a POST message lands where
      * the user was working.
      */
+    /**
+     * Saves the optional photo of a discarded batch and returns its relative
+     * URL, or null when no photo was sent.
+     */
+    private String saveDiscardImage(HttpServletRequest request)
+            throws IOException, ServletException {
+
+        String contentType = request.getContentType();
+        if (contentType == null || !contentType.toLowerCase().startsWith("multipart/")) {
+            return null;
+        }
+
+        Part part = request.getPart("discardImage");
+        if (part == null || part.getSize() == 0) {
+            return null;
+        }
+
+        String ext = switch (part.getContentType() == null ? "" : part.getContentType()) {
+            case "image/png" -> ".png";
+            case "image/jpeg" -> ".jpg";
+            case "image/gif" -> ".gif";
+            case "image/webp" -> ".webp";
+            default -> null;
+        };
+        if (ext == null) {
+            throw new IllegalArgumentException("Ảnh phải là PNG, JPG, GIF hoặc WEBP.");
+        }
+
+        String fileName = "dc_" + UUID.randomUUID() + ext;
+        File dir = new File(getServletContext().getRealPath("")
+                + File.separator + "uploads" + File.separator + "discards");
+        dir.mkdirs();
+        part.write(new File(dir, fileName).getAbsolutePath());
+        return "uploads/discards/" + fileName;
+    }
+
     private String backOf(String action) {
 
         if ("restock".equals(action)) {
@@ -299,7 +340,10 @@ public class StoreOwnerInventoryServlet extends HttpServlet {
 
             } else if ("requestDiscard".equals(action)) {
                 result = inventoryService.requestDiscard(
-                        userId, request.getParameter("batchId"));
+                        userId,
+                        request.getParameter("batchId"),
+                        request.getParameter("discardNote"),
+                        saveDiscardImage(request));
 
             } else if ("approveDiscard".equals(action)) {
                 result = inventoryService.resolveDiscard(
@@ -309,6 +353,14 @@ public class StoreOwnerInventoryServlet extends HttpServlet {
                 result = inventoryService.resolveDiscard(
                         userId, request.getParameter("requestId"), false);
 
+            } else if ("discardQuality".equals(action)) {
+                result = inventoryService.discardQuality(
+                        userId,
+                        request.getParameter("batchId"),
+                        request.getParameter("discardQuantity"),
+                        request.getParameter("discardReason"),
+                        saveDiscardImage(request));
+
             } else {
                 result = inventoryService.updateBatch(
                         userId,
@@ -316,6 +368,9 @@ public class StoreOwnerInventoryServlet extends HttpServlet {
                         request.getParameter("quantity"),
                         request.getParameter("reason"));
             }
+
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            result = "invalid";
 
         } catch (SQLException e) {
             throw new ServletException(

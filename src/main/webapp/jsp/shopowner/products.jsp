@@ -229,12 +229,7 @@
                                             </c:otherwise>
                                         </c:choose>
 
-                                        <!-- Quản lý quy cách đóng gói (Variants) -->
-                                        <a href="${pageContext.request.contextPath}/store-owner/variants?productId=${p.productId}"
-                                           class="btn-sm btn-variants" title="Quản lý quy cách đóng gói & giá biến thể">
-                                            Quy cách
-                                        </a>
-
+                                     
                                         <!-- Quản lý bộ ảnh sản phẩm (Images) -->
                                         <a href="${pageContext.request.contextPath}/store-owner/product-images?productId=${p.productId}"
                                            class="btn-sm btn-images" title="Quản lý thư viện hình ảnh">

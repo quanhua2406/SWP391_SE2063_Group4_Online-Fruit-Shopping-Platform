@@ -135,7 +135,7 @@
         level = "error-message";
         messageText = "Lô này đã có yêu cầu bỏ hàng đang chờ duyệt.";
     } else if ("approved".equals(message)) {
-        messageText = "Đã duyệt và bỏ lô hết hạn khỏi tồn kho.";
+        messageText = "Đã duyệt và bỏ lô không đảm bảo chất lượng khỏi tồn kho.";
     } else if ("rejected".equals(message)) {
         messageText = "Đã từ chối yêu cầu bỏ hàng. Lô được giữ nguyên.";
     } else if ("already-resolved".equals(message)) {
@@ -147,6 +147,16 @@
     } else if ("already-discarded".equals(message)) {
         level = "error-message";
         messageText = "Lô này đã được bỏ trước đó.";
+    } else if ("discarded".equals(message)) {
+        messageText = "Đã bỏ lô không đảm bảo chất lượng khỏi tồn kho.";
+    } else if ("quality-discarded".equals(message)) {
+        messageText = "Đã bỏ hàng không đạt chất lượng và trừ khỏi tồn kho.";
+    } else if ("not-active".equals(message)) {
+        level = "error-message";
+        messageText = "Lô này không còn hàng đang bán nên không thể bỏ thêm.";
+    } else if ("insufficient".equals(message)) {
+        level = "error-message";
+        messageText = "Số lượng bỏ lớn hơn số lượng còn trong lô.";
     } else if ("failed".equals(message)) {
         level = "error-message";
         messageText = "Không thể hoàn tất thao tác.";

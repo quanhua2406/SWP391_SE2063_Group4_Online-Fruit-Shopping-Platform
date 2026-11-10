@@ -45,6 +45,9 @@ final class AccessPolicy {
         if (path.startsWith("/uploads/reviews/")) {
             return path.matches("/uploads/reviews/[^/]+\\.(?i:png|jpe?g|gif|webp)");
         }
+        if (path.startsWith("/uploads/discards/")) {
+            return path.matches("/uploads/discards/[^/]+\\.(?i:png|jpe?g|gif|webp)");
+        }
         boolean directory = path.startsWith("/assets/") || path.startsWith("/css/")
                 || path.startsWith("/js/") || path.startsWith("/images/");
         return path.equals("/favicon.ico") || (directory && path.matches(

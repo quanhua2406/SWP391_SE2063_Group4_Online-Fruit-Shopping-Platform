@@ -206,9 +206,7 @@
 
         <p class="panel-hint">
             <%= deliveries == null ? 0 : deliveries.getTotal() %> bản ghi giao hàng phù hợp.
-            Phân công do chủ cửa hàng tạo; có thể vào
-            <a href="<%= contextPath %>/admin/delivery-assign">Quản lý phân công</a>
-            để xử lý.
+            Phân công do chủ cửa hàng tạo.
         </p>
 
         <div class="table-scroll">

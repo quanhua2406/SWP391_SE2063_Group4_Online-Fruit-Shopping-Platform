@@ -90,7 +90,7 @@
 
         <p class="panel-hint">
             <%= staff == null ? 0 : staff.size() %> tài khoản có vai trò DeliveryStaff.
-            Có thể xem phân công tại
+            Có thể xem tiến độ tại
             <a href="<%= contextPath %>/admin/deliveries">Theo dõi giao hàng</a>.
         </p>
 
@@ -162,12 +162,6 @@
                                 <% } %>
 
                             </form>
-
-                            <a class="btn-sm-info"
-                               href="<%= contextPath %>/admin/delivery-assign?search=<%= esc(row.get("user_id")) %>"
-                               title="Các đơn được phân cho shipper này">
-                                Phân công
-                            </a>
                         </td>
                     </tr>
                 <%

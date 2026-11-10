@@ -155,7 +155,7 @@ public final class LowStockNotifier {
      *
      * @return {@code {email, shopName}} or {@code null}
      */
-    private static String[] findOwnerContact(int ownerId)
+    static String[] findOwnerContact(int ownerId)
             throws SQLException {
 
         String sql =

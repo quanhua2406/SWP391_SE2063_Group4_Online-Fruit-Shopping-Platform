@@ -579,6 +579,95 @@ public class InventoryDAO {
     }
 
     /**
+     * Writes off part or all of a batch that failed quality checks. The
+     * discarded quantity is taken out of the batch and logged as an export.
+     *
+     * @return {@code quality-discarded}, {@code not-active},
+     *         {@code insufficient} or {@code failed}
+     */
+    public String discardQualityQuantity(int batchId, int userId,
+                                         BigDecimal discardQty, String reason)
+            throws SQLException {
+
+        String selectSql =
+                "SELECT quantity, status FROM inventory_batches WITH (UPDLOCK, ROWLOCK) "
+                + "WHERE batch_id = ?";
+
+        Connection conn = null;
+        try {
+            conn = DBConnection.getConnection();
+            conn.setAutoCommit(false);
+
+            BigDecimal quantity;
+            String status;
+
+            try (PreparedStatement ps = conn.prepareStatement(selectSql)) {
+                ps.setInt(1, batchId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) {
+                        conn.rollback();
+                        return "failed";
+                    }
+                    quantity = rs.getBigDecimal("quantity");
+                    status = rs.getString("status");
+                }
+            }
+
+            if (!"active".equals(status)) {
+                conn.rollback();
+                return "not-active";
+            }
+
+            if (discardQty.compareTo(quantity) > 0) {
+                conn.rollback();
+                return "insufficient";
+            }
+
+            BigDecimal remaining = quantity.subtract(discardQty);
+
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "UPDATE inventory_batches SET quantity = ?, status = ? WHERE batch_id = ?")) {
+                ps.setBigDecimal(1, remaining);
+                ps.setString(2, remaining.signum() == 0 ? "depleted" : "active");
+                ps.setInt(3, batchId);
+                ps.executeUpdate();
+            }
+
+            try (PreparedStatement ps = conn.prepareStatement("""
+                    INSERT INTO inventory_adjustments
+                        (batch_id, adjustment_type, quantity, reason, created_by, created_at)
+                    VALUES (?, 'export', ?, ?, ?, GETDATE())
+                    """)) {
+                ps.setInt(1, batchId);
+                ps.setBigDecimal(2, discardQty);
+                ps.setString(3, reason);
+                ps.setInt(4, userId);
+                ps.executeUpdate();
+            }
+
+            conn.commit();
+            return "quality-discarded";
+
+        } catch (SQLException e) {
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ignored) {
+                }
+            }
+            throw e;
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (SQLException ignored) {
+                }
+            }
+        }
+    }
+
+    /**
      * Records a request to write off an expired batch. It waits for the
      * shop owner's approval.
      *
@@ -634,6 +723,70 @@ public class InventoryDAO {
 
             return "requested";
         }
+    }
+
+    /**
+     * Active batches of the owner's shop that have expired or will expire
+     * within {@code withinDays} days.
+     */
+    public List<Map<String, Object>> getExpiringBatchesForOwner(int ownerId, int withinDays)
+            throws SQLException {
+
+        String sql =
+                "SELECT p.product_name, v.sku, v.weight_value, v.unit, "
+                + "b.batch_code, b.quantity, b.expiry_date "
+                + "FROM inventory_batches b "
+                + "JOIN product_variants v ON v.variant_id = b.variant_id "
+                + "JOIN products p ON p.product_id = v.product_id "
+                + "JOIN shops s ON s.shop_id = p.shop_id "
+                + "WHERE s.owner_id = ? AND b.status = 'active' AND b.quantity > 0 "
+                + "AND b.expiry_date IS NOT NULL "
+                + "AND b.expiry_date <= DATEADD(day, ?, CAST(GETDATE() AS DATE)) "
+                + "ORDER BY b.expiry_date ASC, b.batch_id ASC";
+
+        List<Map<String, Object>> rows = new ArrayList<>();
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, ownerId);
+            ps.setInt(2, withinDays);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("product_name", rs.getString("product_name"));
+                    row.put("sku", rs.getString("sku"));
+                    row.put("weight_value", rs.getBigDecimal("weight_value"));
+                    row.put("unit", rs.getString("unit"));
+                    row.put("batch_code", rs.getString("batch_code"));
+                    row.put("quantity", rs.getBigDecimal("quantity"));
+                    row.put("expiry_date", rs.getDate("expiry_date"));
+                    rows.add(row);
+                }
+            }
+        }
+
+        return rows;
+    }
+
+    /** Owners that have an active shop, for the daily stock alert job. */
+    public List<Integer> getActiveShopOwnerIds() throws SQLException {
+
+        String sql = "SELECT DISTINCT owner_id FROM shops WHERE status = 'active'";
+
+        List<Integer> ids = new ArrayList<>();
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                ids.add(rs.getInt("owner_id"));
+            }
+        }
+
+        return ids;
     }
 
     /** Active batches of the owner's shop whose expiry date has passed. */
