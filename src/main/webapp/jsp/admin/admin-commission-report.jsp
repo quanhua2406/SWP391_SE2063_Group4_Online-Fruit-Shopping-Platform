@@ -205,6 +205,9 @@
     </p>
 
     <p class="action-row">
+        <a class="btn-secondary" href="<%= contextPath %>/admin/commission-settlements">
+            💳 Thanh toán hoa hồng của shop
+        </a>
         <a class="btn-secondary"
            href="<%= QueryUrl.keep(request, contextPath + "/admin/commission-report", "from", "to", "status") %>format=csv">
             ⬇️ Xuất CSV
@@ -314,7 +317,7 @@
 
         <p class="panel-hint">
             Quyết toán nền tảng trong kỳ đã chọn, trên tất cả
-            cửa hàng. Hoa hồng chỉ tính trên đơn <em>đã giao</em>;
+            cửa hàng. Hoa hồng chỉ tính trên đơn <em>đã giao</em> và <em>đã thanh toán</em>;
             đơn đã hủy và đơn thất bại được ghi nhận
             là hoàn tiền.
         </p>

@@ -29,19 +29,14 @@ public class LoginServlet extends HttpServlet {
             HttpServletResponse response)
             throws ServletException, IOException {
 
-        // Already logged in -> go to the role dashboard
+        // Already logged in -> go to the home page
         HttpSession session = request.getSession(false);
 
         if (session != null
                 && session.getAttribute("user") != null) {
 
-            User loggedIn =
-                    (User) session.getAttribute("user");
-
             response.sendRedirect(
-                    request.getContextPath()
-                            + LoginService.dashboardPath(
-                                    loggedIn.getRoleName())
+                    request.getContextPath() + "/home"
             );
 
             return;
@@ -166,9 +161,7 @@ public class LoginServlet extends HttpServlet {
                 response.sendRedirect(redirectUrl);
             } else {
                 response.sendRedirect(
-                        request.getContextPath()
-                                + LoginService.dashboardPath(
-                                        user.getRoleName())
+                        request.getContextPath() + "/home"
                 );
             }
 

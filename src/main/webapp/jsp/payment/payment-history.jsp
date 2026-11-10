@@ -343,7 +343,7 @@
                                         </c:choose>
                                     </td>
                                     <td style="text-align: right; white-space: nowrap;">
-                                        <c:if test="${p.status == 'pending' && (p.method == 'vnpay' || p.method == 'online')}">
+                                        <c:if test="${p.status == 'pending' && (p.method == 'vnpay' || p.method == 'online') && !isStaffOrAdmin}">
                                             <a href="${pageContext.request.contextPath}/payment/process?orderId=${p.orderId}" class="btn-sm btn-pay" style="margin-right: 4px;">
                                                 Thanh toán
                                             </a>
@@ -353,9 +353,23 @@
                                                 Hoàn tiền
                                             </a>
                                         </c:if>
-                                        <a href="${pageContext.request.contextPath}/orders/detail?id=${p.orderId}" class="btn-sm btn-detail">
-                                            Xem Đơn
-                                        </a>
+                                        <c:choose>
+                                            <c:when test="${viewerRole == 'ADMIN'}">
+                                                <a href="${pageContext.request.contextPath}/admin/order-detail?orderId=${p.orderId}" class="btn-sm btn-detail">
+                                                    Xem Đơn
+                                                </a>
+                                            </c:when>
+                                            <c:when test="${viewerRole == 'SHOPOWNER'}">
+                                                <a href="${pageContext.request.contextPath}/store-owner/orders?action=detail&orderId=${p.orderId}" class="btn-sm btn-detail">
+                                                    Xem Đơn
+                                                </a>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <a href="${pageContext.request.contextPath}/orders/detail?id=${p.orderId}" class="btn-sm btn-detail">
+                                                    Xem Đơn
+                                                </a>
+                                            </c:otherwise>
+                                        </c:choose>
                                     </td>
                                 </tr>
                             </c:forEach>

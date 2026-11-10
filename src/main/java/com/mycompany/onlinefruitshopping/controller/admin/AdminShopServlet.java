@@ -1,5 +1,6 @@
 package com.mycompany.onlinefruitshopping.controller.admin;
 
+import com.mycompany.onlinefruitshopping.dao.commission.CommissionSettlementDAO;
 import com.mycompany.onlinefruitshopping.dao.shop.AdminShopDAO.ShopInfo;
 import com.mycompany.onlinefruitshopping.service.shop.AdminShopService;
 
@@ -111,6 +112,8 @@ public class AdminShopServlet extends HttpServlet {
 
         request.setAttribute("shop", shop);
         request.setAttribute("message", request.getParameter("message"));
+        request.setAttribute("commissionLocked",
+                new CommissionSettlementDAO().hasUnpaidShopLock(shopId));
 
         request.getRequestDispatcher(DETAIL_JSP)
                 .forward(request, response);

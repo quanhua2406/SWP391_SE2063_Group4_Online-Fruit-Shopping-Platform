@@ -35,6 +35,11 @@ public class VNPayConfig {
     }
 
     public static String buildPaymentUrl(String returnUrl, int orderId, double amount, String orderInfo, String ipAddress) {
+        return buildPaymentUrl(returnUrl, orderId + "_" + System.currentTimeMillis(), amount,
+                orderInfo != null ? orderInfo : "Thanh toan don hang #" + orderId, ipAddress);
+    }
+
+    public static String buildPaymentUrl(String returnUrl, String txnRef, double amount, String orderInfo, String ipAddress) {
         Map<String, String> vnpParams = new HashMap<>();
         vnpParams.put("vnp_Version", VNP_VERSION);
         vnpParams.put("vnp_Command", VNP_COMMAND);
@@ -42,8 +47,8 @@ public class VNPayConfig {
         long vnpAmount = (long) (amount * 100);
         vnpParams.put("vnp_Amount", String.valueOf(vnpAmount));
         vnpParams.put("vnp_CurrCode", "VND");
-        vnpParams.put("vnp_TxnRef", String.valueOf(orderId) + "_" + System.currentTimeMillis());
-        vnpParams.put("vnp_OrderInfo", orderInfo != null ? orderInfo : "Thanh toan don hang #" + orderId);
+        vnpParams.put("vnp_TxnRef", txnRef);
+        vnpParams.put("vnp_OrderInfo", orderInfo != null ? orderInfo : "Thanh toan don hang #" + txnRef);
         vnpParams.put("vnp_OrderType", "other");
         vnpParams.put("vnp_Locale", "vn");
         vnpParams.put("vnp_ReturnUrl", returnUrl);

@@ -257,6 +257,9 @@
     </p>
 
     <p class="action-row">
+        <a class="btn-secondary" href="<%= contextPath %>/store-owner/commission/settlements">
+            💳 Thanh toán hoa hồng cho nền tảng
+        </a>
         <a class="btn-secondary"
            href="<%= QueryUrl.keep(request, contextPath + "/store-owner/commission-report", "from", "to", "status") %>format=csv">
             ⬇️ Xuất CSV

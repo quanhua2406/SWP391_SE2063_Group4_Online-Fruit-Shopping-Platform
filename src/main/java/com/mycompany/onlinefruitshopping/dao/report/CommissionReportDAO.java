@@ -53,6 +53,9 @@ public class CommissionReportDAO {
     public static final BigDecimal SERVICE_FEE_RATE =
             new BigDecimal("2");
 
+    /** Only money actually collected counts towards the fee (needs the {@code pay} join). */
+    private static final String PAID_SQL = " AND pay.status = 'paid'";
+
     /** Every status an order can have (mirrors the DB CHECK). */
     private static final List<String> STATUSES = List.of(
             "pending_confirmation", "preparing", "shipping",
@@ -135,9 +138,9 @@ public class CommissionReportDAO {
             dateSql = dates.toString();
         }
 
-        /** Condition counting towards the fee. */
+        /** Condition counting towards the fee: the order must also be paid. */
         String counted() {
-            return statusSql + dateSql;
+            return statusSql + dateSql + PAID_SQL;
         }
 
         List<Object> countedParams() {
@@ -185,6 +188,7 @@ public class CommissionReportDAO {
                 + "LEFT JOIN product_variants v ON v.product_id = p.product_id "
                 + "LEFT JOIN order_items oi ON oi.variant_id = v.variant_id "
                 + "LEFT JOIN orders o ON o.order_id = oi.order_id "
+                + "LEFT JOIN payments pay ON pay.order_id = o.order_id "
                 + "WHERE s.owner_id = ? "
                 + "GROUP BY p.product_id, p.product_name, p.commission_rate "
                 + "ORDER BY p.product_name";
@@ -243,6 +247,7 @@ public class CommissionReportDAO {
                 + "LEFT JOIN product_variants v ON v.product_id = p.product_id "
                 + "LEFT JOIN order_items oi ON oi.variant_id = v.variant_id "
                 + "LEFT JOIN orders o ON o.order_id = oi.order_id "
+                + "LEFT JOIN payments pay ON pay.order_id = o.order_id "
                 + "WHERE s.owner_id = ? "
                 + "GROUP BY p.commission_rate "
                 + "ORDER BY commission_rate";
@@ -302,6 +307,7 @@ public class CommissionReportDAO {
                 + "LEFT JOIN product_variants v ON v.product_id = p.product_id "
                 + "LEFT JOIN order_items oi ON oi.variant_id = v.variant_id "
                 + "LEFT JOIN orders o ON o.order_id = oi.order_id "
+                + "LEFT JOIN payments pay ON pay.order_id = o.order_id "
                 + "GROUP BY s.shop_id, s.shop_name "
                 + "ORDER BY s.shop_name";
 
@@ -358,6 +364,7 @@ public class CommissionReportDAO {
                 + "LEFT JOIN product_variants v ON v.product_id = p.product_id "
                 + "LEFT JOIN order_items oi ON oi.variant_id = v.variant_id "
                 + "LEFT JOIN orders o ON o.order_id = oi.order_id "
+                + "LEFT JOIN payments pay ON pay.order_id = o.order_id "
                 + "GROUP BY p.commission_rate "
                 + "ORDER BY commission_rate";
 
@@ -427,6 +434,7 @@ public class CommissionReportDAO {
                 + "JOIN product_variants v ON v.product_id = p.product_id "
                 + "JOIN order_items oi ON oi.variant_id = v.variant_id "
                 + "JOIN orders o ON o.order_id = oi.order_id "
+                + "LEFT JOIN payments pay ON pay.order_id = o.order_id "
                 + where
                 + " GROUP BY o.status "
                 + "ORDER BY o.status";
@@ -486,6 +494,7 @@ public class CommissionReportDAO {
                 + "JOIN product_variants v ON v.product_id = p.product_id "
                 + "JOIN order_items oi ON oi.variant_id = v.variant_id "
                 + "JOIN orders o ON o.order_id = oi.order_id "
+                + "LEFT JOIN payments pay ON pay.order_id = o.order_id "
                 + "WHERE s.owner_id = ?";
 
         try (Connection conn = DBConnection.getConnection();
@@ -513,7 +522,8 @@ public class CommissionReportDAO {
                 + "FROM products p "
                 + "JOIN product_variants v ON v.product_id = p.product_id "
                 + "JOIN order_items oi ON oi.variant_id = v.variant_id "
-                + "JOIN orders o ON o.order_id = oi.order_id";
+                + "JOIN orders o ON o.order_id = oi.order_id "
+                + "LEFT JOIN payments pay ON pay.order_id = o.order_id";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {

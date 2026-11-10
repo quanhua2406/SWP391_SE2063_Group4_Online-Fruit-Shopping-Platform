@@ -6,7 +6,7 @@
 <%-- Resolving User Role & Dashboard Link cleanly --%>
 <c:set var="currentUser" value="${sessionScope.user}" />
 <c:set var="userRole" value="${not empty currentUser.roleName ? fn:toUpperCase(fn:trim(currentUser.roleName)) : ''}" />
-<c:set var="isShopOwner" value="${fn:contains(userRole, 'SHOP') or fn:contains(userRole, 'STORE') or currentUser.roleID == 2}" />
+<c:set var="isShopOwner" value="${fn:contains(userRole, 'SHOP') or fn:contains(userRole, 'STORE')}" />
 
 <c:set var="dashboardUrl" value="" />
 <c:set var="dashboardName" value="" />
@@ -161,14 +161,6 @@
                             Lịch sử thanh toán
                         </a>
 
-                        <a href="${pageContext.request.contextPath}/refunds" class="nav-dropdown-item">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="1 4 1 10 7 10"></polyline>
-                                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
-                            </svg>
-                            Yêu cầu hoàn tiền
-                        </a>
-
                         <div class="nav-dropdown-divider"></div>
 
                         <!-- Thông tin cá nhân & Địa chỉ -->
@@ -180,13 +172,15 @@
                             Thông tin tài khoản
                         </a>
 
-                        <a href="${pageContext.request.contextPath}/addresses" class="nav-dropdown-item">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                                <circle cx="12" cy="10" r="3"></circle>
-                            </svg>
-                            Sổ địa chỉ nhận hàng
-                        </a>
+                        <c:if test="${fn:contains(userRole, 'CUSTOMER')}">
+                            <a href="${pageContext.request.contextPath}/addresses" class="nav-dropdown-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                    <circle cx="12" cy="10" r="3"></circle>
+                                </svg>
+                                Sổ địa chỉ nhận hàng
+                            </a>
+                        </c:if>
 
                         <div class="nav-dropdown-divider"></div>
 

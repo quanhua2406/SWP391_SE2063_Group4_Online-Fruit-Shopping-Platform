@@ -3,6 +3,7 @@ package com.mycompany.onlinefruitshopping.controller.payment;
 import com.mycompany.onlinefruitshopping.model.Payment;
 import com.mycompany.onlinefruitshopping.model.User;
 import com.mycompany.onlinefruitshopping.service.PaymentService;
+import com.mycompany.onlinefruitshopping.service.auth.LoginService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -36,8 +37,8 @@ public class PaymentHistoryServlet extends HttpServlet {
         if (user == null) return;
 
         String path = request.getServletPath();
-        String roleName = user.getRoleName() != null ? user.getRoleName().toLowerCase() : "";
-        boolean isStaffOrAdmin = "admin".equals(roleName) || "store_owner".equals(roleName)
+        String viewerRole = LoginService.normalizeRole(user.getRoleName());
+        boolean isStaffOrAdmin = "ADMIN".equals(viewerRole) || "SHOPOWNER".equals(viewerRole)
                 || path.startsWith("/admin/") || path.startsWith("/store-owner/");
 
         String statusFilter = request.getParameter("status");
@@ -57,6 +58,7 @@ public class PaymentHistoryServlet extends HttpServlet {
             request.setAttribute("methodFilter", methodFilter != null ? methodFilter : "all");
             request.setAttribute("searchQuery", searchQuery != null ? searchQuery : "");
             request.setAttribute("isStaffOrAdmin", isStaffOrAdmin);
+            request.setAttribute("viewerRole", viewerRole);
 
             request.getRequestDispatcher("/jsp/payment/payment-history.jsp").forward(request, response);
         } catch (SQLException e) {

@@ -456,6 +456,12 @@
         </div>
 
         <!-- BLOCK / UNBLOCK -->
+        <% if (Boolean.TRUE.equals(request.getAttribute("commissionLocked"))) { %>
+        <div class="message error">
+            Cửa hàng bị tạm khóa do chưa thanh toán hoa hồng cho nền tảng.
+            Cửa hàng sẽ tự mở lại khi thanh toán xong.
+        </div>
+        <% } %>
         <div class="action-row">
 
             <% if (suspended) { %>

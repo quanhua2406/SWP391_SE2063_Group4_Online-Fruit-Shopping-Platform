@@ -226,6 +226,31 @@ public class AuthorizationFilter implements Filter {
         }
 
         // =========================================
+        // 4b. SHOP LOCKED FOR UNPAID COMMISSION
+        // =========================================
+
+        if ("SHOPOWNER".equals(requiredRole)
+                && !path.startsWith("/store-owner/commission/")) {
+
+            try {
+                if (new com.mycompany.onlinefruitshopping.dao.commission.CommissionSettlementDAO()
+                        .hasUnpaidShopLockForOwner(user.getUserID())) {
+
+                    httpResponse.sendRedirect(contextPath
+                            + "/store-owner/commission/settlements?error="
+                            + java.net.URLEncoder.encode(
+                                    "Cửa hàng đang tạm khóa do chưa thanh toán hoa hồng.",
+                                    java.nio.charset.StandardCharsets.UTF_8));
+                    return;
+                }
+            } catch (SQLException e) {
+                httpRequest.getServletContext().log("Không kiểm tra được khóa hoa hồng", e);
+                httpResponse.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+                return;
+            }
+        }
+
+        // =========================================
         // 5. CONTINUE
         // =========================================
 
