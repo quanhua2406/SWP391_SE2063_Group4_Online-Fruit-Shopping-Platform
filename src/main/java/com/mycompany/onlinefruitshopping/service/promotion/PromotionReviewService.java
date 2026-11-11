@@ -186,6 +186,24 @@ public class PromotionReviewService {
                 ? "rejected" : "not-pending";
     }
 
+    /**
+     * Takes an approved promotion back to pending. It stops applying
+     * at once, and the administrator can approve or refuse it again.
+     *
+     * @return a message code understood by the review screen
+     */
+    public String cancelApproval(String promoIdRaw) throws SQLException {
+
+        int promoId = parseInt(promoIdRaw, -1);
+
+        if (promoId <= 0) {
+            return "invalid";
+        }
+
+        return inventoryDAO.cancelPromotionApproval(promoId)
+                ? "cancelled" : "not-approved";
+    }
+
     // =========================================================
     // HELPERS
     // =========================================================

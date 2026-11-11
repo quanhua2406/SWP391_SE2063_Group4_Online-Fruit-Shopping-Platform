@@ -85,22 +85,22 @@
         LocalDate today = LocalDate.now();
 
         if (today.isBefore(from)) {
-            return "Scheduled";
+            return "Sắp diễn ra";
         }
 
         if (today.isAfter(to)) {
-            return "Ended";
+            return "Đã kết thúc";
         }
 
-        return "Running";
+        return "Đang diễn ra";
     }
 
     private String periodPill(String status) {
-        if ("Running".equals(status)) {
+        if ("Đang diễn ra".equals(status)) {
             return "pill-ok";
         }
 
-        if ("Scheduled".equals(status)) {
+        if ("Sắp diễn ra".equals(status)) {
             return "pill-warn";
         }
 
@@ -111,22 +111,22 @@
         String value = status == null ? "" : status.toString();
 
         if ("approved".equals(value)) {
-            return "Approved";
+            return "Đã duyệt";
         }
 
         if ("rejected".equals(value)) {
-            return "Rejected";
+            return "Từ chối";
         }
 
-        return "Pending";
+        return "Chờ duyệt";
     }
 
     private String statusPill(String label) {
-        if ("Approved".equals(label)) {
+        if ("Đã duyệt".equals(label)) {
             return "pill-ok";
         }
 
-        if ("Pending".equals(label)) {
+        if ("Chờ duyệt".equals(label)) {
             return "pill-warn";
         }
 
@@ -166,37 +166,42 @@
     String messageText = null;
 
     if ("approved".equals(message)) {
-        messageText = "Promotion approved. The promotional price is "
-                + "effective inside its date range.";
+        messageText = "Đã duyệt khuyến mãi. Giá khuyến mãi có hiệu lực "
+                + "trong khoảng thời gian đã đặt.";
     } else if ("rejected".equals(message)) {
-        messageText = "Promotion refused. The shop owner sees the reason.";
+        messageText = "Đã từ chối khuyến mãi. Chủ shop sẽ thấy lý do.";
+    } else if ("cancelled".equals(message)) {
+        messageText = "Đã hủy duyệt. Khuyến mãi quay về trạng thái chờ duyệt và không còn áp dụng.";
+    } else if ("not-approved".equals(message)) {
+        level = "error-message";
+        messageText = "Chỉ hủy duyệt được khuyến mãi đã duyệt.";
     } else if ("approve-expired".equals(message)) {
         level = "error-message";
-        messageText = "This promotion already ended, so it cannot be "
-                + "approved. The shop owner has to submit a new one.";
+        messageText = "Khuyến mãi này đã kết thúc nên không thể "
+                + "duyệt. Chủ shop cần gửi yêu cầu mới.";
     } else if ("approve-not-discount".equals(message)) {
         level = "error-message";
-        messageText = "The promotional price is not below the normal "
-                + "price any more, so it cannot be approved.";
+        messageText = "Giá khuyến mãi không còn thấp hơn giá gốc "
+                + "nên không thể duyệt.";
     } else if ("not-pending".equals(message)) {
         level = "error-message";
-        messageText = "That promotion has already been reviewed.";
+        messageText = "Khuyến mãi này đã được xử lý trước đó.";
     } else if ("invalid".equals(message)) {
         level = "error-message";
-        messageText = "The promotion could not be found.";
+        messageText = "Không tìm thấy khuyến mãi.";
     } else if ("failed".equals(message)) {
         level = "error-message";
-        messageText = "The decision could not be saved.";
+        messageText = "Không lưu được quyết định.";
     }
 %>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Promotion Approvals - FreshFruit</title>
+    <title>Duyệt khuyến mãi - FreshFruit</title>
 
     <link rel="stylesheet"
           href="<%= contextPath %>/css/style.css">
@@ -213,16 +218,16 @@
     <nav class="nav-actions">
 
         <a href="<%= contextPath %>/admin/dashboard">
-            📊 Dashboard
+            📊 Bảng điều khiển
         </a>
 
         <a href="<%= contextPath %>/admin/product-management">
-            🍎 Products
+            🍎 Sản phẩm
         </a>
 
         <a href="<%= contextPath %>/logout"
            class="logout">
-            Logout
+            Đăng xuất
         </a>
 
     </nav>
@@ -233,15 +238,15 @@
 
     <p class="breadcrumb">
         <a href="<%= contextPath %>/admin/dashboard">
-            ← Admin Dashboard
+            ← Bảng điều khiển
         </a>
     </p>
 
-    <h1>Promotion Approvals</h1>
+    <h1>Duyệt khuyến mãi</h1>
 
     <p class="dashboard-welcome">
-        Review the promotional prices requested by shop owners.
-        A promotion only applies once it is approved here.
+        Xem các giá khuyến mãi do chủ shop gửi lên.
+        Khuyến mãi chỉ có hiệu lực sau khi được duyệt tại đây.
     </p>
 
     <% if (messageText != null) { %>
@@ -255,22 +260,22 @@
     <div class="summary-grid summary-grid-4">
 
         <div class="summary-card">
-            <span class="summary-label">Total Requests</span>
+            <span class="summary-label">Tổng yêu cầu</span>
             <span class="summary-value"><%= esc(qty(totalCount)) %></span>
         </div>
 
         <div class="summary-card summary-warn">
-            <span class="summary-label">Waiting For Review</span>
+            <span class="summary-label">Chờ duyệt</span>
             <span class="summary-value"><%= esc(qty(pendingCount)) %></span>
         </div>
 
         <div class="summary-card summary-accent">
-            <span class="summary-label">Approved</span>
+            <span class="summary-label">Đã duyệt</span>
             <span class="summary-value"><%= esc(qty(approvedCount)) %></span>
         </div>
 
         <div class="summary-card">
-            <span class="summary-label">Rejected</span>
+            <span class="summary-label">Từ chối</span>
             <span class="summary-value"><%= esc(qty(rejectedCount)) %></span>
         </div>
 
@@ -282,28 +287,28 @@
 
         <input type="text" class="filter-input" name="q"
                value="<%= esc(q) %>"
-               placeholder="Search product, SKU or shop...">
+               placeholder="Tìm sản phẩm, SKU hoặc shop...">
 
         <select class="filter-select" name="status">
-            <option value="">All states</option>
-            <option value="pending" <%= "pending".equals(status) ? "selected" : "" %>>Pending</option>
-            <option value="approved" <%= "approved".equals(status) ? "selected" : "" %>>Approved</option>
-            <option value="rejected" <%= "rejected".equals(status) ? "selected" : "" %>>Rejected</option>
+            <option value="">Tất cả trạng thái</option>
+            <option value="pending" <%= "pending".equals(status) ? "selected" : "" %>>Chờ duyệt</option>
+            <option value="approved" <%= "approved".equals(status) ? "selected" : "" %>>Đã duyệt</option>
+            <option value="rejected" <%= "rejected".equals(status) ? "selected" : "" %>>Từ chối</option>
         </select>
 
-        <button type="submit" class="btn-sm">Filter</button>
+        <button type="submit" class="btn-sm">Lọc</button>
 
         <a class="filter-clear"
-           href="<%= contextPath %>/admin/promotion-approvals">Clear</a>
+           href="<%= contextPath %>/admin/promotion-approvals">Xóa lọc</a>
 
     </form>
 
     <div class="panel">
 
-        <h2>🏷️ Promotion Requests</h2>
+        <h2>🏷️ Yêu cầu khuyến mãi</h2>
 
         <p class="panel-hint">
-            Requests waiting for review are listed first.
+            Yêu cầu đang chờ duyệt được hiển thị trước.
         </p>
 
         <div class="table-scroll">
@@ -312,14 +317,14 @@
 
                 <thead>
                     <tr>
-                        <th>Shop</th>
-                        <th>Product</th>
+                        <th>Cửa hàng</th>
+                        <th>Sản phẩm</th>
                         <th>SKU</th>
-                        <th>Normal Price</th>
-                        <th>Promo Price</th>
-                        <th>Period</th>
-                        <th>Status</th>
-                        <th>Decision</th>
+                        <th>Giá gốc</th>
+                        <th>Giá khuyến mãi</th>
+                        <th>Thời gian</th>
+                        <th>Trạng thái</th>
+                        <th>Quyết định</th>
                     </tr>
                 </thead>
 
@@ -328,7 +333,7 @@
 
                     <tr>
                         <td colspan="8">
-                            No promotion request matches your search.
+                            Không có yêu cầu khuyến mãi nào khớp với tìm kiếm.
                         </td>
                     </tr>
 
@@ -338,7 +343,7 @@
                            String label = statusLabel(p.get("status"));
                            String period = periodStatus(
                                    p.get("start_date"), p.get("end_date"));
-                           boolean pending = "Pending".equals(label);
+                           boolean pending = "Chờ duyệt".equals(label);
                 %>
                     <tr>
                         <td><%= esc(p.get("shop_name")) %></td>
@@ -365,7 +370,7 @@
                                 <%= label %>
                             </span>
 
-                            <% if ("Rejected".equals(label)
+                            <% if ("Từ chối".equals(label)
                                     && p.get("review_note") != null) { %>
                                 <span class="row-note">
                                     <%= esc(p.get("review_note")) %>
@@ -396,7 +401,7 @@
                                                value="<%= esc(currentPage) %>">
 
                                         <button type="submit" class="btn-sm">
-                                            Approve
+                                            Duyệt
                                         </button>
 
                                     </form>
@@ -421,11 +426,42 @@
 
                                         <input class="qty-input note-input" type="text"
                                                name="reviewNote" maxlength="255"
-                                               placeholder="Reason (optional)">
+                                               placeholder="Lý do (không bắt buộc)">
 
                                         <button type="submit"
                                                 class="btn-sm btn-sm-danger">
-                                            Reject
+                                            Từ chối
+                                        </button>
+
+                                    </form>
+
+                                </div>
+
+                            <% } else if ("Đã duyệt".equals(label)) { %>
+
+                                <div class="table-actions">
+
+                                    <form method="post"
+                                          action="<%= contextPath %>/admin/promotion-approvals"
+                                          onsubmit="return confirm('Hủy duyệt khuyến mãi này? Giá khuyến mãi sẽ ngừng áp dụng.');">
+
+                                        <input type="hidden" name="action"
+                                               value="cancel">
+
+                                        <input type="hidden" name="promoId"
+                                               value="<%= esc(p.get("promo_id")) %>">
+
+                                        <input type="hidden" name="status"
+                                               value="<%= esc(status) %>">
+
+                                        <input type="hidden" name="q"
+                                               value="<%= esc(q) %>">
+
+                                        <input type="hidden" name="page"
+                                               value="<%= esc(currentPage) %>">
+
+                                        <button type="submit" class="btn-sm btn-sm-secondary">
+                                            Hủy duyệt
                                         </button>
 
                                     </form>
@@ -435,7 +471,7 @@
                             <% } else { %>
 
                                 <span class="muted-note">
-                                    Reviewed
+                                    Đã xử lý
                                 </span>
 
                             <% } %>

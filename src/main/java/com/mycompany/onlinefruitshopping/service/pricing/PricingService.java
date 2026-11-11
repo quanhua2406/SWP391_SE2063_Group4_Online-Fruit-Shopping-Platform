@@ -37,8 +37,6 @@ public class PricingService {
     /** Automatic prices are rounded to the nearest thousand dong. */
     private static final BigDecimal ROUNDING_UNIT = new BigDecimal("1000");
 
-    private static final int HISTORY_LIMIT = 30;
-
     private final InventoryDAO inventoryDAO = new InventoryDAO();
 
     public boolean hasShop(int ownerId) throws SQLException {
@@ -51,25 +49,33 @@ public class PricingService {
     public static class PriceListView {
 
         private final Page<Map<String, Object>> variantsPage;
+        private final Page<Map<String, Object>> productsPage;
+        private final Page<Map<String, Object>> historyPage;
         private final List<String> weightOptions;
         private final List<Map<String, Object>> qualityGrades;
-        private final List<Map<String, Object>> products;
-        private final List<Map<String, Object>> history;
 
         PriceListView(Page<Map<String, Object>> variantsPage,
+                      Page<Map<String, Object>> productsPage,
+                      Page<Map<String, Object>> historyPage,
                       List<String> weightOptions,
-                      List<Map<String, Object>> qualityGrades,
-                      List<Map<String, Object>> products,
-                      List<Map<String, Object>> history) {
+                      List<Map<String, Object>> qualityGrades) {
             this.variantsPage = variantsPage;
+            this.productsPage = productsPage;
+            this.historyPage = historyPage;
             this.weightOptions = weightOptions;
             this.qualityGrades = qualityGrades;
-            this.products = products;
-            this.history = history;
         }
 
         public Page<Map<String, Object>> getVariantsPage() {
             return variantsPage;
+        }
+
+        public Page<Map<String, Object>> getProductsPage() {
+            return productsPage;
+        }
+
+        public Page<Map<String, Object>> getHistoryPage() {
+            return historyPage;
         }
 
         public List<String> getWeightOptions() {
@@ -79,20 +85,14 @@ public class PricingService {
         public List<Map<String, Object>> getQualityGrades() {
             return qualityGrades;
         }
-
-        public List<Map<String, Object>> getProducts() {
-            return products;
-        }
-
-        public List<Map<String, Object>> getHistory() {
-            return history;
-        }
     }
 
     public PriceListView loadPrices(int ownerId,
                                     String q,
                                     String weight,
-                                    String page) throws SQLException {
+                                    String page,
+                                    String productPage,
+                                    String historyPage) throws SQLException {
 
         String search = Filters.text(q);
         String weightFilter = Filters.text(weight);
@@ -125,10 +125,10 @@ public class PricingService {
 
         return new PriceListView(
                 Page.of(rows, Page.parsePage(page)),
+                Page.of(products, Page.parsePage(productPage)),
+                Page.of(inventoryDAO.getPriceHistoryForOwner(ownerId), Page.parsePage(historyPage)),
                 VariantWeights.options(all),
-                inventoryDAO.getQualityGrades(),
-                products,
-                inventoryDAO.getPriceHistoryForOwner(ownerId, HISTORY_LIMIT));
+                inventoryDAO.getQualityGrades());
     }
 
     /**

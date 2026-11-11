@@ -1833,11 +1833,11 @@ public class InventoryDAO {
         }
     }
 
-    public List<Map<String, Object>> getPriceHistoryForOwner(int ownerId, int limit)
+    public List<Map<String, Object>> getPriceHistoryForOwner(int ownerId)
             throws SQLException {
 
         String sql = """
-                SELECT TOP (?) h.changed_at, p.product_name, v.sku,
+                SELECT h.changed_at, p.product_name, v.sku,
                        h.old_price, h.new_price, h.reason
                 FROM variant_price_history h
                 JOIN product_variants v ON v.variant_id = h.variant_id
@@ -1852,8 +1852,7 @@ public class InventoryDAO {
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setInt(1, limit);
-            ps.setInt(2, ownerId);
+            ps.setInt(1, ownerId);
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -2295,6 +2294,35 @@ public class InventoryDAO {
             ps.setString(2, (note == null || note.isBlank()) ? null : note.trim());
             ps.setInt(3, adminId);
             ps.setInt(4, promoId);
+
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    /**
+     * Takes an approved promotion back to pending, so it stops applying
+     * and can be reviewed again.
+     *
+     * @return {@code true} when the promotion was approved and is now
+     *         pending, {@code false} otherwise.
+     */
+    public boolean cancelPromotionApproval(int promoId) throws SQLException {
+
+        String sql = """
+                UPDATE variant_promotions
+                SET status = 'pending',
+                    review_note = NULL,
+                    reviewed_by = NULL,
+                    reviewed_at = NULL,
+                    updated_at = SYSDATETIME()
+                WHERE promo_id = ?
+                  AND status = 'approved'
+                """;
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, promoId);
 
             return ps.executeUpdate() > 0;
         }

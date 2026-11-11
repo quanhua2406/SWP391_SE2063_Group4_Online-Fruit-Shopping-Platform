@@ -64,12 +64,20 @@
 <%
     String contextPath = request.getContextPath();
 
+    String activePage = (String) request.getAttribute("activePage");
+
     @SuppressWarnings("unchecked")
     Page<Map<String, Object>> variantsPage =
             (Page<Map<String, Object>>) request.getAttribute("variantsPage");
 
     String pagerUrl = QueryUrl.keep(request,
-            contextPath + "/store-owner/pricing", "q", "weight");
+            contextPath + "/store-owner/pricing/variant", "q", "weight");
+
+    String productPagerUrl = QueryUrl.keep(request,
+            contextPath + "/store-owner/pricing/product");
+
+    String historyPagerUrl = QueryUrl.keep(request,
+            contextPath + "/store-owner/pricing/history");
 
     String q = request.getParameter("q") == null ? "" : request.getParameter("q");
     String weight = request.getParameter("weight") == null ? "" : request.getParameter("weight");
@@ -83,12 +91,12 @@
             (java.util.List<Map<String, Object>>) request.getAttribute("qualityGrades");
 
     @SuppressWarnings("unchecked")
-    java.util.List<Map<String, Object>> products =
-            (java.util.List<Map<String, Object>>) request.getAttribute("products");
+    Page<Map<String, Object>> productsPage =
+            (Page<Map<String, Object>>) request.getAttribute("productsPage");
 
     @SuppressWarnings("unchecked")
-    java.util.List<Map<String, Object>> history =
-            (java.util.List<Map<String, Object>>) request.getAttribute("history");
+    Page<Map<String, Object>> historyPage =
+            (Page<Map<String, Object>>) request.getAttribute("historyPage");
 
     String currentPage = request.getParameter("page") == null
             ? "1"
@@ -200,6 +208,27 @@
 
     <% } %>
 
+    <nav class="section-nav">
+
+        <a class="<%= "product".equals(activePage) ? "active" : "" %>"
+           href="<%= contextPath %>/store-owner/pricing/product">
+            ⚖️ Theo sản phẩm
+        </a>
+
+        <a class="<%= "variant".equals(activePage) ? "active" : "" %>"
+           href="<%= contextPath %>/store-owner/pricing/variant">
+            💲 Theo biến thể
+        </a>
+
+        <a class="<%= "history".equals(activePage) ? "active" : "" %>"
+           href="<%= contextPath %>/store-owner/pricing/history">
+            🕘 Lịch sử
+        </a>
+
+    </nav>
+
+    <% if ("product".equals(activePage)) { %>
+
     <!-- ==================== PRICE PER KG ==================== -->
 
     <div class="panel" id="kg">
@@ -228,14 +257,14 @@
             </thead>
 
             <tbody>
-            <% if (products == null || products.isEmpty()) { %>
+            <% if (productsPage == null || productsPage.isEmpty()) { %>
 
                 <tr>
                     <td colspan="3">Cửa hàng chưa có sản phẩm nào.</td>
                 </tr>
 
             <% } else {
-                   for (Map<String, Object> p : products) { %>
+                   for (Map<String, Object> p : productsPage.getItems()) { %>
                 <tr>
                     <td><%= esc(p.get("product_name")) %></td>
                     <td>
@@ -252,21 +281,15 @@
                             <input type="hidden" name="productId"
                                    value="<%= esc(p.get("product_id")) %>">
 
-                            <input type="hidden" name="q"
-                                   value="<%= esc(q) %>">
-
-                            <input type="hidden" name="weight"
-                                   value="<%= esc(weight) %>">
-
-                            <input type="hidden" name="page"
-                                   value="<%= esc(currentPage) %>">
+                            <input type="hidden" name="ppage"
+                                   value="<%= productsPage.getPage() %>">
 
                             <input class="qty-input" type="number"
                                    name="pricePerKg" min="1" step="1"
                                    value="<%= p.get("price_per_kg") == null ? "" : qty(p.get("price_per_kg")) %>"
                                    required>
 
-                            <button type="submit" class="btn-sm">
+                            <button type="submit" class="btn-sm btn-edit">
                                 Lưu
                             </button>
 
@@ -279,12 +302,18 @@
 
         </table>
 
+        <%= Pager.render(productsPage, productPagerUrl, "ppage") %>
+
     </div>
+
+    <% } %>
+
+    <% if ("variant".equals(activePage)) { %>
 
     <!-- ==================== FILTER ==================== -->
 
     <form method="get"
-          action="<%= contextPath %>/store-owner/pricing"
+          action="<%= contextPath %>/store-owner/pricing/variant"
           class="filter-form">
 
         <input type="text" class="filter-input" name="q"
@@ -303,10 +332,9 @@
                } %>
         </select>
 
-        <button type="submit" class="btn-sm">Lọc</button>
+        <button type="submit" class="btn-primary" style="padding: 9px 16px; border-radius: 8px;">Lọc</button>
 
-        <a class="filter-clear"
-           href="<%= contextPath %>/store-owner/pricing">Xóa lọc</a>
+        <a href="<%= contextPath %>/store-owner/pricing/variant" class="btn-secondary" style="padding: 9px 14px; font-size: 13px;">Xóa lọc</a>
 
     </form>
 
@@ -341,7 +369,7 @@
 
                 <tr>
                     <td colspan="8">
-                        <% if (products == null || products.isEmpty()) { %>
+                        <% if (productsPage == null || productsPage.isEmpty()) { %>
                         Cửa hàng chưa có sản phẩm nào.
                         <% } else { %>
                         Không có biến thể sản phẩm nào khớp với tìm kiếm.
@@ -391,7 +419,7 @@
                                    } %>
                             </select>
 
-                            <button type="submit" class="btn-sm">
+                            <button type="submit" class="btn-sm btn-edit">
                                 Lưu
                             </button>
 
@@ -402,7 +430,7 @@
 
                     <td>
                         <% if (auto) { %>
-                            <span class="stock-badge">Tự tính</span>
+                            <span class="stock-badge">Theo giá/kg</span>
                         <% } else { %>
                             <form method="post"
                                   action="<%= contextPath %>/store-owner/pricing">
@@ -426,7 +454,7 @@
                                        value="<%= qty(v.get("price")) %>"
                                        required>
 
-                                <button type="submit" class="btn-sm">
+                                <button type="submit" class="btn-sm btn-edit">
                                     Lưu
                                 </button>
 
@@ -446,13 +474,17 @@
 
     </div>
 
+    <% } %>
+
+    <% if ("history".equals(activePage)) { %>
+
     <!-- ==================== PRICE HISTORY ==================== -->
 
     <div class="panel" id="history">
 
         <h2>🕘 Lịch sử thay đổi giá</h2>
 
-        <p class="panel-hint">30 thay đổi gần nhất.</p>
+        <p class="panel-hint">Các thay đổi giá, mới nhất trước.</p>
 
         <table class="data-table">
 
@@ -468,14 +500,14 @@
             </thead>
 
             <tbody>
-            <% if (history == null || history.isEmpty()) { %>
+            <% if (historyPage == null || historyPage.isEmpty()) { %>
 
                 <tr>
                     <td colspan="6">Chưa có thay đổi giá nào.</td>
                 </tr>
 
             <% } else {
-                   for (Map<String, Object> h : history) { %>
+                   for (Map<String, Object> h : historyPage.getItems()) { %>
                 <tr>
                     <td><%= h.get("changed_at") == null
                             ? ""
@@ -492,7 +524,11 @@
 
         </table>
 
+        <%= Pager.render(historyPage, historyPagerUrl, "hpage") %>
+
     </div>
+
+    <% } %>
 
 </section>
 

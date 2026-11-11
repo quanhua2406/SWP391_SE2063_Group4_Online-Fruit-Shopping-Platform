@@ -88,6 +88,9 @@ public class AdminPromotionApprovalServlet extends HttpServlet {
                         admin.getUserID(),
                         request.getParameter("promoId"),
                         request.getParameter("reviewNote"));
+            } else if ("cancel".equals(action)) {
+                result = reviewService.cancelApproval(
+                        request.getParameter("promoId"));
             } else {
                 result = reviewService.approve(
                         admin.getUserID(),

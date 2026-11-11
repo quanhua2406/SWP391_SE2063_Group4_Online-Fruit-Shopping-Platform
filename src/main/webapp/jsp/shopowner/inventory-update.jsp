@@ -122,7 +122,7 @@
                     </span>
                 </td>
                 <td>
-                    <form method="post"
+                    <form method="post" class="inline-form"
                           action="<%= contextPath %>/store-owner/inventory/update">
 
                         <input type="hidden" name="action" value="update">
@@ -134,9 +134,9 @@
                                value="<%= qty(b.get("quantity")) %>"
                                required>
 
-                        <input class="qty-input" type="text"
+                        <input class="filter-input" type="text"
                                name="reason" maxlength="255"
-                               placeholder="Lý do">
+                               placeholder="Lý do (tùy chọn)">
 
                         <button type="submit" class="btn-sm">
                             Lưu
@@ -144,31 +144,40 @@
 
                     </form>
 
-                    <form method="post"
-                          enctype="multipart/form-data"
-                          action="<%= contextPath %>/store-owner/inventory/update">
+                    <details class="discard-toggle">
+                        <summary class="btn-sm-danger">Bỏ hàng lỗi</summary>
 
-                        <input type="hidden" name="action" value="discardQuality">
-                        <input type="hidden" name="batchId"
-                               value="<%= esc(b.get("batch_id")) %>">
+                        <form method="post"
+                              class="discard-form"
+                              enctype="multipart/form-data"
+                              action="<%= contextPath %>/store-owner/inventory/update">
 
-                        <input class="qty-input" type="number"
-                               name="discardQuantity" min="0.01" step="0.01"
-                               placeholder="SL bỏ" required>
+                            <input type="hidden" name="action" value="discardQuality">
+                            <input type="hidden" name="batchId"
+                                   value="<%= esc(b.get("batch_id")) %>">
 
-                        <input class="qty-input" type="text"
-                               name="discardReason" maxlength="255"
-                               placeholder="Lý do (bắt buộc)" required>
+                            <label>
+                                Số lượng bỏ
+                                <input type="number" name="discardQuantity"
+                                       min="0.01" step="0.01" required>
+                            </label>
 
-                        <input class="qty-input" type="file"
-                               name="discardImage"
-                               accept="image/png,image/jpeg,image/gif,image/webp">
+                            <label>
+                                Lý do bỏ hàng (bắt buộc)
+                                <input type="text" name="discardReason"
+                                       maxlength="255" required>
+                            </label>
 
-                        <button type="submit" class="btn-sm">
-                            Bỏ hàng lỗi
-                        </button>
+                            <label>
+                                Ảnh minh chứng (tùy chọn)
+                                <input type="file" name="discardImage"
+                                       accept="image/png,image/jpeg,image/gif,image/webp">
+                            </label>
 
-                    </form>
+                            <button type="submit" class="btn-sm-danger">Xác nhận bỏ hàng</button>
+
+                        </form>
+                    </details>
 
                 </td>
             </tr>
