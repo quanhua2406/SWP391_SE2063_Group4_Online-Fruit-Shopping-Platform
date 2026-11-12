@@ -3,7 +3,7 @@
 <p class="eyebrow">DÀNH CHO CHỦ CỬA HÀNG</p>
 <div class="page-heading">
     <div><h1>Chương trình khuyến mãi</h1><p class="muted">Quản lý mức giảm, sản phẩm và thời gian áp dụng của cửa hàng.</p></div>
-    <a class="button" href="${ctx}/shopowner/shop/promotions?action=create">+ Tạo chương trình</a>
+    <a class="button" href="${ctx}/store-owner/promotions?action=create">+ Tạo chương trình</a>
 </div>
 <c:set var="effectiveCount" value="0"/>
 <c:set var="scheduledCount" value="0"/>
@@ -16,6 +16,7 @@
     <article class="summary-card"><div class="dashboard-icon" aria-hidden="true"><svg class="icon" width="28" height="28" aria-hidden="true" focusable="false"><use href="${ctx}/assets/icons.svg#check"/></svg></div><div><strong>${effectiveCount}</strong><span>Đang áp dụng</span></div></article>
     <article class="summary-card"><div class="dashboard-icon" aria-hidden="true"><svg class="icon" width="28" height="28" aria-hidden="true" focusable="false"><use href="${ctx}/assets/icons.svg#calendar"/></svg></div><div><strong>${scheduledCount}</strong><span>Sắp bắt đầu</span></div></article>
 </div>
+<p><a class="button secondary" href="${ctx}/store-owner/variant-promotions">Khuyến mãi từng biến thể · Admin duyệt</a></p>
 <section class="card">
     <p class="muted">Một sản phẩm chỉ thuộc một chương trình đang bật trong cùng khoảng thời gian tại mỗi shop. Giờ hiển thị: Việt Nam (UTC+7).</p>
     <div class="table-wrap" tabindex="0" role="region" aria-label="Bảng dữ liệu, cuộn ngang để xem thêm">
@@ -32,9 +33,9 @@
                     <td><span class="badge" data-status="<c:out value='${p.statusLabel}'/>"><c:out value="${p.statusLabel}"/></span></td>
                     <td>
                         <div class="actions">
-                            <a href="${ctx}/shopowner/shop/promotions?action=detail&amp;id=${p.id}">Chi tiết &amp; giá</a>
-                            <a href="${ctx}/shopowner/shop/promotions?action=edit&amp;id=${p.id}">Sửa</a>
-                            <form method="post" action="${ctx}/shopowner/shop/promotions">
+                            <a href="${ctx}/store-owner/promotions?action=detail&amp;id=${p.id}">Chi tiết &amp; giá</a>
+                            <a href="${ctx}/store-owner/promotions?action=edit&amp;id=${p.id}">Sửa</a>
+                            <form method="post" action="${ctx}/store-owner/promotions">
                                 <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
                                 <input type="hidden" name="id" value="${p.id}">
                                 <input type="hidden" name="version" value="${p.version}">

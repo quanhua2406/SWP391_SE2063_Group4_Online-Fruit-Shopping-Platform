@@ -1,6 +1,7 @@
 package com.mycompany.onlinefruitshopping.dao;
 
 import com.mycompany.onlinefruitshopping.model.CartItem;
+import com.mycompany.onlinefruitshopping.dao.promotion.PromotionPricing;
 import com.mycompany.onlinefruitshopping.utils.DBConnection;
 
 import java.sql.*;
@@ -13,6 +14,14 @@ import java.util.List;
  * Handles cart persistence, variant stock checking, dynamic pricing, and validation.
  */
 public class CartDAO {
+    private final com.mycompany.onlinefruitshopping.utils.ConnectionProvider connections;
+
+    public CartDAO() { this(DBConnection::getConnection); }
+
+    public CartDAO(com.mycompany.onlinefruitshopping.utils.ConnectionProvider connections) {
+        this.connections = connections;
+    }
+
 
     public static class CartResult {
         private boolean success;
@@ -80,7 +89,7 @@ public class CartDAO {
                 );
             END;
             """;
-        try (Connection conn = DBConnection.getConnection();
+        try (Connection conn = connections.open();
              Statement stmt = conn.createStatement()) {
             stmt.execute(sql);
         } catch (SQLException e) {
@@ -94,7 +103,7 @@ public class CartDAO {
     public int getOrCreateCartId(int userId) throws SQLException {
         ensureTablesExist();
         String selectSql = "SELECT cart_id FROM carts WHERE user_id = ?";
-        try (Connection conn = DBConnection.getConnection();
+        try (Connection conn = connections.open();
              PreparedStatement ps = conn.prepareStatement(selectSql)) {
             ps.setInt(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -105,7 +114,7 @@ public class CartDAO {
         }
 
         String insertSql = "INSERT INTO carts (user_id, created_at) VALUES (?, GETDATE())";
-        try (Connection conn = DBConnection.getConnection();
+        try (Connection conn = connections.open();
              PreparedStatement ps = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, userId);
             ps.executeUpdate();
@@ -142,8 +151,8 @@ public class CartDAO {
             WHERE pv.variant_id = ?
             """;
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = connections.open();
+             PreparedStatement ps = conn.prepareStatement(sql.replace("product_variants pv", PromotionPricing.customerVariants() + " pv"))) {
             ps.setInt(1, variantId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -200,8 +209,8 @@ public class CartDAO {
             ORDER BY ci.cart_item_id DESC
             """;
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = connections.open();
+             PreparedStatement ps = conn.prepareStatement(sql.replace("product_variants pv", PromotionPricing.customerVariants() + " pv"))) {
             ps.setInt(1, cartId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -258,7 +267,7 @@ public class CartDAO {
         int existingQty = 0;
         int cartItemId = 0;
 
-        try (Connection conn = DBConnection.getConnection();
+        try (Connection conn = connections.open();
              PreparedStatement ps = conn.prepareStatement(checkSql)) {
             ps.setInt(1, cartId);
             ps.setInt(2, variantId);
@@ -278,7 +287,7 @@ public class CartDAO {
             wasCapped = true;
         }
 
-        try (Connection conn = DBConnection.getConnection()) {
+        try (Connection conn = connections.open()) {
             if (cartItemId > 0) {
                 String updateSql = "UPDATE cart_items SET quantity = ? WHERE cart_item_id = ?";
                 try (PreparedStatement ps = conn.prepareStatement(updateSql)) {
@@ -347,7 +356,7 @@ public class CartDAO {
         }
 
         String sql = "UPDATE cart_items SET quantity = ? WHERE cart_id = ? AND variant_id = ?";
-        try (Connection conn = DBConnection.getConnection();
+        try (Connection conn = connections.open();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, finalQuantity);
             ps.setInt(2, cartId);
@@ -370,7 +379,7 @@ public class CartDAO {
     public boolean removeItem(int userId, int variantId) throws SQLException {
         int cartId = getOrCreateCartId(userId);
         String sql = "DELETE FROM cart_items WHERE cart_id = ? AND variant_id = ?";
-        try (Connection conn = DBConnection.getConnection();
+        try (Connection conn = connections.open();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, cartId);
             ps.setInt(2, variantId);
@@ -384,7 +393,7 @@ public class CartDAO {
     public boolean clearCart(int userId) throws SQLException {
         int cartId = getOrCreateCartId(userId);
         String sql = "DELETE FROM cart_items WHERE cart_id = ?";
-        try (Connection conn = DBConnection.getConnection();
+        try (Connection conn = connections.open();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, cartId);
             return ps.executeUpdate() >= 0;
@@ -398,7 +407,7 @@ public class CartDAO {
         try {
             int cartId = getOrCreateCartId(userId);
             String sql = "SELECT COALESCE(SUM(CAST(quantity AS INT)), 0) FROM cart_items WHERE cart_id = ?";
-            try (Connection conn = DBConnection.getConnection();
+            try (Connection conn = connections.open();
                  PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setInt(1, cartId);
                 try (ResultSet rs = ps.executeQuery()) {

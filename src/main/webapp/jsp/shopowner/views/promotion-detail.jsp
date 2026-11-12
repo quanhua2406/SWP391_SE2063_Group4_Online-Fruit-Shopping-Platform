@@ -3,7 +3,7 @@
 <p class="eyebrow">SHOP OWNER · CHI TIẾT KHUYẾN MÃI</p>
 <div class="page-heading">
     <div><h1><c:out value="${promotion.name}"/></h1><p class="muted"><c:out value="${promotion.shopName}"/> · Mã #${promotion.id}</p></div>
-    <a class="button" href="${ctx}/shopowner/shop/promotions?action=edit&amp;id=${promotion.id}">Sửa chương trình</a>
+    <a class="button" href="${ctx}/store-owner/promotions?action=edit&amp;id=${promotion.id}">Sửa chương trình</a>
 </div>
 <section class="card">
     <dl>
@@ -15,13 +15,13 @@
         <dt>Mô tả</dt><dd class="preserve-lines"><c:out value="${empty promotion.description ? 'Chưa có mô tả.' : promotion.description}"/></dd>
     </dl>
     <div class="actions">
-        <form method="post" action="${ctx}/shopowner/shop/promotions">
+        <form method="post" action="${ctx}/store-owner/promotions">
             <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
             <input type="hidden" name="id" value="${promotion.id}">
             <input type="hidden" name="version" value="${promotion.version}">
             <button class="secondary" name="action" value="${promotion.active ? 'deactivate' : 'activate'}">${promotion.active ? 'Tắt chương trình' : 'Bật chương trình'}</button>
         </form>
-        <a href="${ctx}/shopowner/shop/promotions">Về danh sách</a>
+        <a href="${ctx}/store-owner/promotions">Về danh sách</a>
     </div>
 </section>
 
@@ -47,7 +47,7 @@
 <section class="card">
     <h2>Xóa chương trình</h2>
     <p class="muted">Chương trình sẽ ngừng áp dụng và được gỡ khỏi danh sách quản lý.</p>
-    <form method="post" action="${ctx}/shopowner/shop/promotions" class="stack">
+    <form method="post" action="${ctx}/store-owner/promotions" class="stack">
         <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
         <input type="hidden" name="id" value="${promotion.id}">
         <input type="hidden" name="version" value="${promotion.version}">

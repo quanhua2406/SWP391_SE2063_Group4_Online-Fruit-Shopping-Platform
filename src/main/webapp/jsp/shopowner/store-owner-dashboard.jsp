@@ -333,7 +333,7 @@
 
                 <p>Quản lý chương trình khuyến mãi cho sản phẩm của cửa hàng.</p>
 
-                <a href="${pageContext.request.contextPath}/shopowner/shop/promotions">
+                <a href="${pageContext.request.contextPath}/store-owner/promotions">
                     Quản lý khuyến mãi
                 </a>
 

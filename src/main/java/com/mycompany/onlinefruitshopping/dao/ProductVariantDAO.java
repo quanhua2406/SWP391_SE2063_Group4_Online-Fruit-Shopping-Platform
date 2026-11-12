@@ -18,6 +18,14 @@ import java.util.List;
 public class ProductVariantDAO {
 
     public List<ProductVariant> getVariantsByProductId(int productId) throws SQLException {
+        return getVariantsByProductId(productId, false);
+    }
+
+    public List<ProductVariant> getCustomerVariantsByProductId(int productId) throws SQLException {
+        return getVariantsByProductId(productId, true);
+    }
+
+    private List<ProductVariant> getVariantsByProductId(int productId, boolean customerPrice) throws SQLException {
         List<ProductVariant> list = new ArrayList<>();
         String sql = """
                 SELECT pv.variant_id, pv.product_id, p.product_name, pv.sku, pv.unit,
@@ -31,6 +39,11 @@ public class ProductVariantDAO {
                          pv.weight_value, pv.packaging_type, pv.quality_grade, pv.price, pv.created_at
                 ORDER BY pv.variant_id ASC
                 """;
+
+        if (customerPrice) {
+            sql = sql.replace("product_variants pv",
+                    com.mycompany.onlinefruitshopping.dao.promotion.PromotionPricing.customerVariants() + " pv");
+        }
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {

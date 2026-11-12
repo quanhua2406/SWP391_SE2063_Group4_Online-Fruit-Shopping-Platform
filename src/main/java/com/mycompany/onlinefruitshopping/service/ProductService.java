@@ -81,6 +81,14 @@ public class ProductService {
         return variantDAO.getVariantsByProductId(productId);
     }
 
+    public Product getCustomerProductDetail(int productId) throws SQLException {
+        return productId <= 0 ? null : productDAO.getCustomerProductById(productId);
+    }
+
+    public List<ProductVariant> getCustomerProductVariants(int productId) throws SQLException {
+        return productId <= 0 ? java.util.Collections.emptyList() : variantDAO.getCustomerVariantsByProductId(productId);
+    }
+
     public List<ProductImage> getProductImages(int productId) throws SQLException {
         if (productId <= 0) return java.util.Collections.emptyList();
         return imageDAO.getImagesByProductId(productId);

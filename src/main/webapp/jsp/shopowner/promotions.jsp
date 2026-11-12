@@ -158,7 +158,7 @@
             (Page<Map<String, Object>>) request.getAttribute("variantsPage");
 
     String pagerUrl = QueryUrl.keep(request,
-            contextPath + "/store-owner/promotions", "q", "weight", "approval");
+            contextPath + "/store-owner/variant-promotions", "q", "weight", "approval");
 
     String q = request.getParameter("q") == null ? "" : request.getParameter("q");
     String weight = request.getParameter("weight") == null ? "" : request.getParameter("weight");
@@ -264,7 +264,8 @@
         </a>
     </p>
 
-    <h1>Quản lý khuyến mãi</h1>
+    <h1>Khuyến mãi biến thể · Admin duyệt</h1>
+    <p><a href="<%= contextPath %>/store-owner/promotions">← Chương trình khuyến mãi</a></p>
 
     <p class="dashboard-welcome">
         Yêu cầu giá khuyến mãi có thời hạn cho một biến thể sản phẩm.
@@ -305,7 +306,7 @@
     </div>
 
     <form method="get"
-          action="<%= contextPath %>/store-owner/promotions"
+          action="<%= contextPath %>/store-owner/variant-promotions"
           class="filter-form">
 
         <input type="text" class="filter-input" name="q"
@@ -334,7 +335,7 @@
         <button type="submit" class="btn-sm">Lọc</button>
 
         <a class="filter-clear"
-           href="<%= contextPath %>/store-owner/promotions">Xóa lọc</a>
+           href="<%= contextPath %>/store-owner/variant-promotions">Xóa lọc</a>
 
     </form>
 
@@ -436,7 +437,8 @@
                             <div class="table-actions">
 
                                 <form method="post"
-                                      action="<%= contextPath %>/store-owner/promotions">
+                                      action="<%= contextPath %>/store-owner/variant-promotions">
+                                    <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
 
                                     <input type="hidden" name="action"
                                            value="setPromo">
@@ -481,7 +483,8 @@
                                 <% if (promoPrice != null) { %>
 
                                     <form method="post"
-                                          action="<%= contextPath %>/store-owner/promotions">
+                                          action="<%= contextPath %>/store-owner/variant-promotions">
+                                    <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
 
                                         <input type="hidden" name="action"
                                                value="removePromo">

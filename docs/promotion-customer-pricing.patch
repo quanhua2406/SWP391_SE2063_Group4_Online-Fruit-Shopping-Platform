@@ -1,0 +1,546 @@
+--- a/src/main/java/com/mycompany/onlinefruitshopping/controller/cart/CartServlet.java
++++ b/src/main/java/com/mycompany/onlinefruitshopping/controller/cart/CartServlet.java
+@@ -129,7 +129,7 @@
+         if (variantId <= 0 && productId > 0) {
+             try {
+                 com.mycompany.onlinefruitshopping.service.ProductService ps = new com.mycompany.onlinefruitshopping.service.ProductService();
+-                java.util.List<com.mycompany.onlinefruitshopping.model.ProductVariant> vars = ps.getProductVariants(productId);
++                java.util.List<com.mycompany.onlinefruitshopping.model.ProductVariant> vars = ps.getCustomerProductVariants(productId);
+                 if (vars != null && !vars.isEmpty()) {
+                     variantId = vars.get(0).getVariantId();
+                 }
+--- a/src/main/java/com/mycompany/onlinefruitshopping/controller/product/ProductDetailServlet.java
++++ b/src/main/java/com/mycompany/onlinefruitshopping/controller/product/ProductDetailServlet.java
+@@ -84,14 +84,14 @@
+         boolean deleteError   = "1".equals(request.getParameter("deleteError"));
+ 
+         try {
+-            Product product = productService.getProductDetail(productId);
++            Product product = productService.getCustomerProductDetail(productId);
+             if (product == null || !"published".equalsIgnoreCase(product.getStatus())) {
+                 response.sendRedirect(request.getContextPath() + "/products");
+                 return;
+             }
+ 
+             // 1. Lấy danh sách quy cách đóng gói và tồn kho qua Service
+-            List<ProductVariant> variants = productService.getProductVariants(productId);
++            List<ProductVariant> variants = productService.getCustomerProductVariants(productId);
+ 
+             // 2. Lấy thư viện hình ảnh qua Service
+             List<ProductImage> images = productService.getProductImages(productId);
+--- a/src/main/java/com/mycompany/onlinefruitshopping/dao/CartDAO.java
++++ b/src/main/java/com/mycompany/onlinefruitshopping/dao/CartDAO.java
+@@ -1,6 +1,7 @@
+ package com.mycompany.onlinefruitshopping.dao;
+ 
+ import com.mycompany.onlinefruitshopping.model.CartItem;
++import com.mycompany.onlinefruitshopping.dao.promotion.PromotionPricing;
+ import com.mycompany.onlinefruitshopping.utils.DBConnection;
+ 
+ import java.sql.*;
+@@ -13,6 +14,14 @@
+  * Handles cart persistence, variant stock checking, dynamic pricing, and validation.
+  */
+ public class CartDAO {
++    private final com.mycompany.onlinefruitshopping.utils.ConnectionProvider connections;
++
++    public CartDAO() { this(DBConnection::getConnection); }
++
++    public CartDAO(com.mycompany.onlinefruitshopping.utils.ConnectionProvider connections) {
++        this.connections = connections;
++    }
++
+ 
+     public static class CartResult {
+         private boolean success;
+@@ -80,7 +89,7 @@
+                 );
+             END;
+             """;
+-        try (Connection conn = DBConnection.getConnection();
++        try (Connection conn = connections.open();
+              Statement stmt = conn.createStatement()) {
+             stmt.execute(sql);
+         } catch (SQLException e) {
+@@ -94,7 +103,7 @@
+     public int getOrCreateCartId(int userId) throws SQLException {
+         ensureTablesExist();
+         String selectSql = "SELECT cart_id FROM carts WHERE user_id = ?";
+-        try (Connection conn = DBConnection.getConnection();
++        try (Connection conn = connections.open();
+              PreparedStatement ps = conn.prepareStatement(selectSql)) {
+             ps.setInt(1, userId);
+             try (ResultSet rs = ps.executeQuery()) {
+@@ -105,7 +114,7 @@
+         }
+ 
+         String insertSql = "INSERT INTO carts (user_id, created_at) VALUES (?, GETDATE())";
+-        try (Connection conn = DBConnection.getConnection();
++        try (Connection conn = connections.open();
+              PreparedStatement ps = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
+             ps.setInt(1, userId);
+             ps.executeUpdate();
+@@ -142,8 +151,8 @@
+             WHERE pv.variant_id = ?
+             """;
+ 
+-        try (Connection conn = DBConnection.getConnection();
+-             PreparedStatement ps = conn.prepareStatement(sql)) {
++        try (Connection conn = connections.open();
++             PreparedStatement ps = conn.prepareStatement(sql.replace("product_variants pv", PromotionPricing.customerVariants() + " pv"))) {
+             ps.setInt(1, variantId);
+             try (ResultSet rs = ps.executeQuery()) {
+                 if (rs.next()) {
+@@ -200,8 +209,8 @@
+             ORDER BY ci.cart_item_id DESC
+             """;
+ 
+-        try (Connection conn = DBConnection.getConnection();
+-             PreparedStatement ps = conn.prepareStatement(sql)) {
++        try (Connection conn = connections.open();
++             PreparedStatement ps = conn.prepareStatement(sql.replace("product_variants pv", PromotionPricing.customerVariants() + " pv"))) {
+             ps.setInt(1, cartId);
+             try (ResultSet rs = ps.executeQuery()) {
+                 while (rs.next()) {
+@@ -258,7 +267,7 @@
+         int existingQty = 0;
+         int cartItemId = 0;
+ 
+-        try (Connection conn = DBConnection.getConnection();
++        try (Connection conn = connections.open();
+              PreparedStatement ps = conn.prepareStatement(checkSql)) {
+             ps.setInt(1, cartId);
+             ps.setInt(2, variantId);
+@@ -278,7 +287,7 @@
+             wasCapped = true;
+         }
+ 
+-        try (Connection conn = DBConnection.getConnection()) {
++        try (Connection conn = connections.open()) {
+             if (cartItemId > 0) {
+                 String updateSql = "UPDATE cart_items SET quantity = ? WHERE cart_item_id = ?";
+                 try (PreparedStatement ps = conn.prepareStatement(updateSql)) {
+@@ -347,7 +356,7 @@
+         }
+ 
+         String sql = "UPDATE cart_items SET quantity = ? WHERE cart_id = ? AND variant_id = ?";
+-        try (Connection conn = DBConnection.getConnection();
++        try (Connection conn = connections.open();
+              PreparedStatement ps = conn.prepareStatement(sql)) {
+             ps.setInt(1, finalQuantity);
+             ps.setInt(2, cartId);
+@@ -370,7 +379,7 @@
+     public boolean removeItem(int userId, int variantId) throws SQLException {
+         int cartId = getOrCreateCartId(userId);
+         String sql = "DELETE FROM cart_items WHERE cart_id = ? AND variant_id = ?";
+-        try (Connection conn = DBConnection.getConnection();
++        try (Connection conn = connections.open();
+              PreparedStatement ps = conn.prepareStatement(sql)) {
+             ps.setInt(1, cartId);
+             ps.setInt(2, variantId);
+@@ -384,7 +393,7 @@
+     public boolean clearCart(int userId) throws SQLException {
+         int cartId = getOrCreateCartId(userId);
+         String sql = "DELETE FROM cart_items WHERE cart_id = ?";
+-        try (Connection conn = DBConnection.getConnection();
++        try (Connection conn = connections.open();
+              PreparedStatement ps = conn.prepareStatement(sql)) {
+             ps.setInt(1, cartId);
+             return ps.executeUpdate() >= 0;
+@@ -398,7 +407,7 @@
+         try {
+             int cartId = getOrCreateCartId(userId);
+             String sql = "SELECT COALESCE(SUM(CAST(quantity AS INT)), 0) FROM cart_items WHERE cart_id = ?";
+-            try (Connection conn = DBConnection.getConnection();
++            try (Connection conn = connections.open();
+                  PreparedStatement ps = conn.prepareStatement(sql)) {
+                 ps.setInt(1, cartId);
+                 try (ResultSet rs = ps.executeQuery()) {
+--- a/src/main/java/com/mycompany/onlinefruitshopping/dao/OrderDAO.java
++++ b/src/main/java/com/mycompany/onlinefruitshopping/dao/OrderDAO.java
+@@ -15,6 +15,14 @@
+ import java.util.Map;
+ 
+ public class OrderDAO {
++    private final com.mycompany.onlinefruitshopping.utils.ConnectionProvider checkoutConnections;
++
++    public OrderDAO() { this(DBConnection::getConnection); }
++
++    public OrderDAO(com.mycompany.onlinefruitshopping.utils.ConnectionProvider checkoutConnections) {
++        this.checkoutConnections = checkoutConnections;
++    }
++
+ 
+     public List<Order> getOrdersByShop(int shopId, String statusFilter, String searchQuery) throws SQLException {
+         List<Order> list = new ArrayList<>();
+@@ -617,8 +625,11 @@
+                            List<CartItem> items, String note, String couponCode) throws SQLException {
+         Connection conn = null;
+         try {
+-            conn = DBConnection.getConnection();
++            conn = checkoutConnections.open();
++            conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+             conn.setAutoCommit(false);
++            com.mycompany.onlinefruitshopping.dao.promotion.PromotionPricing
++                    .validateCheckoutPrices(conn, shopId, items);
+ 
+             // 1. Tạo bản ghi đơn hàng
+             String insertOrderSql = "INSERT INTO orders (user_id, shop_id, address_id, voucher_id, status, total_amount, created_at) "
+@@ -706,9 +717,8 @@
+             }
+ 
+             // 6. Xóa các sản phẩm đã mua khỏi giỏ hàng
+-            String clearCartSql = "DELETE ci FROM cart_items ci "
+-                    + "INNER JOIN carts c ON ci.cart_id = c.cart_id "
+-                    + "WHERE c.user_id = ?";
++            String clearCartSql = "DELETE FROM cart_items WHERE cart_id IN "
++                    + "(SELECT cart_id FROM carts WHERE user_id = ?)";
+             try (PreparedStatement ps = conn.prepareStatement(clearCartSql)) {
+                 ps.setInt(1, userId);
+                 ps.executeUpdate();
+--- a/src/main/java/com/mycompany/onlinefruitshopping/dao/ProductDAO.java
++++ b/src/main/java/com/mycompany/onlinefruitshopping/dao/ProductDAO.java
+@@ -9,6 +9,11 @@
+ import java.util.List;
+ 
+ public class ProductDAO {
++
++    private static String sellingPrices(String sql) {
++        return sql.replace("FROM product_variants", "FROM "
++                + com.mycompany.onlinefruitshopping.dao.promotion.PromotionPricing.customerVariants() + " priced_variants");
++    }
+ 
+     // =========================================================
+     // GET SHOP ID FOR USER (auto-creates if missing)
+@@ -157,6 +162,14 @@
+     // GET PRODUCT BY ID
+     // =========================================================
+     public Product getProductById(int productId) throws SQLException {
++        return getProductById(productId, false);
++    }
++
++    public Product getCustomerProductById(int productId) throws SQLException {
++        return getProductById(productId, true);
++    }
++
++    private Product getProductById(int productId, boolean customerPrice) throws SQLException {
+         String sql = """
+                 SELECT 
+                     p.product_id,
+@@ -199,7 +212,7 @@
+                 """;
+ 
+         try (Connection conn = DBConnection.getConnection();
+-             PreparedStatement ps = conn.prepareStatement(sql)) {
++             PreparedStatement ps = conn.prepareStatement(customerPrice ? sellingPrices(sql) : sql)) {
+ 
+             ps.setInt(1, productId);
+             try (ResultSet rs = ps.executeQuery()) {
+@@ -634,7 +647,7 @@
+         params.add(pageSize);
+ 
+         try (Connection conn = DBConnection.getConnection();
+-             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
++             PreparedStatement ps = conn.prepareStatement(sellingPrices(sql.toString()))) {
+ 
+             for (int i = 0; i < params.size(); i++) {
+                 ps.setObject(i + 1, params.get(i));
+@@ -674,7 +687,7 @@
+         buildFilterClauses(sql, params, keyword, categoryId, origins, minPrice, maxPrice, inStockOnly);
+ 
+         try (Connection conn = DBConnection.getConnection();
+-             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
++             PreparedStatement ps = conn.prepareStatement(sellingPrices(sql.toString()))) {
+ 
+             for (int i = 0; i < params.size(); i++) {
+                 ps.setObject(i + 1, params.get(i));
+@@ -858,7 +871,7 @@
+                 """;
+ 
+         try (Connection conn = DBConnection.getConnection();
+-             PreparedStatement ps = conn.prepareStatement(sql)) {
++             PreparedStatement ps = conn.prepareStatement(sellingPrices(sql))) {
+             ps.setInt(1, limit <= 0 ? 8 : limit);
+             try (ResultSet rs = ps.executeQuery()) {
+                 while (rs.next()) {
+@@ -919,7 +932,7 @@
+                 """;
+ 
+         try (Connection conn = DBConnection.getConnection();
+-             PreparedStatement ps = conn.prepareStatement(sql)) {
++             PreparedStatement ps = conn.prepareStatement(sellingPrices(sql))) {
+             ps.setInt(1, limit <= 0 ? 4 : limit);
+             ps.setInt(2, excludeProductId);
+             ps.setInt(3, categoryId);
+@@ -995,7 +1008,7 @@
+                 """;
+ 
+         try (Connection conn = DBConnection.getConnection();
+-             PreparedStatement ps = conn.prepareStatement(sql)) {
++             PreparedStatement ps = conn.prepareStatement(sellingPrices(sql))) {
+             ps.setInt(1, limit <= 0 ? 5 : limit);
+             String kw = "%" + query.trim() + "%";
+             ps.setString(2, kw);
+--- a/src/main/java/com/mycompany/onlinefruitshopping/dao/ProductVariantDAO.java
++++ b/src/main/java/com/mycompany/onlinefruitshopping/dao/ProductVariantDAO.java
+@@ -18,6 +18,14 @@
+ public class ProductVariantDAO {
+ 
+     public List<ProductVariant> getVariantsByProductId(int productId) throws SQLException {
++        return getVariantsByProductId(productId, false);
++    }
++
++    public List<ProductVariant> getCustomerVariantsByProductId(int productId) throws SQLException {
++        return getVariantsByProductId(productId, true);
++    }
++
++    private List<ProductVariant> getVariantsByProductId(int productId, boolean customerPrice) throws SQLException {
+         List<ProductVariant> list = new ArrayList<>();
+         String sql = """
+                 SELECT pv.variant_id, pv.product_id, p.product_name, pv.sku, pv.unit,
+@@ -31,6 +39,11 @@
+                          pv.weight_value, pv.packaging_type, pv.quality_grade, pv.price, pv.created_at
+                 ORDER BY pv.variant_id ASC
+                 """;
++
++        if (customerPrice) {
++            sql = sql.replace("product_variants pv",
++                    com.mycompany.onlinefruitshopping.dao.promotion.PromotionPricing.customerVariants() + " pv");
++        }
+ 
+         try (Connection conn = DBConnection.getConnection();
+              PreparedStatement ps = conn.prepareStatement(sql)) {
+--- a/src/main/java/com/mycompany/onlinefruitshopping/dao/promotion/PromotionPricing.java
++++ b/src/main/java/com/mycompany/onlinefruitshopping/dao/promotion/PromotionPricing.java
+@@ -0,0 +1,84 @@
++package com.mycompany.onlinefruitshopping.dao.promotion;
++
++import com.mycompany.onlinefruitshopping.model.CartItem;
++import com.mycompany.onlinefruitshopping.utils.PromotionRules;
++import java.math.BigDecimal;
++import java.sql.*;
++import java.time.LocalDateTime;
++import java.time.format.DateTimeFormatter;
++import java.util.List;
++
++/** Read-only selling prices. Base prices and historical order items never change. */
++public final class PromotionPricing {
++    private PromotionPricing() { }
++
++    public static String customerVariants() {
++        return customerVariants(PromotionRules.now());
++    }
++
++    // The timestamp is generated by the server, never supplied as SQL by a client.
++    public static String customerVariants(LocalDateTime now) {
++        String time = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
++        return """
++            (SELECT v.variant_id, v.product_id, v.sku, v.unit, v.weight_value,
++                    v.packaging_type, v.quality_grade, v.created_at, prices.price
++             FROM product_variants v
++             JOIN (
++                 SELECT offers.variant_id, MIN(offers.price) AS price
++                 FROM (
++                     SELECT variant_id, price FROM product_variants
++                     UNION ALL
++                     SELECT pv.variant_id,
++                            CASE WHEN pr.discount_type = 'PERCENT'
++                                 THEN CASE WHEN ROUND(pv.price * pr.discount_value / 100, 0) >= pv.price THEN 0
++                                           ELSE pv.price - ROUND(pv.price * pr.discount_value / 100, 0) END
++                                 WHEN pr.discount_value >= pv.price THEN 0
++                                 ELSE pv.price - pr.discount_value END AS price
++                     FROM product_variants pv
++                     JOIN products p ON p.product_id = pv.product_id
++                     JOIN shops s ON s.shop_id = p.shop_id
++                     JOIN promotion_products pp ON pp.product_id = p.product_id
++                     JOIN promotions pr ON pr.promotion_id = pp.promotion_id AND pr.shop_id = p.shop_id
++                     WHERE pr.is_active = 1 AND pr.is_deleted = 0
++                       AND pr.starts_at <= CAST('%1$s' AS datetime2)
++                       AND pr.ends_at > CAST('%1$s' AS datetime2)
++                       AND p.status = 'published' AND p.hidden_by_admin = 0 AND s.status = 'active'
++                     UNION ALL
++                     SELECT pv.variant_id, vp.promo_price
++                     FROM product_variants pv
++                     JOIN products p ON p.product_id = pv.product_id
++                     JOIN shops s ON s.shop_id = p.shop_id
++                     JOIN variant_promotions vp ON vp.variant_id = pv.variant_id
++                     WHERE vp.status = 'approved'
++                       AND vp.start_date <= CAST(CAST('%1$s' AS datetime2) AS date)
++                       AND vp.end_date >= CAST(CAST('%1$s' AS datetime2) AS date)
++                       AND p.status = 'published' AND p.hidden_by_admin = 0 AND s.status = 'active'
++                 ) offers
++                 GROUP BY offers.variant_id
++             ) prices ON prices.variant_id = v.variant_id)
++            """.formatted(time);
++    }
++
++    /** Called inside the order transaction, before inserting the order/payment snapshot. */
++    public static void validateCheckoutPrices(Connection connection, int shopId, List<CartItem> items)
++            throws SQLException {
++        if (items == null || items.isEmpty()) throw new IllegalArgumentException("Giỏ hàng đang trống.");
++        String sql = "SELECT pv.price FROM " + customerVariants() + " pv "
++                + "JOIN products p ON p.product_id = pv.product_id "
++                + "JOIN shops s ON s.shop_id = p.shop_id "
++                + "WHERE pv.variant_id = ? AND p.shop_id = ? AND p.status = 'published' "
++                + "AND p.hidden_by_admin = 0 AND s.status = 'active'";
++        try (PreparedStatement ps = connection.prepareStatement(sql)) {
++            for (CartItem item : items) {
++                ps.setInt(1, item.getVariantId());
++                ps.setInt(2, shopId);
++                try (ResultSet rs = ps.executeQuery()) {
++                    if (!rs.next()) throw new IllegalArgumentException("Sản phẩm không còn được bán tại cửa hàng này.");
++                    if (rs.getBigDecimal("price").compareTo(BigDecimal.valueOf(item.getUnitPrice())) != 0) {
++                        throw new IllegalArgumentException("Giá hoặc khuyến mãi vừa thay đổi. Vui lòng tải lại trang thanh toán để xác nhận giá mới.");
++                    }
++                }
++            }
++        }
++    }
++}
+--- a/src/main/java/com/mycompany/onlinefruitshopping/service/ProductService.java
++++ b/src/main/java/com/mycompany/onlinefruitshopping/service/ProductService.java
+@@ -81,6 +81,14 @@
+         return variantDAO.getVariantsByProductId(productId);
+     }
+ 
++    public Product getCustomerProductDetail(int productId) throws SQLException {
++        return productId <= 0 ? null : productDAO.getCustomerProductById(productId);
++    }
++
++    public List<ProductVariant> getCustomerProductVariants(int productId) throws SQLException {
++        return productId <= 0 ? java.util.Collections.emptyList() : variantDAO.getCustomerVariantsByProductId(productId);
++    }
++
+     public List<ProductImage> getProductImages(int productId) throws SQLException {
+         if (productId <= 0) return java.util.Collections.emptyList();
+         return imageDAO.getImagesByProductId(productId);
+--- a/src/test/java/com/mycompany/onlinefruitshopping/dao/promotion/PromotionPricingTest.java
++++ b/src/test/java/com/mycompany/onlinefruitshopping/dao/promotion/PromotionPricingTest.java
+@@ -0,0 +1,127 @@
++package com.mycompany.onlinefruitshopping.dao.promotion;
++
++import com.mycompany.onlinefruitshopping.dao.CartDAO;
++import com.mycompany.onlinefruitshopping.dao.OrderDAO;
++import com.mycompany.onlinefruitshopping.model.CartItem;
++import com.mycompany.onlinefruitshopping.support.ModuleDatabase;
++import com.mycompany.onlinefruitshopping.utils.PromotionRules;
++import java.math.BigDecimal;
++import java.sql.*;
++import java.time.LocalDateTime;
++import java.util.List;
++import org.junit.jupiter.api.*;
++import static org.junit.jupiter.api.Assertions.*;
++
++class PromotionPricingTest {
++    ModuleDatabase db;
++    final LocalDateTime noon = LocalDateTime.of(2026, 11, 12, 12, 0);
++
++    @BeforeEach void setup() throws Exception { db = new ModuleDatabase(); }
++
++    void campaign(String type, String discount, LocalDateTime start, LocalDateTime end) throws Exception {
++        try (Connection c = db.open(); PreparedStatement ps = c.prepareStatement("""
++            INSERT INTO promotions(promotion_id,shop_id,promotion_name,discount_type,discount_value,
++                                   starts_at,ends_at,is_active) VALUES(1,1,'Offer',?,?,?, ?,1)
++            """)) {
++            ps.setString(1,type); ps.setBigDecimal(2,new BigDecimal(discount));
++            ps.setTimestamp(3,Timestamp.valueOf(start)); ps.setTimestamp(4,Timestamp.valueOf(end));
++            ps.executeUpdate();
++        }
++        db.exec("INSERT INTO promotion_products VALUES(1,1)");
++    }
++
++    BigDecimal price(int variant, LocalDateTime time) throws Exception {
++        return new BigDecimal(db.scalar("SELECT price FROM " + PromotionPricing.customerVariants(time)
++                + " priced WHERE variant_id=" + variant));
++    }
++
++    void assertPrice(String expected, int variant, LocalDateTime time) throws Exception {
++        assertEquals(0,new BigDecimal(expected).compareTo(price(variant,time)));
++    }
++
++    @Test void percentageAppliesToSelectedProductsAndAllTheirVariantsOnly() throws Exception {
++        db.exec("INSERT INTO product_variants(variant_id,product_id,sku,price,unit) VALUES(4,1,'ORANGE2',150005,'piece')");
++        campaign("PERCENT","10",noon,noon.plusDays(1));
++        assertPrice("90000",1,noon); assertPrice("135004",4,noon);
++        assertPrice("100000",2,noon); // other shop
++        assertEquals("100000.00",db.scalar("SELECT price FROM product_variants WHERE variant_id=1"));
++        assertEquals("50000.00",db.scalar("SELECT unit_price FROM order_items WHERE order_id=103"));
++    }
++
++    @Test void startIsInclusiveEndIsExclusiveAndDisabledOrDeletedNeverApplies() throws Exception {
++        campaign("PERCENT","10",noon,noon.plusHours(1));
++        assertPrice("100000",1,noon.minusSeconds(1)); assertPrice("90000",1,noon);
++        assertPrice("100000",1,noon.plusHours(1));
++        db.exec("UPDATE promotions SET is_active=0"); assertPrice("100000",1,noon);
++        db.exec("UPDATE promotions SET is_deleted=1"); assertPrice("100000",1,noon);
++    }
++
++    @Test void fixedDiscountCannotMakePriceNegative() throws Exception {
++        campaign("FIXED","200000",noon,noon.plusDays(1)); assertPrice("0",1,noon);
++    }
++
++    @Test void approvedVariantUsesBestPriceWithoutStackingAndIncludesEndDate() throws Exception {
++        campaign("PERCENT","10",noon,noon.plusDays(2));
++        db.exec("INSERT INTO variant_promotions(variant_id,promo_price,start_date,end_date,status) VALUES(1,80000,'2026-11-12','2026-11-12','pending')");
++        assertPrice("90000",1,noon);
++        db.exec("UPDATE variant_promotions SET status='approved'");
++        assertPrice("80000",1,noon); assertPrice("80000",1,noon.withHour(23));
++        assertPrice("90000",1,noon.plusDays(1));
++        db.exec("UPDATE variant_promotions SET promo_price=120000"); assertPrice("90000",1,noon);
++        db.exec("UPDATE variant_promotions SET status='rejected',promo_price=70000"); assertPrice("90000",1,noon);
++    }
++
++    @Test void wrongShopHiddenProductOrInactiveShopCannotSupplyCampaignDiscount() throws Exception {
++        campaign("PERCENT","10",noon,noon.plusDays(1));
++        db.exec("UPDATE promotions SET shop_id=2"); assertPrice("100000",1,noon);
++        db.exec("UPDATE promotions SET shop_id=1", "UPDATE products SET hidden_by_admin=1 WHERE product_id=1");
++        assertPrice("100000",1,noon);
++        db.exec("UPDATE products SET hidden_by_admin=0 WHERE product_id=1", "UPDATE shops SET status='suspended' WHERE shop_id=1");
++        assertPrice("100000",1,noon);
++    }
++
++    @Test void cartAndGuestRefreshReadEffectivePrices() throws Exception {
++        LocalDateTime now=PromotionRules.now();
++        campaign("FIXED","25000",now.minusDays(1),now.plusDays(1));
++        db.exec("INSERT INTO carts(cart_id,user_id) VALUES(1,30)","INSERT INTO cart_items(cart_id,variant_id,quantity) VALUES(1,1,2)");
++        CartDAO cart=new CartDAO(db::open);
++        assertEquals(75000,cart.getVariantDetailForCart(1).getUnitPrice());
++        List<CartItem> items=cart.getCartItemsByCartId(1);
++        assertEquals(75000,items.get(0).getUnitPrice()); assertEquals(150000,items.get(0).getItemTotal());
++        try(Connection c=db.open()) { PromotionPricing.validateCheckoutPrices(c,1,items); }
++        db.exec("UPDATE promotions SET is_active=0");
++        try(Connection c=db.open()) {
++            assertThrows(IllegalArgumentException.class,()->PromotionPricing.validateCheckoutPrices(c,1,items));
++        }
++        assertEquals(100000,cart.getVariantDetailForCart(1).getUnitPrice());
++    }
++
++    @Test void savedOrderAndPaymentUseDiscountedSnapshotAndRejectStaleCheckout() throws Exception {
++        LocalDateTime now=PromotionRules.now();
++        campaign("PERCENT","10",now.minusDays(1),now.plusDays(1));
++        db.exec("INSERT INTO carts(cart_id,user_id) VALUES(1,30)","INSERT INTO cart_items(cart_id,variant_id,quantity) VALUES(1,1,2)");
++        List<CartItem> items=new CartDAO(db::open).getCartItemsByCartId(1);
++        OrderDAO orders=new OrderDAO(db::open);
++        int id=orders.createOrder(30,1,1,null,"standard","cod",205000,25000,0,items,null);
++        assertEquals("90000.00",db.scalar("SELECT unit_price FROM order_items WHERE order_id="+id));
++        assertEquals("205000.00",db.scalar("SELECT total_amount FROM orders WHERE order_id="+id));
++        assertEquals("205000.00",db.scalar("SELECT amount FROM payments WHERE order_id="+id));
++        assertEquals(0,db.count("SELECT COUNT(*) FROM cart_items WHERE cart_id=1"));
++        db.exec("UPDATE promotions SET is_active=0");
++        int count=db.count("SELECT COUNT(*) FROM orders");
++        assertThrows(IllegalArgumentException.class,()->orders.createOrder(30,1,1,null,
++                "standard","cod",205000,25000,0,items,null));
++        assertEquals(count,db.count("SELECT COUNT(*) FROM orders"));
++        assertEquals("90000.00",db.scalar("SELECT unit_price FROM order_items WHERE order_id="+id));
++    }
++
++    @Test void checkoutRejectsWrongShopAndForgedPrice() throws Exception {
++        CartItem item=new CartItem(); item.setVariantId(1); item.setUnitPrice(1);
++        try(Connection c=db.open()) {
++            assertThrows(IllegalArgumentException.class,()->PromotionPricing.validateCheckoutPrices(c,1,List.of(item)));
++            item.setUnitPrice(100000);
++            assertThrows(IllegalArgumentException.class,()->PromotionPricing.validateCheckoutPrices(c,2,List.of(item)));
++            PromotionPricing.validateCheckoutPrices(c,1,List.of(item));
++        }
++    }
++}
