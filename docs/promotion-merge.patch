@@ -1,0 +1,299 @@
+--- a/src/main/java/com/mycompany/onlinefruitshopping/controller/shopowner/PromotionController.java
++++ b/src/main/java/com/mycompany/onlinefruitshopping/controller/shopowner/PromotionController.java
+@@ -15,8 +15,8 @@
+ import com.mycompany.onlinefruitshopping.model.ShopOption;
+ import com.mycompany.onlinefruitshopping.utils.WebUtil;
+ 
+-/** GET để xem; POST để thay đổi dữ liệu. AuthFilter bảo vệ toàn bộ /shop/*. */
+-@WebServlet("/shopowner/shop/promotions")
++/** Quản lý chương trình tại URL chung; giữ URL cũ để tương thích. */
++@WebServlet({"/store-owner/promotions", "/shopowner/shop/promotions"})
+ public class PromotionController extends HttpServlet {
+     private final CampaignPromotionService promotionService = new CampaignPromotionService();
+ 
+@@ -89,7 +89,7 @@
+             log("Không đổi được trạng thái khuyến mãi", e);
+             WebUtil.flash(request, "error", "Chưa lưu được. Hãy tải lại trang và thử lại; nếu còn lỗi, xem log Tomcat.");
+         }
+-        response.sendRedirect(request.getContextPath() + "/shopowner/shop/promotions");
++        response.sendRedirect(request.getContextPath() + "/store-owner/promotions");
+     }
+ 
+     private void saveForm(HttpServletRequest request, HttpServletResponse response)
+@@ -116,7 +116,7 @@
+                 readForm(request, p);
+                 int savedId = promotionService.save(ownerId, p);
+                 WebUtil.flash(request, "success", id == 0 ? "Đã tạo chương trình khuyến mãi." : "Đã cập nhật chương trình khuyến mãi.");
+-                response.sendRedirect(request.getContextPath() + "/shopowner/shop/promotions?action=detail&id=" + savedId);
++                response.sendRedirect(request.getContextPath() + "/store-owner/promotions?action=detail&id=" + savedId);
+             } catch (IllegalArgumentException e) {
+                 response.setStatus(400);
+                 request.setAttribute("formError", e.getMessage());
+--- a/src/main/java/com/mycompany/onlinefruitshopping/controller/shopowner/StoreOwnerPromotionServlet.java
++++ b/src/main/java/com/mycompany/onlinefruitshopping/controller/shopowner/StoreOwnerPromotionServlet.java
+@@ -21,7 +21,7 @@
+  * {@code pending} and becomes effective once an administrator
+  * approves it in {@code /admin/promotion-approvals}.</p>
+  */
+-@WebServlet("/store-owner/promotions")
++@WebServlet("/store-owner/variant-promotions")
+ public class StoreOwnerPromotionServlet extends HttpServlet {
+ 
+     private final PromotionService promotionService = new PromotionService();
+@@ -94,6 +94,10 @@
+         }
+ 
+         String action = request.getParameter("action");
++        if (!"removePromo".equals(action) && !"setPromo".equals(action)) {
++            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
++            return;
++        }
+         String result;
+ 
+         try {
+@@ -118,7 +122,7 @@
+         // Keep the current search / filter / page while redirecting,
+         // so saving one row does not send the owner back to page 1.
+         String url = QueryUrl.keep(request,
+-                request.getContextPath() + "/store-owner/promotions",
++                request.getContextPath() + "/store-owner/variant-promotions",
+                 "q", "weight", "approval", "page") + "msg=" + result;
+ 
+         response.sendRedirect(url);
+--- a/src/main/java/com/mycompany/onlinefruitshopping/filter/AccessPolicy.java
++++ b/src/main/java/com/mycompany/onlinefruitshopping/filter/AccessPolicy.java
+@@ -28,7 +28,12 @@
+             "/cart", "/cart/add", "/cart/update", "/cart/remove", "/cart/clear");
+ 
+     static boolean isModulePath(String path) {
+-        return path.equals("/shopowner") || path.startsWith("/shopowner/") || path.equals("/delivery/team") || path.startsWith("/delivery/team/") || isInternalView(path);
++        return isPromotionPath(path) || path.equals("/shopowner") || path.startsWith("/shopowner/") || path.equals("/delivery/team") || path.startsWith("/delivery/team/") || isInternalView(path);
++    }
++
++    private static boolean isPromotionPath(String path) {
++        return path.equals("/store-owner/promotions")
++                || path.equals("/store-owner/variant-promotions");
+     }
+ 
+     static boolean isRead(String method) {
+@@ -105,7 +110,7 @@
+ 
+     /** Retains the former module's CSRF boundary and covers the shared POST logout. */
+     static boolean requiresCsrf(String path, String method) {
+-        return !isRead(method) && (path.equals("/logout")
++        return !isRead(method) && (isPromotionPath(path) || path.equals("/logout")
+                 || (path.startsWith("/shopowner/") && !path.equals("/shopowner/login"))
+                 || path.startsWith("/delivery/team/"));
+     }
+--- a/src/main/webapp/jsp/shopowner/promotions.jsp
++++ b/src/main/webapp/jsp/shopowner/promotions.jsp
+@@ -158,7 +158,7 @@
+             (Page<Map<String, Object>>) request.getAttribute("variantsPage");
+ 
+     String pagerUrl = QueryUrl.keep(request,
+-            contextPath + "/store-owner/promotions", "q", "weight", "approval");
++            contextPath + "/store-owner/variant-promotions", "q", "weight", "approval");
+ 
+     String q = request.getParameter("q") == null ? "" : request.getParameter("q");
+     String weight = request.getParameter("weight") == null ? "" : request.getParameter("weight");
+@@ -264,7 +264,8 @@
+         </a>
+     </p>
+ 
+-    <h1>Quản lý khuyến mãi</h1>
++    <h1>Khuyến mãi biến thể · Admin duyệt</h1>
++    <p><a href="<%= contextPath %>/store-owner/promotions">← Chương trình khuyến mãi</a></p>
+ 
+     <p class="dashboard-welcome">
+         Yêu cầu giá khuyến mãi có thời hạn cho một biến thể sản phẩm.
+@@ -305,7 +306,7 @@
+     </div>
+ 
+     <form method="get"
+-          action="<%= contextPath %>/store-owner/promotions"
++          action="<%= contextPath %>/store-owner/variant-promotions"
+           class="filter-form">
+ 
+         <input type="text" class="filter-input" name="q"
+@@ -334,7 +335,7 @@
+         <button type="submit" class="btn-sm">Lọc</button>
+ 
+         <a class="filter-clear"
+-           href="<%= contextPath %>/store-owner/promotions">Xóa lọc</a>
++           href="<%= contextPath %>/store-owner/variant-promotions">Xóa lọc</a>
+ 
+     </form>
+ 
+@@ -436,7 +437,8 @@
+                             <div class="table-actions">
+ 
+                                 <form method="post"
+-                                      action="<%= contextPath %>/store-owner/promotions">
++                                      action="<%= contextPath %>/store-owner/variant-promotions">
++                                    <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
+ 
+                                     <input type="hidden" name="action"
+                                            value="setPromo">
+@@ -481,7 +483,8 @@
+                                 <% if (promoPrice != null) { %>
+ 
+                                     <form method="post"
+-                                          action="<%= contextPath %>/store-owner/promotions">
++                                          action="<%= contextPath %>/store-owner/variant-promotions">
++                                    <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
+ 
+                                         <input type="hidden" name="action"
+                                                value="removePromo">
+--- a/src/main/webapp/jsp/shopowner/store-owner-dashboard.jsp
++++ b/src/main/webapp/jsp/shopowner/store-owner-dashboard.jsp
+@@ -333,7 +333,7 @@
+ 
+                 <p>Quản lý chương trình khuyến mãi cho sản phẩm của cửa hàng.</p>
+ 
+-                <a href="${pageContext.request.contextPath}/shopowner/shop/promotions">
++                <a href="${pageContext.request.contextPath}/store-owner/promotions">
+                     Quản lý khuyến mãi
+                 </a>
+ 
+--- a/src/main/webapp/jsp/shopowner/views/header.jspf
++++ b/src/main/webapp/jsp/shopowner/views/header.jspf
+@@ -61,7 +61,7 @@
+     <c:if test="${requestScope.currentRole == 'SHOPOWNER'}">
+         <a href="${ctx}/shopowner/shop/shipper-team" class="${currentPath == '/shopowner/shop/shipper-team' ? 'is-active' : ''}">Quản lý shipper</a>
+         <a href="${ctx}/shopowner/shop/deliveries" class="${fn:startsWith(currentPath, '/shopowner/shop/deliveries') or fn:startsWith(currentPath, '/shopowner/delivery/') ? 'is-active' : ''}" ${fn:startsWith(currentPath, '/shopowner/shop/deliveries') or fn:startsWith(currentPath, '/shopowner/delivery/') ? 'aria-current="page"' : ''}><svg class="icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="${ctx}/assets/icons.svg#truck"/></svg> Giao hàng</a>
+-        <a href="${ctx}/shopowner/shop/promotions" class="${fn:startsWith(currentPath, '/shopowner/shop/promotions') ? 'is-active' : ''}" ${fn:startsWith(currentPath, '/shopowner/shop/promotions') ? 'aria-current="page"' : ''}><svg class="icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="${ctx}/assets/icons.svg#gift"/></svg> Khuyến mãi</a>
++        <a href="${ctx}/store-owner/promotions" class="${(fn:startsWith(currentPath, '/store-owner/promotions') or currentPath == '/shopowner/shop/promotions' or currentPath == '/store-owner/variant-promotions') ? 'is-active' : ''}" ${(fn:startsWith(currentPath, '/store-owner/promotions') or currentPath == '/shopowner/shop/promotions' or currentPath == '/store-owner/variant-promotions') ? 'aria-current="page"' : ''}><svg class="icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="${ctx}/assets/icons.svg#gift"/></svg> Khuyến mãi</a>
+         <a href="${ctx}/shopowner/shop/coupons" class="${fn:startsWith(currentPath, '/shopowner/shop/coupons') ? 'is-active' : ''}" ${fn:startsWith(currentPath, '/shopowner/shop/coupons') ? 'aria-current="page"' : ''}><svg class="icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="${ctx}/assets/icons.svg#ticket"/></svg> Mã giảm giá</a>
+     </c:if>
+     <c:if test="${requestScope.currentRole == 'DELIVERYSTAFF'}">
+--- a/src/main/webapp/jsp/shopowner/views/promotion-detail.jsp
++++ b/src/main/webapp/jsp/shopowner/views/promotion-detail.jsp
+@@ -3,7 +3,7 @@
+ <p class="eyebrow">SHOP OWNER · CHI TIẾT KHUYẾN MÃI</p>
+ <div class="page-heading">
+     <div><h1><c:out value="${promotion.name}"/></h1><p class="muted"><c:out value="${promotion.shopName}"/> · Mã #${promotion.id}</p></div>
+-    <a class="button" href="${ctx}/shopowner/shop/promotions?action=edit&amp;id=${promotion.id}">Sửa chương trình</a>
++    <a class="button" href="${ctx}/store-owner/promotions?action=edit&amp;id=${promotion.id}">Sửa chương trình</a>
+ </div>
+ <section class="card">
+     <dl>
+@@ -15,13 +15,13 @@
+         <dt>Mô tả</dt><dd class="preserve-lines"><c:out value="${empty promotion.description ? 'Chưa có mô tả.' : promotion.description}"/></dd>
+     </dl>
+     <div class="actions">
+-        <form method="post" action="${ctx}/shopowner/shop/promotions">
++        <form method="post" action="${ctx}/store-owner/promotions">
+             <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
+             <input type="hidden" name="id" value="${promotion.id}">
+             <input type="hidden" name="version" value="${promotion.version}">
+             <button class="secondary" name="action" value="${promotion.active ? 'deactivate' : 'activate'}">${promotion.active ? 'Tắt chương trình' : 'Bật chương trình'}</button>
+         </form>
+-        <a href="${ctx}/shopowner/shop/promotions">Về danh sách</a>
++        <a href="${ctx}/store-owner/promotions">Về danh sách</a>
+     </div>
+ </section>
+ 
+@@ -47,7 +47,7 @@
+ <section class="card">
+     <h2>Xóa chương trình</h2>
+     <p class="muted">Chương trình sẽ ngừng áp dụng và được gỡ khỏi danh sách quản lý.</p>
+-    <form method="post" action="${ctx}/shopowner/shop/promotions" class="stack">
++    <form method="post" action="${ctx}/store-owner/promotions" class="stack">
+         <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
+         <input type="hidden" name="id" value="${promotion.id}">
+         <input type="hidden" name="version" value="${promotion.version}">
+--- a/src/main/webapp/jsp/shopowner/views/promotion-form.jsp
++++ b/src/main/webapp/jsp/shopowner/views/promotion-form.jsp
+@@ -14,7 +14,7 @@
+ <c:set var="startValue" value="${submitted ? param.startsAt : promotion.startInput}"/>
+ <c:set var="endValue" value="${submitted ? param.endsAt : promotion.endInput}"/>
+ 
+-<form method="post" action="${ctx}/shopowner/shop/promotions" class="card stack management-form">
++<form method="post" action="${ctx}/store-owner/promotions" class="card stack management-form">
+     <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
+     <input type="hidden" name="action" value="save">
+     <input type="hidden" name="id" value="${promotion.id}">
+@@ -92,8 +92,8 @@
+     <p class="muted">Bỏ chọn để lưu chương trình ở trạng thái tắt. Khi bật, chương trình phải còn hạn và không trùng lịch trên cùng sản phẩm.</p>
+     <div class="actions">
+         <c:if test="${not empty shops}"><button type="submit">Lưu chương trình</button></c:if>
+-        <a class="button secondary" href="${ctx}/shopowner/shop/promotions">Về danh sách</a>
+-        <c:if test="${promotion.id > 0}"><a href="${ctx}/shopowner/shop/promotions?action=edit&amp;id=${promotion.id}">Tải lại dữ liệu đã lưu</a></c:if>
++        <a class="button secondary" href="${ctx}/store-owner/promotions">Về danh sách</a>
++        <c:if test="${promotion.id > 0}"><a href="${ctx}/store-owner/promotions?action=edit&amp;id=${promotion.id}">Tải lại dữ liệu đã lưu</a></c:if>
+     </div>
+ </form>
+ <%@ include file="footer.jspf" %>
+--- a/src/main/webapp/jsp/shopowner/views/promotions.jsp
++++ b/src/main/webapp/jsp/shopowner/views/promotions.jsp
+@@ -3,7 +3,7 @@
+ <p class="eyebrow">DÀNH CHO CHỦ CỬA HÀNG</p>
+ <div class="page-heading">
+     <div><h1>Chương trình khuyến mãi</h1><p class="muted">Quản lý mức giảm, sản phẩm và thời gian áp dụng của cửa hàng.</p></div>
+-    <a class="button" href="${ctx}/shopowner/shop/promotions?action=create">+ Tạo chương trình</a>
++    <a class="button" href="${ctx}/store-owner/promotions?action=create">+ Tạo chương trình</a>
+ </div>
+ <c:set var="effectiveCount" value="0"/>
+ <c:set var="scheduledCount" value="0"/>
+@@ -16,6 +16,7 @@
+     <article class="summary-card"><div class="dashboard-icon" aria-hidden="true"><svg class="icon" width="28" height="28" aria-hidden="true" focusable="false"><use href="${ctx}/assets/icons.svg#check"/></svg></div><div><strong>${effectiveCount}</strong><span>Đang áp dụng</span></div></article>
+     <article class="summary-card"><div class="dashboard-icon" aria-hidden="true"><svg class="icon" width="28" height="28" aria-hidden="true" focusable="false"><use href="${ctx}/assets/icons.svg#calendar"/></svg></div><div><strong>${scheduledCount}</strong><span>Sắp bắt đầu</span></div></article>
+ </div>
++<p><a class="button secondary" href="${ctx}/store-owner/variant-promotions">Khuyến mãi từng biến thể · Admin duyệt</a></p>
+ <section class="card">
+     <p class="muted">Một sản phẩm chỉ thuộc một chương trình đang bật trong cùng khoảng thời gian tại mỗi shop. Giờ hiển thị: Việt Nam (UTC+7).</p>
+     <div class="table-wrap" tabindex="0" role="region" aria-label="Bảng dữ liệu, cuộn ngang để xem thêm">
+@@ -32,9 +33,9 @@
+                     <td><span class="badge" data-status="<c:out value='${p.statusLabel}'/>"><c:out value="${p.statusLabel}"/></span></td>
+                     <td>
+                         <div class="actions">
+-                            <a href="${ctx}/shopowner/shop/promotions?action=detail&amp;id=${p.id}">Chi tiết &amp; giá</a>
+-                            <a href="${ctx}/shopowner/shop/promotions?action=edit&amp;id=${p.id}">Sửa</a>
+-                            <form method="post" action="${ctx}/shopowner/shop/promotions">
++                            <a href="${ctx}/store-owner/promotions?action=detail&amp;id=${p.id}">Chi tiết &amp; giá</a>
++                            <a href="${ctx}/store-owner/promotions?action=edit&amp;id=${p.id}">Sửa</a>
++                            <form method="post" action="${ctx}/store-owner/promotions">
+                                 <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
+                                 <input type="hidden" name="id" value="${p.id}">
+                                 <input type="hidden" name="version" value="${p.version}">
+--- a/src/test/java/com/mycompany/onlinefruitshopping/filter/AuthorizationFilterTest.java
++++ b/src/test/java/com/mycompany/onlinefruitshopping/filter/AuthorizationFilterTest.java
+@@ -18,6 +18,27 @@
+         filter.doFilter(h.request, h.response, h.chain);
+     }
+ 
++    @Test void sharedPromotionRoutesKeepRoleSessionAndCsrfProtection() throws Exception {
++        for (String path : new String[]{"/store-owner/promotions", "/store-owner/variant-promotions", "/shopowner/shop/promotions"}) {
++            ServletHarness read = new ServletHarness(path, "GET").as(31, "ShopOwner");
++            run(read);
++            assertEquals(1, read.calls, path);
++            assertEquals("SHOPOWNER", read.attributes.get("currentRole"));
++            assertNotNull(read.sessionValues.get("csrfToken"));
++            ServletHarness missing = new ServletHarness(path, "POST").as(31, "ShopOwner");
++            run(missing);
++            assertEquals(403, missing.status, path);
++            ServletHarness valid = new ServletHarness(path, "POST").as(31, "ShopOwner");
++            valid.sessionValues.put("csrfToken", "known-token");
++            valid.parameters.put("csrfToken", "known-token");
++            run(valid);
++            assertEquals(1, valid.calls, path);
++            ServletHarness forbidden = new ServletHarness(path, "GET").as(11, "Customer");
++            run(forbidden);
++            assertEquals(403, forbidden.status, path);
++        }
++    }
++
+     @Test void guestIsRedirectedAndInternalGetTargetIsRemembered() throws Exception {
+         ServletHarness h = new ServletHarness("/shopowner/delivery/detail", "GET");
+         h.query = "id=17";
+--- a/src/test/java/com/mycompany/onlinefruitshopping/view/JspCompilationTest.java
++++ b/src/test/java/com/mycompany/onlinefruitshopping/view/JspCompilationTest.java
+@@ -21,7 +21,7 @@
+         assertEquals(15, pages.size());
+         pages.addAll(List.of("jsp/customer/customer-dashboard.jsp",
+                 "jsp/delivery/delivery-dashboard.jsp", "jsp/shopowner/store-owner-dashboard.jsp",
+-                "jsp/admin/admin-delivery-staff.jsp"));
++                "jsp/admin/admin-delivery-staff.jsp", "jsp/shopowner/promotions.jsp", "jsp/shopowner/pricing.jsp"));
+         Path output = Path.of("target/jsp-compilation").toAbsolutePath();
+         Files.createDirectories(output);
+ 

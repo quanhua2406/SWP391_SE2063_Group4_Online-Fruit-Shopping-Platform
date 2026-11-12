@@ -14,7 +14,7 @@
 <c:set var="startValue" value="${submitted ? param.startsAt : promotion.startInput}"/>
 <c:set var="endValue" value="${submitted ? param.endsAt : promotion.endInput}"/>
 
-<form method="post" action="${ctx}/shopowner/shop/promotions" class="card stack management-form">
+<form method="post" action="${ctx}/store-owner/promotions" class="card stack management-form">
     <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
     <input type="hidden" name="action" value="save">
     <input type="hidden" name="id" value="${promotion.id}">
@@ -92,8 +92,8 @@
     <p class="muted">Bỏ chọn để lưu chương trình ở trạng thái tắt. Khi bật, chương trình phải còn hạn và không trùng lịch trên cùng sản phẩm.</p>
     <div class="actions">
         <c:if test="${not empty shops}"><button type="submit">Lưu chương trình</button></c:if>
-        <a class="button secondary" href="${ctx}/shopowner/shop/promotions">Về danh sách</a>
-        <c:if test="${promotion.id > 0}"><a href="${ctx}/shopowner/shop/promotions?action=edit&amp;id=${promotion.id}">Tải lại dữ liệu đã lưu</a></c:if>
+        <a class="button secondary" href="${ctx}/store-owner/promotions">Về danh sách</a>
+        <c:if test="${promotion.id > 0}"><a href="${ctx}/store-owner/promotions?action=edit&amp;id=${promotion.id}">Tải lại dữ liệu đã lưu</a></c:if>
     </div>
 </form>
 <%@ include file="footer.jspf" %>

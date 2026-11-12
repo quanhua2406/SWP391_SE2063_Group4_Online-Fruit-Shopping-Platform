@@ -10,6 +10,11 @@ import java.util.List;
 
 public class ProductDAO {
 
+    private static String sellingPrices(String sql) {
+        return sql.replace("FROM product_variants", "FROM "
+                + com.mycompany.onlinefruitshopping.dao.promotion.PromotionPricing.customerVariants() + " priced_variants");
+    }
+
     // =========================================================
     // GET SHOP ID FOR USER (auto-creates if missing)
     // =========================================================
@@ -157,6 +162,14 @@ public class ProductDAO {
     // GET PRODUCT BY ID
     // =========================================================
     public Product getProductById(int productId) throws SQLException {
+        return getProductById(productId, false);
+    }
+
+    public Product getCustomerProductById(int productId) throws SQLException {
+        return getProductById(productId, true);
+    }
+
+    private Product getProductById(int productId, boolean customerPrice) throws SQLException {
         String sql = """
                 SELECT 
                     p.product_id,
@@ -199,7 +212,7 @@ public class ProductDAO {
                 """;
 
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(customerPrice ? sellingPrices(sql) : sql)) {
 
             ps.setInt(1, productId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -634,7 +647,7 @@ public class ProductDAO {
         params.add(pageSize);
 
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+             PreparedStatement ps = conn.prepareStatement(sellingPrices(sql.toString()))) {
 
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
@@ -674,7 +687,7 @@ public class ProductDAO {
         buildFilterClauses(sql, params, keyword, categoryId, origins, minPrice, maxPrice, inStockOnly);
 
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+             PreparedStatement ps = conn.prepareStatement(sellingPrices(sql.toString()))) {
 
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
@@ -858,7 +871,7 @@ public class ProductDAO {
                 """;
 
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sellingPrices(sql))) {
             ps.setInt(1, limit <= 0 ? 8 : limit);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -919,7 +932,7 @@ public class ProductDAO {
                 """;
 
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sellingPrices(sql))) {
             ps.setInt(1, limit <= 0 ? 4 : limit);
             ps.setInt(2, excludeProductId);
             ps.setInt(3, categoryId);
@@ -995,7 +1008,7 @@ public class ProductDAO {
                 """;
 
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sellingPrices(sql))) {
             ps.setInt(1, limit <= 0 ? 5 : limit);
             String kw = "%" + query.trim() + "%";
             ps.setString(2, kw);

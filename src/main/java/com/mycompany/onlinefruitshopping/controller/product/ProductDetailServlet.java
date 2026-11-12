@@ -84,14 +84,14 @@ public class ProductDetailServlet extends HttpServlet {
         boolean deleteError   = "1".equals(request.getParameter("deleteError"));
 
         try {
-            Product product = productService.getProductDetail(productId);
+            Product product = productService.getCustomerProductDetail(productId);
             if (product == null || !"published".equalsIgnoreCase(product.getStatus())) {
                 response.sendRedirect(request.getContextPath() + "/products");
                 return;
             }
 
             // 1. Lấy danh sách quy cách đóng gói và tồn kho qua Service
-            List<ProductVariant> variants = productService.getProductVariants(productId);
+            List<ProductVariant> variants = productService.getCustomerProductVariants(productId);
 
             // 2. Lấy thư viện hình ảnh qua Service
             List<ProductImage> images = productService.getProductImages(productId);

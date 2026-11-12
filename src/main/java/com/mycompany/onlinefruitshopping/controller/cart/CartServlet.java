@@ -129,7 +129,7 @@ public class CartServlet extends HttpServlet {
         if (variantId <= 0 && productId > 0) {
             try {
                 com.mycompany.onlinefruitshopping.service.ProductService ps = new com.mycompany.onlinefruitshopping.service.ProductService();
-                java.util.List<com.mycompany.onlinefruitshopping.model.ProductVariant> vars = ps.getProductVariants(productId);
+                java.util.List<com.mycompany.onlinefruitshopping.model.ProductVariant> vars = ps.getCustomerProductVariants(productId);
                 if (vars != null && !vars.isEmpty()) {
                     variantId = vars.get(0).getVariantId();
                 }

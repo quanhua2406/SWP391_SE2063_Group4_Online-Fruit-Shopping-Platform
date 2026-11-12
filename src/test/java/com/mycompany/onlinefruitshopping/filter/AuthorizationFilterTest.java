@@ -18,6 +18,27 @@ class AuthorizationFilterTest {
         filter.doFilter(h.request, h.response, h.chain);
     }
 
+    @Test void sharedPromotionRoutesKeepRoleSessionAndCsrfProtection() throws Exception {
+        for (String path : new String[]{"/store-owner/promotions", "/store-owner/variant-promotions", "/shopowner/shop/promotions"}) {
+            ServletHarness read = new ServletHarness(path, "GET").as(31, "ShopOwner");
+            run(read);
+            assertEquals(1, read.calls, path);
+            assertEquals("SHOPOWNER", read.attributes.get("currentRole"));
+            assertNotNull(read.sessionValues.get("csrfToken"));
+            ServletHarness missing = new ServletHarness(path, "POST").as(31, "ShopOwner");
+            run(missing);
+            assertEquals(403, missing.status, path);
+            ServletHarness valid = new ServletHarness(path, "POST").as(31, "ShopOwner");
+            valid.sessionValues.put("csrfToken", "known-token");
+            valid.parameters.put("csrfToken", "known-token");
+            run(valid);
+            assertEquals(1, valid.calls, path);
+            ServletHarness forbidden = new ServletHarness(path, "GET").as(11, "Customer");
+            run(forbidden);
+            assertEquals(403, forbidden.status, path);
+        }
+    }
+
     @Test void guestIsRedirectedAndInternalGetTargetIsRemembered() throws Exception {
         ServletHarness h = new ServletHarness("/shopowner/delivery/detail", "GET");
         h.query = "id=17";

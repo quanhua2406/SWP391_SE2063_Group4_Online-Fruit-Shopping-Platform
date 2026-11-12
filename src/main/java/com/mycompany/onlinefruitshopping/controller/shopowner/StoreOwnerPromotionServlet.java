@@ -21,7 +21,7 @@ import java.sql.SQLException;
  * {@code pending} and becomes effective once an administrator
  * approves it in {@code /admin/promotion-approvals}.</p>
  */
-@WebServlet("/store-owner/promotions")
+@WebServlet("/store-owner/variant-promotions")
 public class StoreOwnerPromotionServlet extends HttpServlet {
 
     private final PromotionService promotionService = new PromotionService();
@@ -94,6 +94,10 @@ public class StoreOwnerPromotionServlet extends HttpServlet {
         }
 
         String action = request.getParameter("action");
+        if (!"removePromo".equals(action) && !"setPromo".equals(action)) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
         String result;
 
         try {
@@ -118,7 +122,7 @@ public class StoreOwnerPromotionServlet extends HttpServlet {
         // Keep the current search / filter / page while redirecting,
         // so saving one row does not send the owner back to page 1.
         String url = QueryUrl.keep(request,
-                request.getContextPath() + "/store-owner/promotions",
+                request.getContextPath() + "/store-owner/variant-promotions",
                 "q", "weight", "approval", "page") + "msg=" + result;
 
         response.sendRedirect(url);

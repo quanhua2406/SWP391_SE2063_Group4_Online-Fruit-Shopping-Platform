@@ -15,8 +15,8 @@ import com.mycompany.onlinefruitshopping.model.Promotion;
 import com.mycompany.onlinefruitshopping.model.ShopOption;
 import com.mycompany.onlinefruitshopping.utils.WebUtil;
 
-/** GET để xem; POST để thay đổi dữ liệu. AuthFilter bảo vệ toàn bộ /shop/*. */
-@WebServlet("/shopowner/shop/promotions")
+/** Quản lý chương trình tại URL chung; giữ URL cũ để tương thích. */
+@WebServlet({"/store-owner/promotions", "/shopowner/shop/promotions"})
 public class PromotionController extends HttpServlet {
     private final CampaignPromotionService promotionService = new CampaignPromotionService();
 
@@ -89,7 +89,7 @@ public class PromotionController extends HttpServlet {
             log("Không đổi được trạng thái khuyến mãi", e);
             WebUtil.flash(request, "error", "Chưa lưu được. Hãy tải lại trang và thử lại; nếu còn lỗi, xem log Tomcat.");
         }
-        response.sendRedirect(request.getContextPath() + "/shopowner/shop/promotions");
+        response.sendRedirect(request.getContextPath() + "/store-owner/promotions");
     }
 
     private void saveForm(HttpServletRequest request, HttpServletResponse response)
@@ -116,7 +116,7 @@ public class PromotionController extends HttpServlet {
                 readForm(request, p);
                 int savedId = promotionService.save(ownerId, p);
                 WebUtil.flash(request, "success", id == 0 ? "Đã tạo chương trình khuyến mãi." : "Đã cập nhật chương trình khuyến mãi.");
-                response.sendRedirect(request.getContextPath() + "/shopowner/shop/promotions?action=detail&id=" + savedId);
+                response.sendRedirect(request.getContextPath() + "/store-owner/promotions?action=detail&id=" + savedId);
             } catch (IllegalArgumentException e) {
                 response.setStatus(400);
                 request.setAttribute("formError", e.getMessage());

@@ -15,6 +15,14 @@ import java.util.List;
 import java.util.Map;
 
 public class OrderDAO {
+    private final com.mycompany.onlinefruitshopping.utils.ConnectionProvider checkoutConnections;
+
+    public OrderDAO() { this(DBConnection::getConnection); }
+
+    public OrderDAO(com.mycompany.onlinefruitshopping.utils.ConnectionProvider checkoutConnections) {
+        this.checkoutConnections = checkoutConnections;
+    }
+
 
     public List<Order> getOrdersByShop(int shopId, String statusFilter, String searchQuery) throws SQLException {
         List<Order> list = new ArrayList<>();
@@ -617,8 +625,11 @@ public class OrderDAO {
                            List<CartItem> items, String note, String couponCode) throws SQLException {
         Connection conn = null;
         try {
-            conn = DBConnection.getConnection();
+            conn = checkoutConnections.open();
+            conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
             conn.setAutoCommit(false);
+            com.mycompany.onlinefruitshopping.dao.promotion.PromotionPricing
+                    .validateCheckoutPrices(conn, shopId, items);
 
             // 1. Tạo bản ghi đơn hàng
             String insertOrderSql = "INSERT INTO orders (user_id, shop_id, address_id, voucher_id, status, total_amount, created_at) "
@@ -706,9 +717,8 @@ public class OrderDAO {
             }
 
             // 6. Xóa các sản phẩm đã mua khỏi giỏ hàng
-            String clearCartSql = "DELETE ci FROM cart_items ci "
-                    + "INNER JOIN carts c ON ci.cart_id = c.cart_id "
-                    + "WHERE c.user_id = ?";
+            String clearCartSql = "DELETE FROM cart_items WHERE cart_id IN "
+                    + "(SELECT cart_id FROM carts WHERE user_id = ?)";
             try (PreparedStatement ps = conn.prepareStatement(clearCartSql)) {
                 ps.setInt(1, userId);
                 ps.executeUpdate();
