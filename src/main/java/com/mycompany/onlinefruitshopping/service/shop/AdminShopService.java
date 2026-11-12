@@ -26,6 +26,9 @@ public class AdminShopService {
             "pending"
     );
 
+    /** Longest block reason kept on a shop (the column is NVARCHAR(255)). */
+    public static final int MAX_REASON_LENGTH = 255;
+
     private final AdminShopDAO shopDAO = new AdminShopDAO();
 
     // =========================================================
@@ -73,11 +76,24 @@ public class AdminShopService {
 
     /**
      * Blocks a shop: the owner account is locked, the shop is suspended
-     * and its published products are hidden.
+     * and its published products are hidden. The reason is required and
+     * is stored on the shop together with the administrator.
      *
      * @return a message code understood by the shop screen
      */
-    public String blockShop(String shopIdRaw) throws SQLException {
+    public String blockShop(String shopIdRaw,
+                            String reasonRaw,
+                            int adminId) throws SQLException {
+
+        String reason = trim(reasonRaw);
+
+        if (reason.isEmpty()) {
+            return "missing-reason";
+        }
+
+        if (reason.length() > MAX_REASON_LENGTH) {
+            return "reason-too-long";
+        }
 
         ShopInfo shop = loadShopOrNull(shopIdRaw);
 
@@ -89,7 +105,7 @@ public class AdminShopService {
             return "already-blocked";
         }
 
-        return shopDAO.blockShop(shop.getShopId(), shop.getOwnerId())
+        return shopDAO.blockShop(shop.getShopId(), shop.getOwnerId(), reason, adminId)
                 ? "blocked"
                 : "failed";
     }

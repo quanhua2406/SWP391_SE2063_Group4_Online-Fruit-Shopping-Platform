@@ -73,6 +73,12 @@ public class DBConnection {
                     + "END;");
             stmt.execute("IF COL_LENGTH('products', 'hidden_by_commission') IS NULL "
                     + "ALTER TABLE products ADD hidden_by_commission BIT NOT NULL CONSTRAINT DF_products_hidden_by_commission DEFAULT (0);");
+            stmt.execute("IF COL_LENGTH('shops', 'block_reason') IS NULL "
+                    + "ALTER TABLE shops ADD block_reason NVARCHAR(255) NULL;");
+            stmt.execute("IF COL_LENGTH('shops', 'blocked_at') IS NULL "
+                    + "ALTER TABLE shops ADD blocked_at DATETIME2 NULL;");
+            stmt.execute("IF COL_LENGTH('shops', 'blocked_by') IS NULL "
+                    + "ALTER TABLE shops ADD blocked_by INT NULL CONSTRAINT FK_shops_blocked_by REFERENCES users(user_id);");
             schemaInitialized = true;
         } catch (Exception ignored) {
             // Không chặn ứng dụng nếu DB in-memory hoặc quyền hạn chế

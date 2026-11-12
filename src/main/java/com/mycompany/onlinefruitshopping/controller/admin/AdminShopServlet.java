@@ -2,6 +2,7 @@ package com.mycompany.onlinefruitshopping.controller.admin;
 
 import com.mycompany.onlinefruitshopping.dao.commission.CommissionSettlementDAO;
 import com.mycompany.onlinefruitshopping.dao.shop.AdminShopDAO.ShopInfo;
+import com.mycompany.onlinefruitshopping.model.User;
 import com.mycompany.onlinefruitshopping.service.shop.AdminShopService;
 
 import jakarta.servlet.ServletException;
@@ -9,6 +10,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -189,7 +191,16 @@ public class AdminShopServlet extends HttpServlet {
             String message;
 
             if ("block".equalsIgnoreCase(action)) {
-                message = shopService.blockShop(request.getParameter("shopId"));
+                User admin = currentAdmin(request, response);
+
+                if (admin == null) {
+                    return;
+                }
+
+                message = shopService.blockShop(
+                        request.getParameter("shopId"),
+                        request.getParameter("reason"),
+                        admin.getUserID());
 
             } else if ("unblock".equalsIgnoreCase(action)) {
                 message = shopService.unblockShop(request.getParameter("shopId"));
@@ -264,5 +275,25 @@ public class AdminShopServlet extends HttpServlet {
 
     private String trim(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    /**
+     * Returns the logged-in administrator, or sends anyone else to the
+     * login page and returns {@code null}.
+     */
+    private User currentAdmin(HttpServletRequest request,
+                              HttpServletResponse response)
+            throws IOException {
+
+        HttpSession session = request.getSession(false);
+
+        if (session != null
+                && session.getAttribute("user") instanceof User) {
+
+            return (User) session.getAttribute("user");
+        }
+
+        response.sendRedirect(request.getContextPath() + "/login");
+        return null;
     }
 }

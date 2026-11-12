@@ -54,20 +54,33 @@
                 return "Không tìm thấy cửa hàng.";
             case "failed":
                 return "Không thể thay đổi trạng thái cửa hàng. Vui lòng thử lại.";
+            case "missing-reason":
+                return "Vui lòng nhập lý do khóa cửa hàng.";
+            case "reason-too-long":
+                return "Lý do khóa tối đa 255 ký tự.";
             default:
                 return "";
         }
+    }
+
+    private boolean isErrorMessage(String code) {
+        return "notfound".equals(code)
+                || "failed".equals(code)
+                || "already-blocked".equals(code)
+                || "not-blocked".equals(code)
+                || "missing-reason".equals(code)
+                || "reason-too-long".equals(code);
     }
 %>
 
 <%
     ShopInfo shop = (ShopInfo) request.getAttribute("shop");
 
-    String message = messageText(
-            request.getAttribute("message") == null
-                    ? ""
-                    : String.valueOf(request.getAttribute("message"))
-    );
+    String messageCode = request.getAttribute("message") == null
+            ? ""
+            : String.valueOf(request.getAttribute("message"));
+
+    String message = messageText(messageCode);
 
     String contextPath = request.getContextPath();
 
@@ -205,6 +218,12 @@
             border: 1px solid #c7ead2;
         }
 
+        .notice-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
         /* CARD */
         .card {
             padding: 26px;
@@ -319,6 +338,31 @@
             margin-top: 22px;
         }
 
+        .block-form {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .block-form label {
+            color: #333;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .block-form textarea {
+            width: 100%;
+            max-width: 560px;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 7px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+        }
+
         .hint {
             color: #888;
             font-size: 13px;
@@ -360,7 +404,7 @@
     </section>
 
     <% if (!message.isEmpty()) { %>
-        <div class="notice notice-success" role="status">
+        <div class="notice <%=isErrorMessage(messageCode) ? "notice-error" : "notice-success"%>" role="status">
             <%=escapeHtml(message)%>
         </div>
     <% } %>
@@ -456,6 +500,15 @@
         </div>
 
         <!-- BLOCK / UNBLOCK -->
+        <% if (suspended && shop.getBlockReason() != null) { %>
+        <div class="notice notice-error">
+            <strong>Cửa hàng đang bị khóa.</strong>
+            Lý do: <%=escapeHtml(shop.getBlockReason())%>
+            <% if (shop.getBlockedAt() != null) { %>
+                (khóa lúc <%=dateFormat.format(shop.getBlockedAt())%>)
+            <% } %>
+        </div>
+        <% } %>
         <% if (Boolean.TRUE.equals(request.getAttribute("commissionLocked"))) { %>
         <div class="message error">
             Cửa hàng bị tạm khóa do chưa thanh toán hoa hồng cho nền tảng.
@@ -488,12 +541,18 @@
             <% } else { %>
 
                 <form method="post"
+                      class="block-form"
                       action="<%=contextPath%>/admin/shops"
                       onsubmit="return confirm('Khóa cửa hàng này? Chủ cửa hàng sẽ bị khóa và sản phẩm bị ẩn.');">
 
                     <input type="hidden" name="action" value="block">
                     <input type="hidden" name="shopId"
                            value="<%=shop.getShopId()%>">
+
+                    <label for="blockReason">Lý do khóa (bắt buộc)</label>
+                    <textarea id="blockReason" name="reason" rows="3"
+                              maxlength="255" required
+                              placeholder="Ví dụ: Bán sản phẩm không đúng mô tả, vi phạm chính sách..."></textarea>
 
                     <button type="submit" class="btn btn-block">
                         Khóa cửa hàng
@@ -503,7 +562,7 @@
 
                 <span class="hint">
                     Khóa sẽ khóa tài khoản chủ cửa hàng, tạm ngưng cửa hàng và
-                    gỡ mọi sản phẩm đang được bán.
+                    gỡ mọi sản phẩm đang được bán. Lý do được lưu trên hồ sơ cửa hàng.
                 </span>
 
             <% } %>

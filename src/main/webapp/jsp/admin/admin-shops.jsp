@@ -753,11 +753,12 @@
                                     <form class="action-form"
                                           method="post"
                                           action="<%=contextPath%>/admin/shops"
-                                          onsubmit="return confirm('Khóa cửa hàng này? Chủ cửa hàng sẽ bị khóa và sản phẩm bị ẩn.');">
+                                          onsubmit="return askBlockReason(this);">
 
                                         <input type="hidden" name="action" value="block">
                                         <input type="hidden" name="shopId"
                                                value="<%=shop.getShopId()%>">
+                                        <input type="hidden" name="reason" value="">
 
                                         <button type="submit" class="btn btn-block">
                                             Khóa
@@ -802,6 +803,35 @@
     </section>
 
 </main>
+
+<script>
+    function askBlockReason(form) {
+        var reason = window.prompt("Lý do khóa cửa hàng (bắt buộc, tối đa 255 ký tự):", "");
+
+        if (reason === null) {
+            return false;
+        }
+
+        reason = reason.trim();
+
+        if (reason === "") {
+            window.alert("Vui lòng nhập lý do khóa cửa hàng.");
+            return false;
+        }
+
+        if (reason.length > 255) {
+            window.alert("Lý do khóa tối đa 255 ký tự.");
+            return false;
+        }
+
+        if (!window.confirm("Khóa cửa hàng này? Chủ cửa hàng sẽ bị khóa và sản phẩm bị ẩn.")) {
+            return false;
+        }
+
+        form.elements.reason.value = reason;
+        return true;
+    }
+</script>
 
 </body>
 </html>

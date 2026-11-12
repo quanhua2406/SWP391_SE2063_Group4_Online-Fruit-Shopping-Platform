@@ -74,6 +74,8 @@ public class AdminShopDAO {
                 s.description,
                 s.status,
                 s.created_at,
+                s.block_reason,
+                s.blocked_at,
                 u.user_id,
                 u.full_name,
                 u.email,
@@ -132,6 +134,8 @@ public class AdminShopDAO {
                 s.description,
                 s.status,
                 s.created_at,
+                s.block_reason,
+                s.blocked_at,
                 u.user_id,
                 u.full_name,
                 u.email,
@@ -164,24 +168,32 @@ public class AdminShopDAO {
     /**
      * Blocks the shop and its owner in one transaction:
      * the owner account is locked, the shop becomes {@code suspended}
-     * and every published product is hidden.
+     * and every published product is hidden. The reason and the
+     * administrator who blocked the shop are stored on the shop.
      *
      * <p>The hidden products are flagged with {@code hidden_by_admin}
      * so that {@link #unblockShop(int, int)} restores only them and
      * leaves the products the shop had hidden by itself alone.</p>
      */
-    public boolean blockShop(int shopId, int ownerId) throws SQLException {
+    public boolean blockShop(int shopId,
+                             int ownerId,
+                             String reason,
+                             int adminId) throws SQLException {
 
         try (Connection conn = DBConnection.getConnection()) {
 
             conn.setAutoCommit(false);
 
             try {
-                // Suspend the shop.
+                // Suspend the shop and record why and by whom.
                 try (PreparedStatement ps = conn.prepareStatement(
-                        "UPDATE shops SET status = 'suspended' "
+                        "UPDATE shops SET status = 'suspended', "
+                                + "block_reason = ?, blocked_at = SYSDATETIME(), "
+                                + "blocked_by = ? "
                                 + "WHERE shop_id = ?")) {
-                    ps.setInt(1, shopId);
+                    ps.setString(1, reason);
+                    ps.setInt(2, adminId);
+                    ps.setInt(3, shopId);
                     ps.executeUpdate();
                 }
 
@@ -230,7 +242,9 @@ public class AdminShopDAO {
 
             try {
                 try (PreparedStatement ps = conn.prepareStatement(
-                        "UPDATE shops SET status = 'active' "
+                        "UPDATE shops SET status = 'active', "
+                                + "block_reason = NULL, blocked_at = NULL, "
+                                + "blocked_by = NULL "
                                 + "WHERE shop_id = ?")) {
                     ps.setInt(1, shopId);
                     ps.executeUpdate();
@@ -283,6 +297,8 @@ public class AdminShopDAO {
         shop.setOwnerStatus(rs.getString("owner_status"));
         shop.setProductCount(rs.getInt("product_count"));
         shop.setPublishedCount(rs.getInt("published_count"));
+        shop.setBlockReason(rs.getString("block_reason"));
+        shop.setBlockedAt(rs.getTimestamp("blocked_at"));
 
         return shop;
     }
@@ -304,6 +320,8 @@ public class AdminShopDAO {
         private String ownerStatus;
         private int productCount;
         private int publishedCount;
+        private String blockReason;
+        private java.sql.Timestamp blockedAt;
 
         public int getShopId() {
             return shopId;
@@ -391,6 +409,22 @@ public class AdminShopDAO {
 
         public void setPublishedCount(int publishedCount) {
             this.publishedCount = publishedCount;
+        }
+
+        public String getBlockReason() {
+            return blockReason;
+        }
+
+        public void setBlockReason(String blockReason) {
+            this.blockReason = blockReason;
+        }
+
+        public java.sql.Timestamp getBlockedAt() {
+            return blockedAt;
+        }
+
+        public void setBlockedAt(java.sql.Timestamp blockedAt) {
+            this.blockedAt = blockedAt;
         }
     }
 
