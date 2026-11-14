@@ -354,25 +354,6 @@ public class InventoryService {
         return inventoryDAO.getExpiredBatches(userId);
     }
 
-    public List<Map<String, Object>> pendingDiscards(int userId) throws SQLException {
-        return inventoryDAO.getPendingDiscards(userId);
-    }
-
-    /**
-     * The shop owner approves or rejects a pending discard request.
-     */
-    public String resolveDiscard(int userId, String requestIdRaw, boolean approve)
-            throws SQLException {
-
-        int requestId = parseInt(requestIdRaw, -1);
-
-        if (requestId <= 0) {
-            return "invalid";
-        }
-
-        return inventoryDAO.resolveDiscardRequest(requestId, userId, approve);
-    }
-
     /**
      * The shop owner writes off part or all of a batch that failed quality
      * checks. The reason is required.

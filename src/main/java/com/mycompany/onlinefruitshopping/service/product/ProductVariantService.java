@@ -17,10 +17,14 @@ public class ProductVariantService {
     private final InventoryDAO inventoryDAO = new InventoryDAO();
 
     public List<ProductVariant> shopVariants(int ownerId) throws SQLException {
+        return shopVariants(ownerId, null, null);
+    }
+
+    public List<ProductVariant> shopVariants(int ownerId, String keyword, Integer productId) throws SQLException {
 
         List<ProductVariant> list = new ArrayList<>();
 
-        for (Map<String, Object> row : inventoryDAO.getVariantsForOwner(ownerId)) {
+        for (Map<String, Object> row : inventoryDAO.getVariantsForOwner(ownerId, keyword, productId)) {
 
             ProductVariant v = new ProductVariant();
             Object varIdObj = row.get("variant_id");

@@ -10,11 +10,10 @@
 
     <!-- Global CSS -->
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/quanht/style.css">
     <!-- Admin Dedicated Notification CSS (100% CSS thuần, zero inline styles) -->
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/quanht/admin-notification.css">
 </head>
-<body>
+<body class="qt-ui">
 
 <!-- ======================================================================= -->
 <!-- NAVBAR HEADER FOR ADMIN -->

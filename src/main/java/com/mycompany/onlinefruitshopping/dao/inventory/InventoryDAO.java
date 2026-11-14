@@ -242,8 +242,13 @@ public class InventoryDAO {
 
     public List<Map<String, Object>> getVariantsForOwner(int ownerId)
             throws SQLException {
+        return getVariantsForOwner(ownerId, null, null);
+    }
 
-        String sql = """
+    public List<Map<String, Object>> getVariantsForOwner(int ownerId, String keyword, Integer productId)
+            throws SQLException {
+
+        StringBuilder sql = new StringBuilder("""
                 SELECT v.variant_id,
                        v.product_id,
                        p.product_name,
@@ -269,10 +274,24 @@ public class InventoryDAO {
                 LEFT JOIN variant_promotions pr
                        ON pr.variant_id = v.variant_id
                 WHERE p.shop_id = ?
-                ORDER BY p.product_name ASC,
-                         ISNULL(v.weight_value, 0) ASC,
-                         v.variant_id ASC
-                """;
+                """);
+
+        List<Object> params = new ArrayList<>();
+
+        if (productId != null && productId > 0) {
+            sql.append(" AND v.product_id = ?");
+        }
+
+        String kw = keyword == null ? "" : keyword.trim();
+        if (!kw.isEmpty()) {
+            sql.append(" AND (p.product_name LIKE ? OR v.sku LIKE ? OR v.packaging_type LIKE ?)");
+        }
+
+        sql.append("""
+                 ORDER BY p.product_name ASC,
+                          ISNULL(v.weight_value, 0) ASC,
+                          v.variant_id ASC
+                """);
 
         List<Map<String, Object>> list = new ArrayList<>();
 
@@ -283,8 +302,21 @@ public class InventoryDAO {
                 return list;
             }
 
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setInt(1, shopId);
+            params.add(shopId);
+            if (productId != null && productId > 0) {
+                params.add(productId);
+            }
+            if (!kw.isEmpty()) {
+                String like = "%" + kw + "%";
+                params.add(like);
+                params.add(like);
+                params.add(like);
+            }
+
+            try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+                for (int i = 0; i < params.size(); i++) {
+                    ps.setObject(i + 1, params.get(i));
+                }
                 try (ResultSet rs = ps.executeQuery()) {
                     list.addAll(mapVariants(rs));
                 }
@@ -525,7 +557,10 @@ public class InventoryDAO {
                 }
             }
 
-            if (!"active".equals(status)) {
+            boolean reopenedExpired = "expired".equals(status)
+                    && quantity != null && quantity.signum() > 0;
+
+            if (!"active".equals(status) && !reopenedExpired) {
                 conn.rollback();
                 return "already-discarded";
             }
@@ -668,64 +703,6 @@ public class InventoryDAO {
     }
 
     /**
-     * Records a request to write off an expired batch. It waits for the
-     * shop owner's approval.
-     *
-     * @return {@code requested}, {@code already-requested},
-     *         {@code already-discarded}, {@code not-expired} or {@code failed}
-     */
-    public String createDiscardRequest(int batchId, int userId) throws SQLException {
-
-        String batchSql = "SELECT status, expiry_date FROM inventory_batches WHERE batch_id = ?";
-
-        try (Connection conn = DBConnection.getConnection()) {
-
-            String status;
-            Date expiry;
-
-            try (PreparedStatement ps = conn.prepareStatement(batchSql)) {
-                ps.setInt(1, batchId);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (!rs.next()) {
-                        return "failed";
-                    }
-                    status = rs.getString("status");
-                    expiry = rs.getDate("expiry_date");
-                }
-            }
-
-            if (!"active".equals(status)) {
-                return "already-discarded";
-            }
-
-            if (expiry == null
-                    || !expiry.toLocalDate().isBefore(java.time.LocalDate.now())) {
-                return "not-expired";
-            }
-
-            try (PreparedStatement ps = conn.prepareStatement(
-                    "SELECT COUNT(*) FROM inventory_discard_requests "
-                    + "WHERE batch_id = ? AND status = 'pending'")) {
-                ps.setInt(1, batchId);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next() && rs.getInt(1) > 0) {
-                        return "already-requested";
-                    }
-                }
-            }
-
-            try (PreparedStatement ps = conn.prepareStatement(
-                    "INSERT INTO inventory_discard_requests (batch_id, requested_by) VALUES (?, ?)")) {
-                ps.setInt(1, batchId);
-                ps.setInt(2, userId);
-                ps.executeUpdate();
-            }
-
-            return "requested";
-        }
-    }
-
-    /**
      * Active batches of the owner's shop that have expired or will expire
      * within {@code withinDays} days.
      */
@@ -794,17 +771,13 @@ public class InventoryDAO {
 
         String sql = """
                 SELECT b.batch_id, b.batch_code, p.product_name, v.sku,
-                       b.quantity, b.expiry_date,
-                       CASE WHEN EXISTS (
-                           SELECT 1 FROM inventory_discard_requests r
-                           WHERE r.batch_id = b.batch_id AND r.status = 'pending'
-                       ) THEN 1 ELSE 0 END AS requested
+                       b.quantity, b.expiry_date
                 FROM inventory_batches b
                 JOIN product_variants v ON v.variant_id = b.variant_id
                 JOIN products p ON p.product_id = v.product_id
                 JOIN shops s ON s.shop_id = p.shop_id
                 WHERE s.owner_id = ?
-                  AND b.status = 'active'
+                  AND b.status IN ('active', 'expired')
                   AND b.quantity > 0
                   AND b.expiry_date < CAST(GETDATE() AS DATE)
                 ORDER BY b.expiry_date ASC, b.batch_id ASC
@@ -826,122 +799,12 @@ public class InventoryDAO {
                     row.put("sku", rs.getString("sku"));
                     row.put("quantity", rs.getBigDecimal("quantity"));
                     row.put("expiry_date", rs.getDate("expiry_date"));
-                    row.put("requested", rs.getInt("requested") == 1);
                     list.add(row);
                 }
             }
         }
 
         return list;
-    }
-
-    public List<Map<String, Object>> getPendingDiscards(int ownerId) throws SQLException {
-
-        String sql = """
-                SELECT r.request_id, b.batch_code, p.product_name, v.sku,
-                       b.quantity, b.expiry_date, r.requested_at
-                FROM inventory_discard_requests r
-                JOIN inventory_batches b ON b.batch_id = r.batch_id
-                JOIN product_variants v ON v.variant_id = b.variant_id
-                JOIN products p ON p.product_id = v.product_id
-                JOIN shops s ON s.shop_id = p.shop_id
-                WHERE s.owner_id = ? AND r.status = 'pending'
-                ORDER BY r.requested_at ASC
-                """;
-
-        List<Map<String, Object>> list = new ArrayList<>();
-
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, ownerId);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    Map<String, Object> row = new LinkedHashMap<>();
-                    row.put("request_id", rs.getInt("request_id"));
-                    row.put("batch_code", rs.getString("batch_code"));
-                    row.put("product_name", rs.getString("product_name"));
-                    row.put("sku", rs.getString("sku"));
-                    row.put("quantity", rs.getBigDecimal("quantity"));
-                    row.put("expiry_date", rs.getDate("expiry_date"));
-                    row.put("requested_at", rs.getTimestamp("requested_at"));
-                    list.add(row);
-                }
-            }
-        }
-
-        return list;
-    }
-
-    /**
-     * The shop owner's decision on a pending request. Approving writes
-     * the batch off; rejecting only closes the request.
-     *
-     * @return {@code approved}, {@code rejected}, {@code already-discarded},
-     *         {@code already-resolved} or {@code forbidden}
-     */
-    public String resolveDiscardRequest(int requestId, int ownerId, boolean approve)
-            throws SQLException {
-
-        String sql = """
-                SELECT r.batch_id, r.status
-                FROM inventory_discard_requests r
-                JOIN inventory_batches b ON b.batch_id = r.batch_id
-                JOIN product_variants v ON v.variant_id = b.variant_id
-                JOIN products p ON p.product_id = v.product_id
-                JOIN shops s ON s.shop_id = p.shop_id
-                WHERE r.request_id = ? AND s.owner_id = ?
-                """;
-
-        int batchId;
-        String status;
-
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, requestId);
-            ps.setInt(2, ownerId);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) {
-                    return "forbidden";
-                }
-                batchId = rs.getInt("batch_id");
-                status = rs.getString("status");
-            }
-        }
-
-        if (!"pending".equals(status)) {
-            return "already-resolved";
-        }
-
-        String result = "rejected";
-        String newStatus = "rejected";
-
-        if (approve) {
-            String discarded = discardExpiredBatch(batchId, ownerId, "Bỏ lô hết hạn (đã duyệt)");
-
-            if ("discarded".equals(discarded) || "already-discarded".equals(discarded)) {
-                newStatus = "approved";
-                result = discarded.equals("discarded") ? "approved" : "already-discarded";
-            } else {
-                return discarded;
-            }
-        }
-
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(
-                     "UPDATE inventory_discard_requests "
-                     + "SET status = ?, resolved_by = ?, resolved_at = SYSDATETIME() "
-                     + "WHERE request_id = ?")) {
-            ps.setString(1, newStatus);
-            ps.setInt(2, ownerId);
-            ps.setInt(3, requestId);
-            ps.executeUpdate();
-        }
-
-        return result;
     }
 
     /**

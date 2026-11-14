@@ -60,9 +60,9 @@ public class StoreOwnerPricingServlet extends HttpServlet {
         return null;
     }
 
-    private String backOf(String action) {
+    private String backOf(String action, HttpServletRequest request) {
 
-        if ("kg".equals(action)) {
+        if ("kg".equals(action) && !"variant".equals(request.getParameter("back"))) {
             return "/product";
         }
 
@@ -161,10 +161,8 @@ public class StoreOwnerPricingServlet extends HttpServlet {
                         request.getParameter("pricePerKg"));
 
             } else {
-                result = pricingService.savePrice(
-                        user.getUserID(),
-                        request.getParameter("variantId"),
-                        request.getParameter("price"));
+                // Manual variant base price is not allowed; price is derived from product kg price.
+                result = "auto-only";
             }
 
         } catch (SQLException e) {
@@ -175,7 +173,7 @@ public class StoreOwnerPricingServlet extends HttpServlet {
         // Keep the current search / filter / page while redirecting,
         // so saving one row does not send the owner back to page 1.
         String url = QueryUrl.keep(request,
-                request.getContextPath() + "/store-owner/pricing" + backOf(action),
+                request.getContextPath() + "/store-owner/pricing" + backOf(action, request),
                 "q", "weight", "page", "ppage") + "msg=" + result;
 
         response.sendRedirect(url);

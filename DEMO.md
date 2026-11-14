@@ -56,18 +56,24 @@ After loading, the database holds:
    `/admin/product-edit?id=1`, change the commission. Show a bad id
    (`?id=abc`) bouncing back to the list.
 4. **18.0 Users** - `/admin/user-management`: search, filter by role, open a
-   user detail. Try to **block the Admin account** (refused). Show
-   `/admin/commission-report`.
-5. **18.0 Shops** ⭐ - `/admin/shops`: the shop list with owner, product count
-   and status. Search by keyword / filter by status. Open a shop profile
-   (`?action=detail&shopId=1`) and press **Block Shop**: the owner is locked,
-   the shop becomes `suspended` and its products disappear from the catalog.
-   Press **Unblock Shop** and they come back - a product the shop had hidden
-   by itself stays hidden.
-6. **19.0 Orders** ⭐ - `/admin/orders` -> open an order detail.
-   `/admin/delivery-assign`: assign order #4 to a shipper, then reassign /
-   unassign. Show that assigning to a non-shipper is refused and that a note
-   longer than 255 characters is refused.
+   user detail / edit. Try to **block the Admin account** (refused). Show
+   `/admin/roles` (role management). Show commission reports:
+   `/admin/commission-report` (admin) and `/store-owner/commission-report`
+   (shop owner).
+5. **18.0 Shops** ⭐ - `/admin/shops`: the shop list (with owner, product count,
+   status), shop dashboard, search by keyword / filter by status. Open a shop
+   profile (`?action=detail&shopId=1`). Enter a **block reason** (required, max
+   255 chars) and confirm **Khóa cửa hàng**: the owner account is locked, the
+   shop becomes `suspended`, and its published products are hidden. Press
+   **Mở khóa cửa hàng** to restore: the owner/shop are reactivated and only the
+   products hidden by that block are republished (products the shop hid itself
+   stay hidden). From the shop profile you can also open/edit the owner's
+   account via user management.
+6. **19.0 Orders** ⭐ - `/admin/orders` -> open an order detail
+   (`/admin/order-detail?orderId=...`). `/admin/deliveries` monitors delivery
+   status. `/admin/delivery-assign`: assign an eligible order to a delivery
+   staff member, then reassign / unassign. Show that assigning to a non-shipper
+   is refused and that a note longer than 255 characters is refused.
 7. **19.0 Issues** - `/admin/order-issues`: reopen a `failed` order or cancel it.
 8. **19.0 Staff** - `/admin/delivery-staff`: show the workload and block /
    unblock a shipper.

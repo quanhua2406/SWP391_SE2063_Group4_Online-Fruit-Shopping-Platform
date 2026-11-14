@@ -11,7 +11,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Khám Phá & Tìm Kiếm Trái Cây Tươi | FreshFruit</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/quanht/style.css">
     <style>
         /* Modern Catalog Layout & Components */
         .catalog-container {
@@ -593,7 +592,7 @@
         }
     </style>
 </head>
-<body>
+<body class="qt-ui">
 
 <!-- Header Component Reusable -->
 <jsp:include page="/includes/header.jsp" />

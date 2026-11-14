@@ -226,10 +226,44 @@
 
         <!-- TABLE -->
         <div class="panel">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <h2>Danh sách biến thể (${variants.size()})</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 12px; flex-wrap: wrap;">
+                <h2 style="margin: 0;">Danh sách biến thể (${variants.size()})</h2>
                 <button type="button" class="btn-primary" onclick="openAddForm()">+ Thêm biến thể</button>
             </div>
+
+            <form method="get" action="${pageContext.request.contextPath}/store-owner/variants"
+                  style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc;">
+                <c:choose>
+                    <c:when test="${not empty product}">
+                        <input type="hidden" name="productId" value="${product.productId}">
+                    </c:when>
+                    <c:otherwise>
+                        <input type="hidden" name="view" value="shop">
+                        <label for="filterProductId" style="font-size: 13px; font-weight: 600; color: #334155;">Sản phẩm</label>
+                        <select id="filterProductId" name="productId" style="min-width: 220px; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff;">
+                            <option value="0" ${empty filterProductId || filterProductId == 0 ? 'selected' : ''}>Tất cả sản phẩm</option>
+                            <c:forEach var="sp" items="${shopProducts}">
+                                <option value="${sp.product_id}" ${filterProductId == sp.product_id ? 'selected' : ''}>${sp.product_name}</option>
+                            </c:forEach>
+                        </select>
+                    </c:otherwise>
+                </c:choose>
+
+                <label for="q" style="font-size: 13px; font-weight: 600; color: #334155;">Tìm kiếm</label>
+                <input type="text" id="q" name="q" value="${fn:escapeXml(q)}"
+                       placeholder="SKU, quy cách đóng gói, đơn vị..." 
+                       style="flex: 1; min-width: 220px; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px;">
+
+                <button type="submit" class="btn-primary" style="padding: 8px 14px;">Lọc</button>
+                <c:choose>
+                    <c:when test="${not empty product}">
+                        <a href="${pageContext.request.contextPath}/store-owner/variants?productId=${product.productId}" class="btn-secondary" style="padding: 8px 14px; text-decoration: none;">Đặt lại</a>
+                    </c:when>
+                    <c:otherwise>
+                        <a href="${pageContext.request.contextPath}/store-owner/variants" class="btn-secondary" style="padding: 8px 14px; text-decoration: none;">Đặt lại</a>
+                    </c:otherwise>
+                </c:choose>
+            </form>
 
             <div class="table-responsive">
                 <table class="data-table">
@@ -250,7 +284,7 @@
                         <c:choose>
                             <c:when test="${empty variants}">
                                 <tr>
-                                    <td colspan="9">Chưa có biến thể nào.</td>
+                                    <td colspan="9">Không tìm thấy biến thể phù hợp.</td>
                                 </tr>
                             </c:when>
                             <c:otherwise>
@@ -366,9 +400,9 @@
                     </div>
 
                     <div class="form-field">
-                        <label for="weightValue">Khối lượng (kg)</label>
-                        <input type="number" step="0.01" min="0" id="weightValue" name="weightValue"
-                               placeholder="VD: 1.0">
+                        <label for="weightValue">Khối lượng (kg) *</label>
+                        <input type="number" step="0.01" min="0.01" id="weightValue" name="weightValue"
+                               placeholder="VD: 1.0" required>
                     </div>
                 </div>
 
@@ -383,10 +417,10 @@
 
                 <div class="form-grid-2">
                     <div class="form-field">
-                        <label for="price">Giá bán (đ) *</label>
+                        <label for="price">Giá gốc biến thể (tự tính, đ)</label>
                         <input type="number" step="1" min="0" id="price" name="price"
-                               placeholder="VD: 220000" required>
-                        <small>Nếu sản phẩm có giá/kg, giá tính tự động.</small>
+                               placeholder="Tự tính theo giá/kg" readonly>
+                        <small>Giá gốc = giá/kg sản phẩm × khối lượng × hệ số phẩm cấp. Không nhập giá riêng (cần đặt giá/kg sản phẩm trước).</small>
                     </div>
 
                     <div class="form-field">

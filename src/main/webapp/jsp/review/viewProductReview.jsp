@@ -8,9 +8,9 @@
     <title>Đánh Giá Sản Phẩm – FreshFruit</title>
     <meta name="description" content="Xem tất cả đánh giá thực tế từ khách hàng đã mua sản phẩm tại FreshFruit.">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/quanht/style.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
 </head>
-<body>
+<body class="qt-ui qt-only">
 
 <%-- ===== Lấy dữ liệu từ ViewReviewServlet ===== --%>
 <%

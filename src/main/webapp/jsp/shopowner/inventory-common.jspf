@@ -129,18 +129,6 @@
     } else if ("forbidden".equals(message)) {
         level = "error-message";
         messageText = "Bạn không có quyền thay đổi mục này.";
-    } else if ("requested".equals(message)) {
-        messageText = "Đã gửi yêu cầu bỏ lô. Chủ shop cần duyệt để bỏ khỏi tồn kho.";
-    } else if ("already-requested".equals(message)) {
-        level = "error-message";
-        messageText = "Lô này đã có yêu cầu bỏ hàng đang chờ duyệt.";
-    } else if ("approved".equals(message)) {
-        messageText = "Đã duyệt và bỏ lô không đảm bảo chất lượng khỏi tồn kho.";
-    } else if ("rejected".equals(message)) {
-        messageText = "Đã từ chối yêu cầu bỏ hàng. Lô được giữ nguyên.";
-    } else if ("already-resolved".equals(message)) {
-        level = "error-message";
-        messageText = "Yêu cầu này đã được xử lý trước đó.";
     } else if ("not-expired".equals(message)) {
         level = "error-message";
         messageText = "Lô này chưa hết hạn nên không thể bỏ.";

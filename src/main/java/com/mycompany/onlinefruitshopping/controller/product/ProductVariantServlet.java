@@ -103,9 +103,17 @@ public class ProductVariantServlet extends HttpServlet {
     private void showVariantList(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, ServletException, IOException {
 
+        String q = trim(request.getParameter("q"));
         String productIdStr = request.getParameter("productId");
-        if (productIdStr == null || productIdStr.isBlank()) {
-            showShopVariants(request, response);
+
+        // In shop-wide view, productId acts as an optional filter. In single-product
+        // context links, productId is the target product. We treat it as single-product
+        // context only when it resolves to an owned/existing product and no explicit
+        // shop-wide filter intent is implied by other params? To keep behavior simple:
+        // if productId is present and valid, prefer single-product context; provide
+        // filter UI via shop-wide mode (productId omitted or "0"/"all") and q.
+        if (productIdStr == null || productIdStr.isBlank() || "0".equals(productIdStr) || "all".equalsIgnoreCase(productIdStr)) {
+            showShopVariants(request, response, q, parseOptionalInt(productIdStr));
             return;
         }
 
@@ -117,6 +125,12 @@ public class ProductVariantServlet extends HttpServlet {
             return;
         }
 
+        // Allow using productId as filter in shop-wide mode by passing view=shop.
+        if ("shop".equalsIgnoreCase(request.getParameter("view"))) {
+            showShopVariants(request, response, q, productId);
+            return;
+        }
+
         Product product = productService.getProductDetail(productId);
         if (product == null) {
             redirectInvalid(request, response, "Không tìm thấy sản phẩm.");
@@ -124,22 +138,55 @@ public class ProductVariantServlet extends HttpServlet {
         }
 
         List<ProductVariant> variants = productService.getProductVariants(productId);
+        if (q != null && !q.isBlank()) {
+            String needle = q.toLowerCase();
+            variants = variants.stream().filter(v ->
+                    containsIgnoreCase(v.getSku(), needle)
+                    || containsIgnoreCase(v.getPackagingType(), needle)
+                    || containsIgnoreCase(v.getUnit(), needle)
+                    || containsIgnoreCase(v.getQualityGrade(), needle)
+            ).collect(java.util.stream.Collectors.toList());
+        }
 
+        request.setAttribute("q", q);
         request.setAttribute("product", product);
         request.setAttribute("variants", variants);
         request.setAttribute("qualityGrades", variantService.qualityGrades());
         request.getRequestDispatcher("/jsp/shopowner/product-variants.jsp").forward(request, response);
     }
 
-    private void showShopVariants(HttpServletRequest request, HttpServletResponse response)
+    private void showShopVariants(HttpServletRequest request, HttpServletResponse response,
+                                  String q, Integer filterProductId)
             throws SQLException, ServletException, IOException {
 
         int ownerId = currentUserId(request);
 
-        request.setAttribute("variants", variantService.shopVariants(ownerId));
+        request.setAttribute("q", q);
+        request.setAttribute("filterProductId", filterProductId == null ? 0 : filterProductId);
+        request.setAttribute("variants", variantService.shopVariants(ownerId, q, filterProductId));
         request.setAttribute("shopProducts", variantService.shopProducts(ownerId));
         request.setAttribute("qualityGrades", variantService.qualityGrades());
         request.getRequestDispatcher("/jsp/shopowner/product-variants.jsp").forward(request, response);
+    }
+
+    private Integer parseOptionalInt(String value) {
+        if (value == null || value.isBlank() || "all".equalsIgnoreCase(value)) {
+            return null;
+        }
+        try {
+            int v = Integer.parseInt(value);
+            return v > 0 ? v : null;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private String trim(String value) {
+        return value == null ? null : value.trim();
+    }
+
+    private boolean containsIgnoreCase(String value, String needleLower) {
+        return value != null && value.toLowerCase().contains(needleLower);
     }
 
     // =========================================================
@@ -153,7 +200,6 @@ public class ProductVariantServlet extends HttpServlet {
         String packagingType = request.getParameter("packagingType");
         String unit = request.getParameter("unit");
         String weightStr = request.getParameter("weightValue");
-        String priceStr = request.getParameter("price");
         String stockStr = request.getParameter("stock");
 
         int productId;
@@ -169,26 +215,21 @@ public class ProductVariantServlet extends HttpServlet {
             return;
         }
 
-        double price = 0;
-        try {
-            price = Double.parseDouble(priceStr);
-            if (price <= 0) {
-                redirectWithError(request, response, productId, "Đơn giá phải lớn hơn 0!");
-                return;
-            }
-        } catch (Exception e) {
-            redirectWithError(request, response, productId, "Đơn giá không hợp lệ!");
+        if (weightStr == null || weightStr.isBlank()) {
+            redirectWithError(request, response, productId, "Vui lòng nhập khối lượng quy cách (kg).");
             return;
         }
 
-        Double weightValue = null;
-        if (weightStr != null && !weightStr.isBlank()) {
-            try {
-                weightValue = Double.parseDouble(weightStr);
-            } catch (Exception e) {
-                redirectWithError(request, response, productId, "Khối lượng quy cách không hợp lệ!");
-                return;
-            }
+        Double weightValue;
+        try {
+            weightValue = Double.parseDouble(weightStr);
+        } catch (Exception e) {
+            redirectWithError(request, response, productId, "Khối lượng quy cách không hợp lệ!");
+            return;
+        }
+        if (weightValue.isNaN() || weightValue.isInfinite() || weightValue <= 0) {
+            redirectWithError(request, response, productId, "Khối lượng quy cách phải lớn hơn 0!");
+            return;
         }
 
         double stock = 0;
@@ -202,7 +243,13 @@ public class ProductVariantServlet extends HttpServlet {
         }
 
         String grade = pricingService.normalizeGrade(request.getParameter("qualityGrade"));
-        price = pricingService.resolveVariantPrice(productId, weightValue, grade, price).doubleValue();
+        double price;
+        try {
+            price = pricingService.requireAutoVariantPrice(productId, weightValue, grade).doubleValue();
+        } catch (IllegalArgumentException e) {
+            redirectWithError(request, response, productId, e.getMessage());
+            return;
+        }
 
         ProductVariant v = new ProductVariant();
         v.setProductId(productId);
@@ -233,7 +280,6 @@ public class ProductVariantServlet extends HttpServlet {
         String packagingType = request.getParameter("packagingType");
         String unit = request.getParameter("unit");
         String weightStr = request.getParameter("weightValue");
-        String priceStr = request.getParameter("price");
         String stockStr = request.getParameter("stock");
 
         int variantId, productId;
@@ -250,26 +296,21 @@ public class ProductVariantServlet extends HttpServlet {
             return;
         }
 
-        double price = 0;
-        try {
-            price = Double.parseDouble(priceStr);
-            if (price <= 0) {
-                redirectWithError(request, response, productId, "Đơn giá phải lớn hơn 0!");
-                return;
-            }
-        } catch (Exception e) {
-            redirectWithError(request, response, productId, "Đơn giá không hợp lệ!");
+        if (weightStr == null || weightStr.isBlank()) {
+            redirectWithError(request, response, productId, "Vui lòng nhập khối lượng quy cách (kg).");
             return;
         }
 
-        Double weightValue = null;
-        if (weightStr != null && !weightStr.isBlank()) {
-            try {
-                weightValue = Double.parseDouble(weightStr);
-            } catch (Exception e) {
-                redirectWithError(request, response, productId, "Khối lượng quy cách không hợp lệ!");
-                return;
-            }
+        Double weightValue;
+        try {
+            weightValue = Double.parseDouble(weightStr);
+        } catch (Exception e) {
+            redirectWithError(request, response, productId, "Khối lượng quy cách không hợp lệ!");
+            return;
+        }
+        if (weightValue.isNaN() || weightValue.isInfinite() || weightValue <= 0) {
+            redirectWithError(request, response, productId, "Khối lượng quy cách phải lớn hơn 0!");
+            return;
         }
 
         double stock = 0;
@@ -283,7 +324,13 @@ public class ProductVariantServlet extends HttpServlet {
         }
 
         String grade = pricingService.normalizeGrade(request.getParameter("qualityGrade"));
-        price = pricingService.resolveVariantPrice(productId, weightValue, grade, price).doubleValue();
+        double price;
+        try {
+            price = pricingService.requireAutoVariantPrice(productId, weightValue, grade).doubleValue();
+        } catch (IllegalArgumentException e) {
+            redirectWithError(request, response, productId, e.getMessage());
+            return;
+        }
 
         ProductVariant before = productService.getVariantById(variantId);
 

@@ -8,9 +8,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Gói Đăng Ký Của Tôi | FreshFruit</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css"/>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/quanht/style.css"/>
 </head>
-<body class="my-subscriptions-page">
+<body class="my-subscriptions-page qt-ui">
 
 <!-- Global Header (Reusable Component) -->
 <jsp:include page="/includes/header.jsp" />

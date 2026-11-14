@@ -10,11 +10,10 @@
 
     <!-- Global CSS -->
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/quanht/style.css">
     <!-- Shop Owner Notification Dedicated CSS (100% CSS thuần, zero inline styles) -->
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/quanht/shop-owner-notification.css">
 </head>
-<body>
+<body class="qt-ui">
 
 <!-- ======================================================================= -->
 <!-- NAVBAR HEADER FOR STORE OWNER -->

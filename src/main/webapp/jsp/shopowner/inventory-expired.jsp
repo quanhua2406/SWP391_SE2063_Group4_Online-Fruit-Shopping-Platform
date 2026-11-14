@@ -36,9 +36,6 @@
     java.util.List<Map<String, Object>> expiredBatches =
             (java.util.List<Map<String, Object>>) request.getAttribute("expiredBatches");
 
-    @SuppressWarnings("unchecked")
-    java.util.List<Map<String, Object>> pendingDiscards =
-            (java.util.List<Map<String, Object>>) request.getAttribute("pendingDiscards");
 %>
 
 <%@ include file="inventory-nav.jspf" %>
@@ -58,8 +55,8 @@
     <h2>⚠️ Lô hàng không đảm bảo chất lượng</h2>
 
     <p class="panel-hint">
-        Các lô còn hàng nhưng đã quá hạn sử dụng. Gửi yêu cầu bỏ hàng,
-        chủ shop duyệt ở mục bên dưới trước khi lô được bỏ khỏi tồn kho.
+        Các lô còn hàng nhưng đã quá hạn sử dụng. Bấm Bỏ hàng để bỏ toàn bộ
+        số lượng còn lại khỏi tồn kho.
     </p>
 
     <table class="data-table">
@@ -93,82 +90,10 @@
                 <td><%= dmyDate(b.get("expiry_date")) %></td>
                 <td><%= daysExpired(b.get("expiry_date")) %> ngày</td>
                 <td>
-                    <% if (Boolean.TRUE.equals(b.get("requested"))) { %>
-                        <span class="pill pill-ok">Đã gửi yêu cầu</span>
-                    <% } else { %>
-                        <button type="button" class="btn-sm btn-delete"
-                                onclick="openDiscard(<%= esc(b.get("batch_id")) %>)">
-                            Bỏ hàng
-                        </button>
-                    <% } %>
-                </td>
-            </tr>
-        <%     }
-           } %>
-        </tbody>
-
-    </table>
-
-</div>
-
-<!-- ==================== PENDING APPROVAL ==================== -->
-
-<div class="panel">
-
-    <h2>📝 Yêu cầu bỏ hàng chờ duyệt</h2>
-
-    <p class="panel-hint">
-        Duyệt để bỏ lô khỏi tồn kho, hoặc từ chối để giữ lại lô.
-    </p>
-
-    <table class="data-table">
-
-        <thead>
-            <tr>
-                <th>Lô hàng</th>
-                <th>Sản phẩm</th>
-                <th>SKU</th>
-                <th>Số lượng</th>
-                <th>Hạn sử dụng</th>
-                <th>Ngày gửi</th>
-                <th>Thao tác</th>
-            </tr>
-        </thead>
-
-        <tbody>
-        <% if (pendingDiscards == null || pendingDiscards.isEmpty()) { %>
-
-            <tr>
-                <td colspan="7">Không có yêu cầu nào đang chờ duyệt.</td>
-            </tr>
-
-        <% } else {
-               for (Map<String, Object> r : pendingDiscards) { %>
-            <tr>
-                <td><%= esc(r.get("batch_code")) %></td>
-                <td><%= esc(r.get("product_name")) %></td>
-                <td><%= esc(r.get("sku")) %></td>
-                <td><%= qty(r.get("quantity")) %></td>
-                <td><%= dmyDate(r.get("expiry_date")) %></td>
-                <td><%= dmy(r.get("requested_at")) %></td>
-                <td>
-                    <form method="post"
-                          action="<%= contextPath %>/store-owner/inventory/update"
-                          style="display: inline;">
-                        <input type="hidden" name="action" value="approveDiscard">
-                        <input type="hidden" name="requestId"
-                               value="<%= esc(r.get("request_id")) %>">
-                        <button type="submit" class="btn-sm">Duyệt bỏ</button>
-                    </form>
-
-                    <form method="post"
-                          action="<%= contextPath %>/store-owner/inventory/update"
-                          style="display: inline;">
-                        <input type="hidden" name="action" value="rejectDiscard">
-                        <input type="hidden" name="requestId"
-                               value="<%= esc(r.get("request_id")) %>">
-                        <button type="submit" class="btn-sm btn-secondary">Từ chối</button>
-                    </form>
+                    <button type="button" class="btn-sm btn-delete"
+                            onclick="openDiscard(<%= esc(b.get("batch_id")) %>)">
+                        Bỏ hàng
+                    </button>
                 </td>
             </tr>
         <%     }

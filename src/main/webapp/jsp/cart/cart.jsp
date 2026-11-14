@@ -12,7 +12,6 @@
     <title>Giỏ Hàng Mua Sắm | FreshFruit</title>
 
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/quanht/style.css">
 
     <style>
         .cart-page-wrapper {
@@ -544,7 +543,7 @@
     </style>
 </head>
 
-<body>
+<body class="qt-ui">
 
 <!-- Header Navigation Bar (Reusable Component) -->
 <jsp:include page="/includes/header.jsp" />

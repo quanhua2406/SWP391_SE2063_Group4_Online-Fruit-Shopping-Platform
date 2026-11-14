@@ -7,7 +7,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>${mode == 'edit' ? 'Chỉnh sửa' : 'Tạo'} Gói Đăng Ký | Shop Owner</title>
-  <link rel="stylesheet" href="${pageContext.request.contextPath}/css/quanht/style.css"/>
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css"/>
   <style>
     /* Styling cho thanh tìm kiếm biến thể sản phẩm */
     .variant-search-container {
@@ -162,7 +162,7 @@
     }
   </style>
 </head>
-<body class="plan-management-page">
+<body class="plan-management-page qt-ui qt-only">
 
 <div class="topbar">
   <h1>${mode == 'edit' ? 'Chỉnh sửa Gói Đăng Ký' : 'Tạo Gói Đăng Ký Mới'}</h1>

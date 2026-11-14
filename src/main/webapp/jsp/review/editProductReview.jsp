@@ -8,9 +8,9 @@
     <title>Chỉnh Sửa Đánh Giá – FreshFruit</title>
     <meta name="description" content="Chỉnh sửa đánh giá sản phẩm đã mua tại FreshFruit trong vòng 7 ngày.">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/quanht/style.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
 </head>
-<body>
+<body class="qt-ui qt-only">
 
 <%-- ===== Lấy dữ liệu Review từ Servlet ===== --%>
 <%

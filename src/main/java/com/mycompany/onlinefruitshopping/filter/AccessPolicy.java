@@ -33,6 +33,7 @@ final class AccessPolicy {
 
     private static boolean isPromotionPath(String path) {
         return path.equals("/store-owner/promotions")
+                || path.equals("/shopowner/shop/promotions")
                 || path.equals("/store-owner/variant-promotions");
     }
 

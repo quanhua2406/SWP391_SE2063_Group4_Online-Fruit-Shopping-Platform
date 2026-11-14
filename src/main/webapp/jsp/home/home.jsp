@@ -12,8 +12,6 @@
 
     <link rel="stylesheet"
           href="${pageContext.request.contextPath}/css/style.css">
-    <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/css/quanht/style.css">
     <style>
         .hero-actions {
             display: flex;
@@ -146,7 +144,7 @@
     </style>
 </head>
 
-<body>
+<body class="qt-ui">
 
 <jsp:include page="/includes/header.jsp" />
 

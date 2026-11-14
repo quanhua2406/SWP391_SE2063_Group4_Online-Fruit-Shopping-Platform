@@ -111,6 +111,7 @@ public class PricingService {
         for (Map<String, Object> v : all) {
             BigDecimal kg = kgByProduct.get((Integer) v.get("product_id"));
             v.put("auto", isAuto(kg, (BigDecimal) v.get("weight_value")));
+            v.put("price_per_kg", kg);
         }
 
         List<Map<String, Object>> rows = new ArrayList<>();
@@ -132,52 +133,14 @@ public class PricingService {
     }
 
     /**
-     * Sets the manual selling price of one variant.
-     *
-     * <p>A promotion must stay cheaper than the normal price, so the
-     * normal price cannot be dropped below a running promotion. An
-     * automatically priced variant cannot be set by hand.</p>
-     *
-     * @return a message code understood by the pricing screen
+     * Manual base price per variant is no longer supported.
+     * Variant base price must be calculated automatically from the
+     * product's price per kg, variant weight and quality grade.
      */
     public String savePrice(int ownerId,
                             String variantIdRaw,
                             String priceRaw) throws SQLException {
-
-        int variantId = parseInt(variantIdRaw, -1);
-        double price = parseDouble(priceRaw, -1);
-
-        // A selling price must be a real, positive amount; NaN and
-        // infinity are rejected here too so they can never be stored.
-        if (variantId <= 0
-                || Double.isNaN(price)
-                || Double.isInfinite(price)
-                || price <= 0
-                || price > MAX_PRICE) {
-            return "invalid";
-        }
-
-        if (!inventoryDAO.variantBelongsToOwner(variantId, ownerId)) {
-            return "forbidden";
-        }
-
-        Map<String, Object> variant = inventoryDAO.getVariantForPricing(variantId);
-
-        if (variant != null && isAuto(
-                (BigDecimal) variant.get("price_per_kg"),
-                (BigDecimal) variant.get("weight_value"))) {
-            return "auto-priced";
-        }
-
-        BigDecimal newPrice = BigDecimal.valueOf(price);
-        BigDecimal promo = inventoryDAO.getLivePromoPrice(variantId);
-
-        if (promo != null && newPrice.compareTo(promo) <= 0) {
-            return "promo-conflict";
-        }
-
-        return inventoryDAO.savePriceWithHistory(variantId, newPrice, "manual", ownerId)
-                ? "updated" : "failed";
+        return "auto-only";
     }
 
     /**
@@ -305,15 +268,27 @@ public class PricingService {
         return grade != null && factors().containsKey(grade) ? grade : "1";
     }
 
-    /** The automatic price when the variant has one, otherwise the entered price. */
+    /** The automatic base price of a variant, calculated from product kg price. */
     public BigDecimal resolveVariantPrice(int productId,
                                           Double weight,
                                           String grade,
                                           double enteredPrice) throws SQLException {
+        return autoPrice(productId, weight, grade);
+    }
 
+    /**
+     * Base price is auto-calculated from the product's price per kg.
+     * The product must have a price per kg and the variant must have weight.
+     */
+    public BigDecimal requireAutoVariantPrice(int productId,
+                                              Double weight,
+                                              String grade) throws SQLException {
         BigDecimal auto = autoPrice(productId, weight, grade);
-
-        return auto != null ? auto : BigDecimal.valueOf(enteredPrice);
+        if (auto == null) {
+            throw new IllegalArgumentException(
+                    "Vui lòng đặt giá/kg cho sản phẩm và nhập khối lượng biến thể để hệ thống tự tính giá gốc biến thể.");
+        }
+        return auto;
     }
 
     /** Records a price change made on the variant form. */

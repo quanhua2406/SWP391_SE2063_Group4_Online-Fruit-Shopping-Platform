@@ -7,7 +7,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Quản lý Đánh giá | Admin</title>
-  <link rel="stylesheet" href="${pageContext.request.contextPath}/css/quanht/style.css"/>
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css"/>
   <style>
     /* ── Evidence thumbnails in admin table ── */
     .evidence-imgs { display: flex; gap: 4px; flex-wrap: wrap; }
@@ -42,7 +42,7 @@
     .btn-detail:hover { background: #4338ca; }
   </style>
 </head>
-<body class="review-mod-page">
+<body class="review-mod-page qt-ui qt-only">
 
 <!-- ── Top Bar ── -->
 <div class="topbar">

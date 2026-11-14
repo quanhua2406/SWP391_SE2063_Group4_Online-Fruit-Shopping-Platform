@@ -12,7 +12,6 @@
     <title>${fn:escapeXml(product.productName)} | FreshFruit</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/quanht/style.css">
     <style>
         .detail-wrapper {
             width: 90%;
@@ -553,7 +552,7 @@
         }
     </style>
 </head>
-<body>
+<body class="qt-ui">
 
 <!-- Header Component Reusable -->
 <jsp:include page="/includes/header.jsp" />
@@ -1272,6 +1271,7 @@
     // Quantity update
     function updateQty(delta) {
         const input = document.getElementById('quantityInput');
+        if (!input) return;
         let current = parseInt(input.value) || 1;
         current += delta;
         if (current < 1) current = 1;
@@ -1284,7 +1284,9 @@
     // Buy now action
     function buyNow() {
         const form = document.getElementById('addToCartForm');
-        document.getElementById('formAction').value = 'add';
+        if (!form) return;
+        const formAction = document.getElementById('formAction');
+        if (formAction) formAction.value = 'add';
         let buyNowInput = document.getElementById('buyNowInput');
         if (!buyNowInput) {
             buyNowInput = document.createElement('input');
@@ -1302,14 +1304,15 @@
     if (cartForm) {
         cartForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            const variantId = document.getElementById('selectedVariantId').value;
-            const qty = document.getElementById('quantityInput').value;
+            const variantIdEl = document.getElementById('selectedVariantId');
+            const qtyEl = document.getElementById('quantityInput');
+            if (!variantIdEl || !qtyEl) { cartForm.submit(); return; }
 
             const formData = new URLSearchParams();
             formData.append('action', 'add');
-            formData.append('variantId', variantId);
+            formData.append('variantId', variantIdEl.value);
             formData.append('productId', '${product.productId}');
-            formData.append('quantity', qty);
+            formData.append('quantity', qtyEl.value);
 
             fetch('${pageContext.request.contextPath}/cart', {
                 method: 'POST',

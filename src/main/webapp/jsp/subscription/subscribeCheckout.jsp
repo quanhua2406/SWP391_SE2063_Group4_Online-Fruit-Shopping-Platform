@@ -9,10 +9,9 @@
                 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
                 <title>Xác nhận đăng ký gói ${plan.name} | FreshFruit</title>
                 <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css" />
-                <link rel="stylesheet" href="${pageContext.request.contextPath}/css/quanht/style.css" />
             </head>
 
-            <body class="subscribe-checkout-page">
+            <body class="subscribe-checkout-page qt-ui">
 
                 <!-- Navigation (Reusable Component) -->
                 <jsp:include page="/includes/header.jsp" />

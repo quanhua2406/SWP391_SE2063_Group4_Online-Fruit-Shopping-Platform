@@ -115,36 +115,37 @@ public class DeliveryDAO {
     /** The ID passed from the module UI is attempt_id, never delivery_id. */
     public void updateStatus(int attemptId,int shipperId,String action,String reason,boolean collected) throws SQLException {
         try(Connection c=connections.open()) {
+            com.mycompany.onlinefruitshopping.utils.ModuleSql.prepare(c);
             c.setAutoCommit(false);
             try {
-                int deliveryId,orderId,shopId,customerId,ownerId; String orderStatus,baseStatus;
+                int deliveryId,orderId,shopId,customerId,ownerId,version; String orderStatus,baseStatus,oldStatus;
                 try(PreparedStatement ps=c.prepareStatement("""
-                    SELECT d.delivery_id, o.order_id, o.shop_id, o.user_id, o.status, s.owner_id, d.status
-                    FROM deliveries d WITH(UPDLOCK,HOLDLOCK)
+                    SELECT d.delivery_id, o.order_id, o.shop_id, o.user_id, o.status, s.owner_id, d.status, a.delivery_status, a.version
+                    FROM delivery_attempts a WITH(UPDLOCK,HOLDLOCK)
+                    JOIN deliveries d WITH(UPDLOCK,HOLDLOCK) ON d.delivery_id = a.delivery_id
                     JOIN orders o WITH(UPDLOCK,HOLDLOCK) ON o.order_id = d.order_id
                     JOIN shops s ON s.shop_id = o.shop_id
-                    WHERE (d.delivery_id = ? OR d.order_id = ?) AND d.staff_id = ?
+                    WHERE a.attempt_id = ? AND a.shipper_id = ? AND a.closed_at IS NULL
+                      AND d.staff_id = a.shipper_id
+                      AND a.attempt_id = (SELECT MAX(x.attempt_id) FROM delivery_attempts x WHERE x.delivery_id=d.delivery_id)
+                      AND s.status=N'active'
                     """)) {
-                    ps.setInt(1,attemptId);ps.setInt(2,attemptId);ps.setInt(3,shipperId);
+                    ps.setInt(1,attemptId);ps.setInt(2,shipperId);
                     try(ResultSet rs=ps.executeQuery()) {
-                        if(!rs.next()) throw new IllegalArgumentException("Không tìm thấy đơn giao hàng được phân công cho bạn.");
+                        if(!rs.next()) throw new IllegalArgumentException("Lần phân công đã đóng hoặc đã đổi người giao. Hãy tải lại trang.");
                         deliveryId=rs.getInt(1);orderId=rs.getInt(2);shopId=rs.getInt(3);
                         customerId=rs.getInt(4);orderStatus=rs.getString(5);ownerId=rs.getInt(6);baseStatus=rs.getString(7);
+                        oldStatus=rs.getString(8);version=rs.getInt(9);
                     }
                 }
-                String oldStatus = switch(baseStatus != null ? baseStatus.toLowerCase() : "assigned") {
-                    case "assigned" -> "Assigned";
-                    case "accepted" -> "Accepted";
-                    case "rejected" -> "Rejected";
-                    case "picked_up" -> "PickedUp";
-                    case "delivering" -> "Delivering";
-                    case "delivered" -> "Delivered";
-                    case "failed" -> "Failed";
-                    default -> "Assigned";
-                };
+                AssignmentDAO.requireCurrentAttemptMember(c,shopId,shipperId);
+                // delivery_attempts is the source of truth for the shipper UI.
+                // Older/demo data may have deliveries/orders out of sync, so do not
+                // block here; the update below writes all three states back in sync.
                 String next=DeliveryRules.nextStatus(oldStatus,action);
                 String clean=DeliveryRules.validateReason(next,reason);
                 String note=clean.isEmpty()?DeliveryRules.label(next):clean;
+                boolean terminal=List.of("Delivered","Failed","Rejected").contains(next);
                 if("Delivered".equals(next)) {
                     String method="cod",paymentStatus="pending";
                     try(PreparedStatement ps=c.prepareStatement("""
@@ -157,30 +158,45 @@ public class DeliveryDAO {
                             }
                         }
                     }
+                    DeliveryRules.validatePayment(method,paymentStatus,collected);
                     if("cod".equalsIgnoreCase(method) && "pending".equalsIgnoreCase(paymentStatus)) {
-                        try(PreparedStatement ps=c.prepareStatement("UPDATE payments SET status=N'paid',paid_at=GETDATE() WHERE order_id=?")) {
-                            ps.setInt(1,orderId);ps.executeUpdate();
+                        try(PreparedStatement ps=c.prepareStatement("UPDATE payments SET status=N'paid',paid_at=SYSDATETIME() WHERE order_id=? AND status=N'pending'")) {
+                            ps.setInt(1,orderId);
+                            if(ps.executeUpdate()!=1) throw new SQLException("Thanh toán đã thay đổi.");
                         }
                     }
                 }
                 try(PreparedStatement ps=c.prepareStatement("""
-                    UPDATE deliveries SET status=?, note=?
+                    UPDATE delivery_attempts SET delivery_status=?, note=?, version=version+1,
+                        accepted_at=CASE WHEN ?=N'Accepted' THEN SYSDATETIME() ELSE accepted_at END,
+                        pickup_time=CASE WHEN ?=N'PickedUp' THEN SYSDATETIME() ELSE pickup_time END,
+                        delivered_time=CASE WHEN ?=N'Delivered' THEN SYSDATETIME() ELSE delivered_time END,
+                        closed_at=CASE WHEN ?=1 THEN SYSDATETIME() ELSE closed_at END
+                    WHERE attempt_id=? AND shipper_id=? AND version=? AND closed_at IS NULL
+                    """)) {
+                    ps.setNString(1,next);ps.setNString(2,note);ps.setNString(3,next);ps.setNString(4,next);ps.setNString(5,next);
+                    ps.setBoolean(6,terminal);ps.setInt(7,attemptId);ps.setInt(8,shipperId);ps.setInt(9,version);
+                    if(ps.executeUpdate()!=1) throw new SQLException("Lần giao vừa thay đổi.");
+                }
+                try(PreparedStatement ps=c.prepareStatement("""
+                    UPDATE deliveries SET status=?, delivery_status=?, note=?,
+                        staff_id=CASE WHEN ?=N'Rejected' THEN NULL ELSE staff_id END,
+                        shipper_id=CASE WHEN ?=N'Rejected' THEN NULL ELSE shipper_id END,
+                        pickup_time=CASE WHEN ?=N'PickedUp' THEN SYSDATETIME() ELSE pickup_time END,
+                        delivered_time=CASE WHEN ?=N'Delivered' THEN SYSDATETIME() ELSE delivered_time END
                     WHERE delivery_id=? AND staff_id=?
                     """)) {
-                    ps.setNString(1,baseStatus(next));ps.setNString(2,note);ps.setInt(3,deliveryId);ps.setInt(4,shipperId);
-                    ps.executeUpdate();
+                    ps.setNString(1,baseStatus(next));ps.setNString(2,next);ps.setNString(3,note);
+                    ps.setNString(4,next);ps.setNString(5,next);ps.setNString(6,next);ps.setNString(7,next);
+                    ps.setInt(8,deliveryId);ps.setInt(9,shipperId);
+                    if(ps.executeUpdate()!=1) throw new SQLException("Người giao đã thay đổi.");
                 }
-                String targetOrderStatus = switch(next) {
-                    case "Delivered" -> "delivered";
-                    case "Failed" -> "failed";
-                    case "Rejected" -> "preparing";
-                    default -> "shipping";
-                };
-                try(PreparedStatement ps=c.prepareStatement("UPDATE orders SET status=? WHERE order_id=?")) {
-                    ps.setNString(1,targetOrderStatus);ps.setInt(2,orderId);
-                    ps.executeUpdate();
+                String targetOrderStatus = DeliveryRules.canonicalOrderStatus(next);
+                try(PreparedStatement ps=c.prepareStatement("UPDATE orders SET status=?, order_status=? WHERE order_id=? AND status=?")) {
+                    ps.setNString(1,targetOrderStatus);ps.setNString(2,targetOrderStatus);ps.setInt(3,orderId);ps.setNString(4,orderStatus);
+                    if(ps.executeUpdate()!=1) throw new SQLException("Đơn hàng đã thay đổi.");
                 }
-                try(PreparedStatement ps=c.prepareStatement("INSERT INTO order_status_history(order_id,status,changed_by,changed_at) VALUES(?,?,?,GETDATE())")) {
+                try(PreparedStatement ps=c.prepareStatement("INSERT INTO order_status_history(order_id,status,changed_by,changed_at) VALUES(?,?,?,SYSDATETIME())")) {
                     ps.setInt(1,orderId);ps.setNString(2,targetOrderStatus);ps.setInt(3,shipperId);ps.executeUpdate();
                 }
                 NotificationDAO notifications=new NotificationDAO();
@@ -192,9 +208,12 @@ public class DeliveryDAO {
                 } else if("Failed".equals(next)) {
                     notifications.insert(c,customerId,"Giao hàng không thành công #"+orderId,message,"delivery_status","order",String.valueOf(orderId));
                     notifications.insert(c,shipperId,"Đã ghi nhận kết quả giao hàng #"+orderId,message,"delivery_status_update","delivery",String.valueOf(orderId));
+                } else if("Rejected".equals(next)) {
+                    notifications.insert(c,shipperId,"Đã từ chối đơn hàng #"+orderId,message,"delivery_status_update","delivery",String.valueOf(orderId));
                 } else {
                     notifications.insert(c,customerId,"Cập nhật giao hàng #"+orderId,message,"delivery_status","order",String.valueOf(orderId));
                 }
+                ShipperTeamDAO.finalizeLeaveIfNoOpenAttempt(c,shipperId);
                 c.commit();
             } catch(SQLException|RuntimeException e) {c.rollback();throw e;}
         }

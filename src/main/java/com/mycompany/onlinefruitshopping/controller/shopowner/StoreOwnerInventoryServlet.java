@@ -158,9 +158,7 @@ public class StoreOwnerInventoryServlet extends HttpServlet {
             return "/low-stock";
         }
 
-        if ("requestDiscard".equals(action)
-                || "approveDiscard".equals(action)
-                || "rejectDiscard".equals(action)) {
+        if ("requestDiscard".equals(action)) {
             return "/expired";
         }
 
@@ -284,8 +282,6 @@ public class StoreOwnerInventoryServlet extends HttpServlet {
 
         request.setAttribute("expiredBatches",
                 inventoryService.expiredBatches(userId));
-        request.setAttribute("pendingDiscards",
-                inventoryService.pendingDiscards(userId));
     }
 
     private void loadHistoryView(HttpServletRequest request, int userId)
@@ -344,14 +340,6 @@ public class StoreOwnerInventoryServlet extends HttpServlet {
                         request.getParameter("batchId"),
                         request.getParameter("discardNote"),
                         saveDiscardImage(request));
-
-            } else if ("approveDiscard".equals(action)) {
-                result = inventoryService.resolveDiscard(
-                        userId, request.getParameter("requestId"), true);
-
-            } else if ("rejectDiscard".equals(action)) {
-                result = inventoryService.resolveDiscard(
-                        userId, request.getParameter("requestId"), false);
 
             } else if ("discardQuality".equals(action)) {
                 result = inventoryService.discardQuality(

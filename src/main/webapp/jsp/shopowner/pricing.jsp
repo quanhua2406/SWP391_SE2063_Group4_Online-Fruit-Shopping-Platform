@@ -124,10 +124,10 @@
     } else if ("invalid-grade".equals(message)) {
         level = "error-message";
         messageText = "Phẩm cấp không hợp lệ.";
-    } else if ("auto-priced".equals(message)) {
+    } else if ("auto-priced".equals(message) || "auto-only".equals(message)) {
         level = "error-message";
-        messageText = "Biến thể này được tính giá tự động từ giá/kg và phẩm cấp. "
-                + "Hãy đặt giá/kg của sản phẩm để thay đổi.";
+        messageText = "Giá gốc biến thể được tính tự động từ giá/kg của sản phẩm, khối lượng và phẩm cấp. "
+                + "Không được nhập giá riêng; hãy đặt hoặc cập nhật giá/kg của sản phẩm.";
     } else if ("promo-conflict".equals(message)) {
         level = "error-message";
         messageText = "Giá này không cao hơn giá khuyến mãi đang chạy. "
@@ -236,8 +236,8 @@
         <h2>⚖️ Giá theo kg của sản phẩm</h2>
 
         <p class="panel-hint">
-            Biến thể có khối lượng được tính giá:
-            <strong>giá/kg × khối lượng × hệ số phẩm cấp</strong>.
+            Giá gốc của biến thể <strong>bắt buộc</strong> được tính tự động từ
+            <strong>giá/kg sản phẩm × khối lượng × hệ số phẩm cấp</strong>, không được nhập giá riêng cho biến thể.
             Hệ số:
             <% if (qualityGrades != null) {
                    for (Map<String, Object> g : qualityGrades) { %>
@@ -345,8 +345,8 @@
         <h2>💲 Giá và phẩm cấp theo biến thể</h2>
 
         <p class="panel-hint">
-            Biến thể có khối lượng và sản phẩm đã đặt giá/kg được tính giá tự động.
-            Các biến thể khác đặt giá bằng tay.
+            Giá gốc mỗi biến thể = giá /1kg của sản phẩm × khối lượng × hệ số phẩm cấp (bắt buộc, không nhập riêng).
+            Sửa giá /1kg hoặc phẩm cấp sẽ tự tính lại giá gốc biến thể.
         </p>
 
         <table class="data-table">
@@ -359,7 +359,7 @@
                     <th>Đóng gói</th>
                     <th>Phẩm cấp</th>
                     <th>Giá hiện tại</th>
-                    <th>Giá mới (đ)</th>
+                    <th>Giá /1kg (đ)</th>
                     <th>Tồn kho</th>
                 </tr>
             </thead>
@@ -379,7 +379,6 @@
 
             <% } else {
                    for (Map<String, Object> v : variantsPage.getItems()) {
-                       boolean auto = Boolean.TRUE.equals(v.get("auto"));
             %>
                 <tr>
                     <td><%= esc(v.get("product_name")) %></td>
@@ -429,37 +428,38 @@
                     <td><%= money(v.get("price")) %></td>
 
                     <td>
-                        <% if (auto) { %>
-                            <span class="stock-badge">Theo giá/kg</span>
-                        <% } else { %>
-                            <form method="post"
-                                  action="<%= contextPath %>/store-owner/pricing">
-
-                                <input type="hidden" name="action" value="price">
-
-                                <input type="hidden" name="variantId"
-                                       value="<%= esc(v.get("variant_id")) %>">
-
-                                <input type="hidden" name="q"
-                                       value="<%= esc(q) %>">
-
-                                <input type="hidden" name="weight"
-                                       value="<%= esc(weight) %>">
-
-                                <input type="hidden" name="page"
-                                       value="<%= esc(currentPage) %>">
-
-                                <input class="qty-input" type="number"
-                                       name="price" min="0" step="1"
-                                       value="<%= qty(v.get("price")) %>"
-                                       required>
-
-                                <button type="submit" class="btn-sm btn-edit">
-                                    Lưu
-                                </button>
-
-                            </form>
+                        <% if (v.get("weight_value") == null) { %>
+                            <span class="stock-badge">Cần nhập khối lượng</span><br>
                         <% } %>
+                        <form method="post"
+                              action="<%= contextPath %>/store-owner/pricing">
+
+                            <input type="hidden" name="action" value="kg">
+
+                            <input type="hidden" name="back" value="variant">
+
+                            <input type="hidden" name="productId"
+                                   value="<%= esc(v.get("product_id")) %>">
+
+                            <input type="hidden" name="q"
+                                   value="<%= esc(q) %>">
+
+                            <input type="hidden" name="weight"
+                                   value="<%= esc(weight) %>">
+
+                            <input type="hidden" name="page"
+                                   value="<%= esc(currentPage) %>">
+
+                            <input class="qty-input" type="number"
+                                   name="pricePerKg" min="0.01" step="1"
+                                   value="<%= qty(v.get("price_per_kg")) %>"
+                                   required>
+
+                            <button type="submit" class="btn-sm btn-edit">
+                                Lưu
+                            </button>
+
+                        </form>
                     </td>
 
                     <td><%= qty(v.get("stock")) %></td>

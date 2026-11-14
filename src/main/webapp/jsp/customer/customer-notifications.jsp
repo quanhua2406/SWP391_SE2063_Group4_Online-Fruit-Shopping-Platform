@@ -10,11 +10,10 @@
 
     <!-- Global CSS -->
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/quanht/style.css">
     <!-- Notification Custom CSS (Toàn bộ style nằm ở đây, không inline trong JSP) -->
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/quanht/notification.css">
 </head>
-<body>
+<body class="qt-ui">
 
 <!-- ======================================================================= -->
 <!-- NAVBAR HEADER -->

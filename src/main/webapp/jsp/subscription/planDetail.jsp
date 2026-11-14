@@ -8,9 +8,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>${plan.name} | Chi tiết gói Combo FreshFruit</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css"/>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/quanht/style.css"/>
 </head>
-<body class="customer-plans-page">
+<body class="customer-plans-page qt-ui">
 
 <!-- Global Navigation Bar (Reusable Component) -->
 <jsp:include page="/includes/header.jsp" />
